@@ -6,10 +6,10 @@ export default async function TimPage() {
   const { supabase, user, profile } = await requireUser()
   const { data: rows, error } = await supabase.from('tim_analisis').select('*').eq('active', true).order('id')
   if (error) throw new Error(error.message)
-  const canEdit = profile.role === 'admin' || profile.role === 'editor'
+  const canEdit = profile.role === 'admin'
 
   return <AppShell active="/tim-analisis" title="Tim Analisis" email={user.email}>
-    {!canEdit ? <div className="notice notice-info">Mode viewer aktif. Profil tim dapat dilihat, tetapi perubahan link foto/CV hanya tersedia untuk editor dan admin.</div> : null}
+    {!canEdit ? <div className="notice notice-info">Profil Tim Analisis adalah master data. Viewer dan editor dapat melihat profil, tetapi perubahan link Foto/CV hanya tersedia untuk admin.</div> : null}
     <section className="team-grid">
       {(rows ?? []).map((row) => <article className="panel team-card" key={row.id}>
         <div className="avatar">{String(row.nama || '?').split(' ').slice(0, 2).map((v: string) => v[0]).join('').toUpperCase()}</div>
