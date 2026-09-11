@@ -1,5 +1,6 @@
 import { AppShell } from '@/components/app-shell'
 import { requireUser } from '@/lib/auth'
+import { changeAdminPin } from '@/lib/actions/pin-auth'
 import {
   addMasterAgenda,
   addMasterContribution,
@@ -33,6 +34,19 @@ export default async function PengaturanPage() {
       <article className="panel summary-card"><p className="eyebrow">TIM AKTIF</p><strong>{team.filter((row) => row.active).length}</strong><span className="muted">anggota aktif</span></article>
       <article className="panel summary-card"><p className="eyebrow">MASTER AGENDA</p><strong>{agendas.filter((row) => row.status === 'Aktif').length}</strong><span className="muted">jenis agenda aktif</span></article>
       <article className="panel summary-card"><p className="eyebrow">MASTER KONTRIBUSI</p><strong>{contributions.filter((row) => row.status === 'Aktif').length}</strong><span className="muted">jenis kontribusi aktif</span></article>
+    </section>
+
+    <section className="settings-section">
+      <div className="section-heading"><p className="eyebrow">KEAMANAN</p><h2>Ganti PIN Administrator</h2></div>
+      <div className="settings-grid">
+        <form action={changeAdminPin} className="panel form-card compact-form">
+          <h3>Rotasi PIN</h3>
+          <p className="muted-line">Gunakan tepat 6 angka. Setelah PIN diganti, seluruh sesi aktif akan langsung dicabut dan Anda harus login kembali.</p>
+          <label>PIN Baru<input name="new_pin" type="password" inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete="new-password" required /></label>
+          <label>Konfirmasi PIN<input name="confirm_pin" type="password" inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete="new-password" required /></label>
+          <button className="primary-button" type="submit">Ganti PIN & Keluar</button>
+        </form>
+      </div>
     </section>
 
     <section className="settings-section">

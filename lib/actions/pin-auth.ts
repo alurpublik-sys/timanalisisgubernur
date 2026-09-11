@@ -27,6 +27,23 @@ export async function loginWithPin(_state: LoginState, formData: FormData): Prom
   redirect('/dashboard')
 }
 
+export async function changeAdminPin(formData: FormData) {
+  const newPin = String(formData.get('new_pin') ?? '').trim()
+  const confirmation = String(formData.get('confirm_pin') ?? '').trim()
+  if (!/^\d{6}$/.test(newPin)) throw new Error('PIN baru harus terdiri dari 6 angka.')
+  if (newPin !== confirmation) throw new Error('Konfirmasi PIN tidak sama.')
+
+  const token = await getAdminSessionToken()
+  if (!token) throw new Error('Sesi admin tidak valid. Masukkan PIN kembali.')
+  const supabase = await createClient(token)
+  const { data, error } = await supabase.rpc('ah_admin_change_pin', { p_new_pin: newPin })
+  if (error) throw new Error(`Gagal mengganti PIN admin: ${error.message}`)
+  if (!data) throw new Error('PIN admin tidak berhasil diganti.')
+
+  await clearAdminSession()
+  redirect('/login?pin_changed=1')
+}
+
 export async function logoutPinAdmin() {
   const token = await getAdminSessionToken()
   if (token) {

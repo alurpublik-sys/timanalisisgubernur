@@ -35,6 +35,7 @@ export type Database = {
     }
     Views: { dashboard_stats: { Row: { total_agenda:number|null; total_isu:number|null; total_kunjungan:number|null; total_media:number|null; total_policy_brief:number|null }; Relationships: [] } }
     Functions: {
+      ah_admin_change_pin: { Args: { p_new_pin: string }; Returns: boolean }
       ah_admin_login: { Args: { p_pin: string }; Returns: { error_code:string|null; expires_at:string|null; session_token:string|null; success:boolean }[] }
       ah_admin_logout: { Args: never; Returns: boolean }
       ah_admin_session_check: { Args: never; Returns: boolean }
