@@ -32,7 +32,6 @@ export async function addTeamMember(formData: FormData) {
     peran: text(formData, 'peran'),
     link_foto: text(formData, 'link_foto'),
     link_cv: text(formData, 'link_cv'),
-    user_id: null,
     active: true,
   })
   if (error) throw new Error(error.message)
@@ -48,7 +47,6 @@ export async function updateTeamMember(formData: FormData) {
     peran: text(formData, 'peran'),
     link_foto: text(formData, 'link_foto'),
     link_cv: text(formData, 'link_cv'),
-    user_id: null,
     active: text(formData, 'active') === 'true',
   }).eq('id', id)
   if (error) throw new Error(error.message)
