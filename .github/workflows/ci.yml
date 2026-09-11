@@ -12,15 +12,9 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-      SUPABASE_SECRET_KEY: sb_secret_ci_placeholder
-      ADMIN_PIN: "000000"
-      AH_SESSION_SECRET: ci-only-session-secret-at-least-32-characters-long
-      APP_TIMEZONE: Asia/Makassar
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
