@@ -23,34 +23,24 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run build
-      - name: Start production server and verify login boundary
+      - name: Start production server and verify public app + protected settings
         run: |
           set -euo pipefail
           npm start > /tmp/ah-center-next.log 2>&1 &
-          echo $! > /tmp/ah-center-next.pid
-
           ready=0
           for i in {1..30}; do
-            status=$(curl -sS -o /tmp/login.html -w '%{http_code}' http://127.0.0.1:3000/login || true)
-            if [ "$status" = "200" ]; then
-              ready=1
-              break
-            fi
+            status=$(curl -sS -o /tmp/dashboard.html -w '%{http_code}' http://127.0.0.1:3000/dashboard || true)
+            if [ "$status" = "200" ]; then ready=1; break; fi
             sleep 1
           done
-
-          if [ "$ready" != "1" ]; then
-            echo '--- next server log ---'
-            cat /tmp/ah-center-next.log
-            echo '--- login response ---'
-            cat /tmp/login.html || true
-            exit 1
-          fi
-          echo 'Login route returned HTTP 200'
-
-          dashboard_status=$(curl -sS -o /tmp/dashboard.html -D /tmp/dashboard.headers -w '%{http_code}' http://127.0.0.1:3000/dashboard || true)
-          echo "Dashboard unauthenticated status: $dashboard_status"
-          cat /tmp/dashboard.headers
-          test "$dashboard_status" = "307"
-          grep -Eiq '^location: .*/login' /tmp/dashboard.headers
-          echo 'Dashboard unauthenticated request redirects to /login'
+          if [ "$ready" != "1" ]; then cat /tmp/ah-center-next.log; exit 1; fi
+          grep -q 'Dashboard Strategis' /tmp/dashboard.html
+          echo 'Public dashboard returned HTTP 200'
+          settings_status=$(curl -sS -o /tmp/settings.html -D /tmp/settings.headers -w '%{http_code}' http://127.0.0.1:3000/pengaturan || true)
+          test "$settings_status" = "307"
+          grep -Eiq '^location: .*/login' /tmp/settings.headers
+          echo 'Pengaturan redirects unauthenticated requests to /login'
+          login_status=$(curl -sS -o /tmp/login.html -w '%{http_code}' http://127.0.0.1:3000/login || true)
+          test "$login_status" = "200"
+          grep -q 'Buka Pengaturan' /tmp/login.html
+          echo 'PIN settings route returned HTTP 200'

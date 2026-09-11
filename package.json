@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "node scripts/verify-pin-only.mjs && tsc --noEmit",
-    "verify:pin-only": "node scripts/verify-pin-only.mjs"
+    "typecheck": "node scripts/verify-settings-pin.mjs && tsc --noEmit",
+    "verify:architecture": "node scripts/verify-settings-pin.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",

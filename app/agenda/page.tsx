@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { createAgenda } from '@/lib/actions/core'
-import { requireUser } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 
 type Params = { q?: string; tipe?: string; status?: string }
 
@@ -10,8 +10,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   const q = String(params.q || '').trim()
   const tipe = String(params.tipe || '').trim()
   const status = String(params.status || '').trim()
-  const { supabase, user, profile } = await requireUser()
-  const canEdit = profile.role === 'admin' || profile.role === 'editor'
+  const supabase = await createClient(null)
 
   let query = supabase.from('agenda').select('*').order('tanggal', { ascending: false }).order('id', { ascending: false })
   if (q) query = query.or(`nama_agenda.ilike.%${q}%,pic.ilike.%${q}%,legacy_id.ilike.%${q}%`)
@@ -20,10 +19,9 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   const { data: rows, error } = await query
   if (error) throw new Error(error.message)
 
-  return <AppShell active="/agenda" title="Agenda & Tugas" email={user.email}>
-    {!canEdit ? <div className="notice notice-info">Mode viewer aktif. Agenda dapat dibaca dan difilter, tetapi penambahan agenda/tugas hanya tersedia untuk editor dan admin.</div> : null}
-    <section className={`module-grid${canEdit ? '' : ' single-module'}`}>
-      {canEdit ? <form action={createAgenda} className="panel form-card">
+  return <AppShell active="/agenda" title="Agenda & Tugas">
+    <section className="module-grid">
+      <form action={createAgenda} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">MONITORING</p><h2>Tambah Agenda / Tugas</h2></div>
         <label>Nama Agenda<input name="nama" required /></label>
         <label>Tanggal<input name="tanggal" type="date" required /></label>
@@ -31,7 +29,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         <label>Status<select name="status"><option>Terjadwal</option><option>Proses</option><option>Selesai</option><option>Ditunda</option></select></label>
         <label>PIC<input name="pic" /></label>
         <button className="primary-button" type="submit">Simpan Agenda</button>
-      </form> : null}
+      </form>
 
       <section className="panel table-panel">
         <div className="section-heading table-heading-with-filter">

@@ -1,6 +1,6 @@
+import Image from 'next/image'
 import Link from 'next/link'
-import { requireUser } from '@/lib/auth'
-import { SignOutButton } from '@/components/signout-button'
+import { ANWAR_HAFID_PHOTO } from '@/lib/branding'
 
 const menu = [
   ['Dashboard', '/dashboard'],
@@ -10,32 +10,46 @@ const menu = [
   ['Media Monitor', '/media-monitor'],
   ['Agenda & Tugas', '/agenda'],
   ['Tim Analisis', '/tim-analisis'],
-  ['Kinerja & Honor', '/kinerja'],
   ['Pengaturan', '/pengaturan'],
-]
+] as const
 
 function Brand() {
-  return <div className="brand">
-    <div className="brand-mark">AH</div>
-    <div><strong>Strategic</strong><span>Center</span></div>
-  </div>
+  return (
+    <div className="brand">
+      <div className="brand-portrait-wrap">
+        <Image src={ANWAR_HAFID_PHOTO} alt="Anwar Hafid" width={62} height={62} className="brand-portrait" priority unoptimized />
+      </div>
+      <div className="brand-copy">
+        <strong>Anwar Hafid</strong>
+        <span>Strategic Center</span>
+      </div>
+    </div>
+  )
 }
 
-export async function AppShell({ active, title, children }: { active: string; title: string; email?: string | null; children: React.ReactNode }) {
-  await requireUser()
-  const identity = 'Administrator'
+function Navigation({ active }: { active: string }) {
+  return (
+    <nav>
+      {menu.map(([label, href]) => (
+        <Link key={href} href={href} className={active === href ? 'active' : ''}>
+          <span>{label}</span>
+          {href === '/pengaturan' ? <small className="nav-lock">PIN</small> : null}
+        </Link>
+      ))}
+    </nav>
+  )
+}
 
+export function AppShell({ active, title, children }: { active: string; title: string; children: React.ReactNode }) {
   return (
     <div className="app-shell">
       <aside className="sidebar desktop-sidebar">
         <Brand />
-        <nav>
-          {menu.map(([label, href]) => <Link key={href} href={href} className={active === href ? 'active' : ''}>{label}</Link>)}
-        </nav>
-        <div className="sidebar-account">
-          <span>{identity}</span>
-          <small>PIN-only</small>
-          <SignOutButton />
+        <div className="sidebar-kicker">Command Center</div>
+        <Navigation active={active} />
+        <div className="sidebar-foot">
+          <span>AH Center</span>
+          <small>Analisis · Monitoring · Kebijakan</small>
         </div>
       </aside>
 
@@ -44,19 +58,19 @@ export async function AppShell({ active, title, children }: { active: string; ti
         <details className="mobile-menu">
           <summary aria-label="Buka navigasi">Menu</summary>
           <div className="mobile-menu-panel">
-            <div className="mobile-account"><b>{identity}</b><span>PIN-only</span></div>
-            <nav>
-              {menu.map(([label, href]) => <Link key={href} href={href} className={active === href ? 'active' : ''}>{label}</Link>)}
-            </nav>
-            <SignOutButton />
+            <Navigation active={active} />
+            <div className="mobile-menu-note">Pengaturan dilindungi PIN administrator.</div>
           </div>
         </details>
       </div>
 
       <main className="main-content">
         <header className="topbar">
-          <div><p className="eyebrow">ANWAR HAFID STRATEGIC CENTER</p><h1>{title}</h1></div>
-          <div className="user-chip">Administrator · PIN</div>
+          <div>
+            <p className="eyebrow">ANWAR HAFID STRATEGIC CENTER</p>
+            <h1>{title}</h1>
+          </div>
+          <div className="topbar-badge"><span className="online-dot" /> Sistem Aktif</div>
         </header>
         {children}
       </main>

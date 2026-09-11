@@ -1,0 +1,15 @@
+drop function if exists public.next_attendance_event_id() cascade;
+drop table if exists public.finalisasi_honor cascade;
+drop table if exists public.kontribusi_kerja cascade;
+drop table if exists public.absensi_agenda cascade;
+drop table if exists public.pengaturan_kinerja cascade;
+drop table if exists public.master_kontribusi cascade;
+drop table if exists public.master_agenda cascade;
+alter table public.tim_analisis add column if not exists photo_url text,add column if not exists photo_path text,add column if not exists cv_url text,add column if not exists cv_path text,add column if not exists bio text,add column if not exists sort_order integer not null default 0;
+update public.tim_analisis set photo_url=nullif(link_foto,'') where photo_url is null and nullif(link_foto,'') is not null;
+update public.tim_analisis set cv_url=nullif(link_cv,'') where cv_url is null and nullif(link_cv,'') is not null;
+update public.tim_analisis set sort_order=id::integer where sort_order=0;
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)values('team-assets','team-assets',true,10485760,array['image/jpeg','image/png','image/webp','application/pdf']::text[])on conflict(id)do update set public=excluded.public,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
+do $$ declare t text; begin foreach t in array array['kunjungan','isu_strategis','rekomendasi','media_monitoring','agenda','tim_analisis'] loop execute format('drop policy if exists pin_admin_select on public.%I',t);execute format('drop policy if exists pin_admin_insert on public.%I',t);execute format('drop policy if exists pin_admin_update on public.%I',t);execute format('drop policy if exists pin_admin_delete on public.%I',t);execute format('create policy public_read on public.%I for select to anon using (true)',t);execute format('revoke insert, update, delete on public.%I from anon',t);execute format('grant select on public.%I to anon',t);execute format('grant select, insert, update, delete on public.%I to service_role',t);end loop;end $$;
+create or replace view public.dashboard_stats with(security_invoker=true)as select(select count(*) from public.kunjungan)as total_kunjungan,(select count(*) from public.isu_strategis)as total_isu,(select count(*) from public.rekomendasi)as total_policy_brief,(select count(*) from public.media_monitoring)as total_media,(select count(*) from public.agenda)as total_agenda;
+grant select on public.dashboard_stats to anon,service_role;

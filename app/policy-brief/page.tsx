@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { createPolicy } from '@/lib/actions/core'
-import { requireUser } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 
 type Params = { q?: string; status?: string }
 
@@ -9,8 +9,7 @@ export default async function PolicyPage({ searchParams }: { searchParams: Promi
   const params = await searchParams
   const q = String(params.q || '').trim()
   const status = String(params.status || '').trim()
-  const { supabase, user, profile } = await requireUser()
-  const canEdit = profile.role === 'admin' || profile.role === 'editor'
+  const supabase = await createClient(null)
 
   let query = supabase.from('rekomendasi').select('*').order('created_at', { ascending: false })
   if (q) query = query.or(`judul.ilike.%${q}%,opd_terkait.ilike.%${q}%,pic.ilike.%${q}%,ringkasan.ilike.%${q}%,legacy_id.ilike.%${q}%`)
@@ -18,10 +17,9 @@ export default async function PolicyPage({ searchParams }: { searchParams: Promi
   const { data: rows, error } = await query
   if (error) throw new Error(error.message)
 
-  return <AppShell active="/policy-brief" title="Policy Brief" email={user.email}>
-    {!canEdit ? <div className="notice notice-info">Mode viewer aktif. Policy brief dapat dibaca dan dicari, tetapi penambahan dokumen hanya tersedia untuk editor dan admin.</div> : null}
-    <section className={`module-grid${canEdit ? '' : ' single-module'}`}>
-      {canEdit ? <form action={createPolicy} className="panel form-card">
+  return <AppShell active="/policy-brief" title="Policy Brief">
+    <section className="module-grid">
+      <form action={createPolicy} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">REKOMENDASI</p><h2>Tambah Policy Brief</h2></div>
         <label>Judul<input name="judul" required /></label>
         <label>OPD Terkait<input name="opd" /></label>
@@ -30,7 +28,7 @@ export default async function PolicyPage({ searchParams }: { searchParams: Promi
         <label>Ringkasan<textarea name="ringkasan" /></label>
         <label>Link Dokumen<input name="link" type="url" /></label>
         <button className="primary-button" type="submit">Simpan Policy Brief</button>
-      </form> : null}
+      </form>
 
       <section className="panel table-panel">
         <div className="section-heading table-heading-with-filter">

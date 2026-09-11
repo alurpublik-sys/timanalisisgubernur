@@ -2,166 +2,25 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireActionUser } from '@/lib/auth'
+import { driveFileId, TEAM_ASSET_BUCKET } from '@/lib/branding'
 
-const SETTINGS = new Set([
-  'HONOR_DASAR',
-  'POTONGAN_75_84',
-  'POTONGAN_65_74',
-  'POTONGAN_50_64',
-  'POTONGAN_35_49',
-  'POTONGAN_20_34',
-  'POTONGAN_0_19',
-  'FAKTOR_HADIR',
-  'FAKTOR_IZIN',
-  'FAKTOR_TIDAK_HADIR',
-  'MIN_AGENDA_INTI_FLOOR',
-])
-
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const CV_TYPES = new Set(['application/pdf'])
 const text = (fd: FormData, key: string) => String(fd.get(key) ?? '').trim()
-function required(fd: FormData, key: string, label: string, max = 5000) {
-  const result = text(fd, key)
-  if (!result) throw new Error(`${label} wajib diisi.`)
-  if (result.length > max) throw new Error(`${label} terlalu panjang.`)
-  return result
-}
-function optional(fd: FormData, key: string, label: string, max = 5000) {
-  const result = text(fd, key)
-  if (result.length > max) throw new Error(`${label} terlalu panjang.`)
-  return result
-}
-function idValue(fd: FormData, key: string, label: string) {
-  const result = Number(required(fd, key, label, 20))
-  if (!Number.isSafeInteger(result) || result <= 0) throw new Error(`${label} tidak valid.`)
-  return result
-}
-function numberValue(fd: FormData, key: string, label: string) {
-  const raw = required(fd, key, label, 50).replace(',', '.')
-  if (!/^-?\d+(?:\.\d+)?$/.test(raw)) throw new Error(`${label} harus berupa angka.`)
-  const result = Number(raw)
-  if (!Number.isFinite(result)) throw new Error(`${label} harus berupa angka.`)
-  return result
-}
-function positiveNumber(fd: FormData, key: string, label: string) {
-  const result = numberValue(fd, key, label)
-  if (result <= 0 || result > 1000000000) throw new Error(`${label} harus lebih dari 0 dan dalam batas wajar.`)
-  return result
-}
-function enumValue(fd: FormData, key: string, label: string, allowed: readonly string[], fallback?: string) {
-  const result = text(fd, key) || fallback || ''
-  if (!allowed.includes(result)) throw new Error(`${label} tidak valid.`)
-  return result
-}
-function optionalUrl(fd: FormData, key: string, label: string) {
-  const result = optional(fd, key, label, 2048)
-  if (!result) return ''
-  let parsed: URL
-  try { parsed = new URL(result) } catch { throw new Error(`${label} harus berupa URL yang valid.`) }
-  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error(`${label} harus menggunakan http atau https.`)
-  return result
-}
-function refreshAll() {
-  revalidatePath('/pengaturan')
-  revalidatePath('/kinerja')
-  revalidatePath('/tim-analisis')
-  revalidatePath('/dashboard')
-}
-async function adminClient() {
-  return (await requireActionUser(['admin'])).supabase
-}
+function required(fd:FormData,key:string,label:string,max=5000){const result=text(fd,key);if(!result)throw new Error(`${label} wajib diisi.`);if(result.length>max)throw new Error(`${label} terlalu panjang.`);return result}
+function optional(fd:FormData,key:string,label:string,max=5000){const result=text(fd,key);if(result.length>max)throw new Error(`${label} terlalu panjang.`);return result}
+function idValue(fd:FormData,key:string,label:string){const result=Number(required(fd,key,label,20));if(!Number.isSafeInteger(result)||result<=0)throw new Error(`${label} tidak valid.`);return result}
+function fileFrom(fd:FormData,key:string){const item=fd.get(key);return item instanceof File&&item.size>0?item:null}
+function extensionFor(type:string,fallback='bin'){if(type==='image/jpeg')return'jpg';if(type==='image/png')return'png';if(type==='image/webp')return'webp';if(type==='application/pdf')return'pdf';return fallback}
+function refresh(){revalidatePath('/pengaturan');revalidatePath('/tim-analisis');revalidatePath('/dashboard')}
+async function adminClient(){return(await requireActionUser(['admin'])).supabase}
+async function uploadFile(supabase:Awaited<ReturnType<typeof adminClient>>,memberId:number,kind:'photo'|'cv',file:File){const allowed=kind==='photo'?IMAGE_TYPES:CV_TYPES;if(!allowed.has(file.type))throw new Error(kind==='photo'?'Foto harus JPG, PNG, atau WEBP.':'CV harus berupa PDF.');if(file.size>MAX_FILE_SIZE)throw new Error('Ukuran file maksimal 10 MB.');const ext=extensionFor(file.type);const path=`${kind==='photo'?'photos':'cv'}/${memberId}-${Date.now()}.${ext}`;const body=Buffer.from(await file.arrayBuffer());const{error}=await supabase.storage.from(TEAM_ASSET_BUCKET).upload(path,body,{contentType:file.type,cacheControl:'3600',upsert:false});if(error)throw new Error(`Upload ${kind==='photo'?'foto':'CV'} gagal: ${error.message}`);const{data}=supabase.storage.from(TEAM_ASSET_BUCKET).getPublicUrl(path);return{path,url:data.publicUrl}}
 
-export async function addTeamMember(formData: FormData) {
-  const supabase = await adminClient()
-  const { error } = await supabase.from('tim_analisis').insert({
-    nama: required(formData, 'nama', 'Nama', 300),
-    peran: optional(formData, 'peran', 'Peran', 500),
-    link_foto: optionalUrl(formData, 'link_foto', 'Link foto'),
-    link_cv: optionalUrl(formData, 'link_cv', 'Link CV'),
-    active: true,
-  })
-  if (error) throw new Error(error.message)
-  refreshAll()
-}
+export async function addTeamMember(formData:FormData){const supabase=await adminClient();const{data:last}=await supabase.from('tim_analisis').select('sort_order').order('sort_order',{ascending:false}).limit(1).maybeSingle();const{data:member,error}=await supabase.from('tim_analisis').insert({nama:required(formData,'nama','Nama',300),peran:optional(formData,'peran','Peran',500),bio:optional(formData,'bio','Bio',2000),active:true,sort_order:Number(last?.sort_order||0)+1}).select('id').single();if(error||!member)throw new Error(error?.message||'Gagal menambah anggota.');const updates:Record<string,string>={};const photo=fileFrom(formData,'photo_file');const cv=fileFrom(formData,'cv_file');if(photo){const uploaded=await uploadFile(supabase,member.id,'photo',photo);updates.photo_path=uploaded.path;updates.photo_url=uploaded.url}if(cv){const uploaded=await uploadFile(supabase,member.id,'cv',cv);updates.cv_path=uploaded.path;updates.cv_url=uploaded.url}if(Object.keys(updates).length){const{error:updateError}=await supabase.from('tim_analisis').update(updates).eq('id',member.id);if(updateError)throw new Error(updateError.message)}refresh()}
 
-export async function updateTeamMember(formData: FormData) {
-  const supabase = await adminClient()
-  const id = idValue(formData, 'id', 'ID anggota')
-  const { error } = await supabase.from('tim_analisis').update({
-    nama: required(formData, 'nama', 'Nama', 300),
-    peran: optional(formData, 'peran', 'Peran', 500),
-    link_foto: optionalUrl(formData, 'link_foto', 'Link foto'),
-    link_cv: optionalUrl(formData, 'link_cv', 'Link CV'),
-    active: enumValue(formData, 'active', 'Status', ['true', 'false']) === 'true',
-  }).eq('id', id)
-  if (error) throw new Error(error.message)
-  refreshAll()
-}
+export async function updateTeamMember(formData:FormData){const supabase=await adminClient();const id=idValue(formData,'id','ID anggota');const updates:Record<string,string|boolean|number|null>={nama:required(formData,'nama','Nama',300),peran:optional(formData,'peran','Peran',500)||null,bio:optional(formData,'bio','Bio',2000)||null,active:text(formData,'active')==='true',sort_order:Math.max(0,Number(text(formData,'sort_order'))||0)};const photo=fileFrom(formData,'photo_file');const cv=fileFrom(formData,'cv_file');if(photo){const uploaded=await uploadFile(supabase,id,'photo',photo);updates.photo_path=uploaded.path;updates.photo_url=uploaded.url}if(cv){const uploaded=await uploadFile(supabase,id,'cv',cv);updates.cv_path=uploaded.path;updates.cv_url=uploaded.url}const{error}=await supabase.from('tim_analisis').update(updates).eq('id',id);if(error)throw new Error(error.message);refresh()}
 
-export async function addMasterAgenda(formData: FormData) {
-  const supabase = await adminClient()
-  const { error } = await supabase.from('master_agenda').insert({
-    nama_agenda: required(formData, 'nama_agenda', 'Nama agenda', 300),
-    bobot: positiveNumber(formData, 'bobot', 'Bobot'),
-    kewajiban: enumValue(formData, 'kewajiban', 'Kewajiban', ['Semua Tim', 'Peserta Dipilih']),
-    pengecualian: optional(formData, 'pengecualian', 'Pengecualian', 2000),
-    status: enumValue(formData, 'status', 'Status', ['Aktif', 'Nonaktif'], 'Aktif'),
-  })
-  if (error) throw new Error(error.message)
-  refreshAll()
-}
+async function fetchDriveAsset(url:string,kind:'photo'|'cv'){const id=driveFileId(url);if(!id)throw new Error('ID Google Drive tidak dikenali.');const response=await fetch(`https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t`,{redirect:'follow',cache:'no-store'});if(!response.ok)throw new Error(`Google Drive merespons ${response.status}.`);if(Number(response.headers.get('content-length')||0)>MAX_FILE_SIZE)throw new Error('File lebih besar dari 10 MB.');const declared=(response.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();const mime=kind==='photo'?(IMAGE_TYPES.has(declared)?declared:'image/jpeg'):'application/pdf';const body=Buffer.from(await response.arrayBuffer());if(!body.length||body.length>MAX_FILE_SIZE)throw new Error('File Google Drive kosong atau terlalu besar.');return{body,mime}}
 
-export async function updateMasterAgenda(formData: FormData) {
-  const supabase = await adminClient()
-  const id = idValue(formData, 'id', 'ID agenda')
-  const { error } = await supabase.from('master_agenda').update({
-    nama_agenda: required(formData, 'nama_agenda', 'Nama agenda', 300),
-    bobot: positiveNumber(formData, 'bobot', 'Bobot'),
-    kewajiban: enumValue(formData, 'kewajiban', 'Kewajiban', ['Semua Tim', 'Peserta Dipilih']),
-    pengecualian: optional(formData, 'pengecualian', 'Pengecualian', 2000),
-    status: enumValue(formData, 'status', 'Status', ['Aktif', 'Nonaktif']),
-  }).eq('id', id)
-  if (error) throw new Error(error.message)
-  refreshAll()
-}
-
-export async function addMasterContribution(formData: FormData) {
-  const supabase = await adminClient()
-  const { error } = await supabase.from('master_kontribusi').insert({
-    nama_kontribusi: required(formData, 'nama_kontribusi', 'Nama kontribusi', 500),
-    bobot: positiveNumber(formData, 'bobot', 'Bobot'),
-    khusus_tim: optional(formData, 'khusus_tim', 'Khusus tim', 2000),
-    status: enumValue(formData, 'status', 'Status', ['Aktif', 'Nonaktif'], 'Aktif'),
-  })
-  if (error) throw new Error(error.message)
-  refreshAll()
-}
-
-export async function updateMasterContribution(formData: FormData) {
-  const supabase = await adminClient()
-  const id = idValue(formData, 'id', 'ID kontribusi')
-  const { error } = await supabase.from('master_kontribusi').update({
-    nama_kontribusi: required(formData, 'nama_kontribusi', 'Nama kontribusi', 500),
-    bobot: positiveNumber(formData, 'bobot', 'Bobot'),
-    khusus_tim: optional(formData, 'khusus_tim', 'Khusus tim', 2000),
-    status: enumValue(formData, 'status', 'Status', ['Aktif', 'Nonaktif']),
-  }).eq('id', id)
-  if (error) throw new Error(error.message)
-  refreshAll()
-}
-
-export async function updateKinerjaSetting(formData: FormData) {
-  const supabase = await adminClient()
-  const kunci = required(formData, 'kunci', 'Kunci pengaturan', 100)
-  if (!SETTINGS.has(kunci)) throw new Error('Kunci pengaturan tidak dikenal.')
-
-  const nilai = numberValue(formData, 'nilai', 'Nilai')
-  if (kunci.startsWith('FAKTOR_') && (nilai < 0 || nilai > 1)) throw new Error('Faktor kehadiran harus berada pada rentang 0 sampai 1.')
-  if (kunci === 'MIN_AGENDA_INTI_FLOOR' && (!Number.isInteger(nilai) || nilai < 1 || nilai > 100)) throw new Error('Minimal agenda inti harus berupa bilangan bulat 1–100.')
-  if ((kunci === 'HONOR_DASAR' || kunci.startsWith('POTONGAN_')) && (nilai < 0 || nilai > 1000000000)) throw new Error('Nominal honor/potongan tidak valid.')
-
-  const { error } = await supabase.from('pengaturan_kinerja').update({
-    nilai,
-    keterangan: optional(formData, 'keterangan', 'Keterangan', 5000),
-  }).eq('kunci', kunci)
-  if (error) throw new Error(error.message)
-  refreshAll()
-}
+export async function migrateLegacyTeamAssets(){const supabase=await adminClient();const{data:members,error}=await supabase.from('tim_analisis').select('id,nama,link_foto,link_cv,photo_path,cv_path');if(error)throw new Error(error.message);for(const member of members||[]){const patch:Record<string,string>={};if(!member.photo_path&&member.link_foto){try{const asset=await fetchDriveAsset(member.link_foto,'photo');const path=`photos/${member.id}-legacy.${extensionFor(asset.mime,'jpg')}`;const upload=await supabase.storage.from(TEAM_ASSET_BUCKET).upload(path,asset.body,{contentType:asset.mime,cacheControl:'86400',upsert:true});if(upload.error)throw upload.error;const{data}=supabase.storage.from(TEAM_ASSET_BUCKET).getPublicUrl(path);patch.photo_path=path;patch.photo_url=data.publicUrl}catch(assetError){console.warn(`Migrasi foto ${member.nama} dilewati:`,assetError)}}if(!member.cv_path&&member.link_cv){try{const asset=await fetchDriveAsset(member.link_cv,'cv');const path=`cv/${member.id}-legacy.pdf`;const upload=await supabase.storage.from(TEAM_ASSET_BUCKET).upload(path,asset.body,{contentType:'application/pdf',cacheControl:'3600',upsert:true});if(upload.error)throw upload.error;const{data}=supabase.storage.from(TEAM_ASSET_BUCKET).getPublicUrl(path);patch.cv_path=path;patch.cv_url=data.publicUrl}catch(assetError){console.warn(`Migrasi CV ${member.nama} dilewati:`,assetError)}}if(Object.keys(patch).length){const{error:patchError}=await supabase.from('tim_analisis').update(patch).eq('id',member.id);if(patchError)console.warn(`Update aset ${member.nama} gagal:`,patchError.message)}}refresh()}

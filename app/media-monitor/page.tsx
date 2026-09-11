@@ -1,10 +1,9 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { createMedia } from '@/lib/actions/core'
-import { requireUser } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 
 const PAGE_SIZE = 20
-
 type Params = { q?: string; sentimen?: string; page?: string }
 
 export default async function MediaPage({ searchParams }: { searchParams: Promise<Params> }) {
@@ -14,18 +13,11 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
   const page = Math.max(1, Number(params.page) || 1)
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
+  const supabase = await createClient(null)
 
-  const { supabase, user, profile } = await requireUser()
-  const canEdit = profile.role === 'admin' || profile.role === 'editor'
-  let query = supabase
-    .from('media_monitoring')
-    .select('*', { count: 'exact' })
-    .order('tanggal', { ascending: false })
-    .order('id', { ascending: false })
-
+  let query = supabase.from('media_monitoring').select('*', { count: 'exact' }).order('tanggal', { ascending: false }).order('id', { ascending: false })
   if (q) query = query.or(`judul_berita.ilike.%${q}%,nama_media.ilike.%${q}%,legacy_id.ilike.%${q}%`)
   if (sentimen) query = query.eq('sentimen', sentimen)
-
   const { data: rows, error, count } = await query.range(from, to)
   if (error) throw new Error(error.message)
 
@@ -40,10 +32,9 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
     return `/media-monitor?${p.toString()}`
   }
 
-  return <AppShell active="/media-monitor" title="Media Monitor" email={user.email}>
-    {!canEdit ? <div className="notice notice-info">Mode viewer aktif. Data media dapat dicari dan dibaca, tetapi penambahan berita hanya tersedia untuk editor dan admin.</div> : null}
-    <section className={`module-grid${canEdit ? '' : ' single-module'}`}>
-      {canEdit ? <form action={createMedia} className="panel form-card">
+  return <AppShell active="/media-monitor" title="Media Monitor">
+    <section className="module-grid">
+      <form action={createMedia} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">MONITORING MEDIA</p><h2>Tambah Berita</h2></div>
         <label>Judul Berita<input name="judul" required /></label>
         <label>Nama Media<input name="media" /></label>
@@ -51,7 +42,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
         <label>Sentimen<select name="sentimen"><option>Positif</option><option>Netral</option><option>Negatif</option></select></label>
         <label>Link Berita<input name="link" type="url" /></label>
         <button className="primary-button" type="submit">Simpan Berita</button>
-      </form> : null}
+      </form>
 
       <section className="panel table-panel">
         <div className="section-heading table-heading-with-filter">

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { createIsu } from '@/lib/actions/core'
-import { requireUser } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 
 type Params = { q?: string; prioritas?: string; status?: string }
 
@@ -10,8 +10,7 @@ export default async function IsuPage({ searchParams }: { searchParams: Promise<
   const q = String(params.q || '').trim()
   const prioritas = String(params.prioritas || '').trim()
   const status = String(params.status || '').trim()
-  const { supabase, user, profile } = await requireUser()
-  const canEdit = profile.role === 'admin' || profile.role === 'editor'
+  const supabase = await createClient(null)
 
   let query = supabase.from('isu_strategis').select('*').order('created_at', { ascending: false })
   if (q) query = query.or(`nama_isu.ilike.%${q}%,opd_terkait.ilike.%${q}%,ringkasan.ilike.%${q}%,legacy_id.ilike.%${q}%`)
@@ -20,10 +19,9 @@ export default async function IsuPage({ searchParams }: { searchParams: Promise<
   const { data: rows, error } = await query
   if (error) throw new Error(error.message)
 
-  return <AppShell active="/isu-strategis" title="Isu Strategis" email={user.email}>
-    {!canEdit ? <div className="notice notice-info">Mode viewer aktif. Data isu dapat dibaca dan difilter, tetapi penambahan isu hanya tersedia untuk editor dan admin.</div> : null}
-    <section className={`module-grid${canEdit ? '' : ' single-module'}`}>
-      {canEdit ? <form action={createIsu} className="panel form-card">
+  return <AppShell active="/isu-strategis" title="Isu Strategis">
+    <section className="module-grid">
+      <form action={createIsu} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">MONITORING</p><h2>Tambah Isu Strategis</h2></div>
         <label>Nama Isu<input name="nama" required /></label>
         <label>OPD Terkait<input name="opd" /></label>
@@ -31,7 +29,7 @@ export default async function IsuPage({ searchParams }: { searchParams: Promise<
         <label>Status<select name="status"><option>Aktif</option><option>Monitoring</option><option>Perlu Tindak Lanjut</option><option>Selesai</option></select></label>
         <label>Ringkasan<textarea name="ringkasan" /></label>
         <button className="primary-button" type="submit">Simpan Isu</button>
-      </form> : null}
+      </form>
 
       <section className="panel table-panel">
         <div className="section-heading table-heading-with-filter">
