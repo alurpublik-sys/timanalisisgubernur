@@ -7,37 +7,34 @@ AH Center adalah migrasi full-stack dari Google Apps Script + Google Sheets ke N
 - Next.js App Router + TypeScript
 - Supabase PostgreSQL
 - Akses administrator PIN-only
-- Supabase secret key hanya di server
-- Cookie sesi HTTP-only yang ditandatangani
-- Rate limit percobaan PIN
-- GitHub CI untuk migration validation, typecheck, dan production build
+- Tidak memakai Supabase Auth user/email
+- Tidak memakai `SUPABASE_SECRET_KEY` di Vercel
+- Sesi admin berupa token acak 256-bit di cookie HTTP-only
+- Token sesi divalidasi PostgreSQL melalui RLS dan header `x-ah-session`
+- PIN hanya disimpan sebagai hash bcrypt di schema private Supabase
+- Rate limit global: 5 PIN salah per 15 menit, lalu lock 15 menit
+- GitHub CI untuk migration validation, PIN architecture guard, typecheck, dan production build
 - Target deployment: Vercel
 
 ## Akses Admin
 
-AH Center tidak memakai username, email, atau akun Supabase Auth untuk login aplikasi. Administrator cukup memasukkan satu PIN.
+AH Center tidak memakai username, email, atau akun Supabase Auth. Administrator cukup memasukkan PIN 6 digit.
 
-Nilai PIN **tidak boleh disimpan di repository**. Konfigurasikan di environment server:
+PIN tidak disimpan di repository maupun environment hosting. Verifikasi PIN dilakukan oleh RPC PostgreSQL `ah_admin_login`, lalu database menerbitkan token sesi acak yang berlaku 12 jam. Browser hanya menerima token opaque tersebut melalui cookie HTTP-only, `SameSite=Strict`, dan `Secure` pada production.
 
-```bash
-ADMIN_PIN=<pin-admin>
-AH_SESSION_SECRET=<random-secret-minimal-32-karakter>
-SUPABASE_SECRET_KEY=<sb_secret_...>
-```
-
-Untuk deployment utama, `ADMIN_PIN` diisi dengan PIN yang sudah ditetapkan pemilik aplikasi. Secret Supabase hanya boleh berada di backend/server dan tidak boleh memakai prefix `NEXT_PUBLIC_`.
-
-Sesi admin berlaku 12 jam, disimpan dalam cookie HTTP-only, `SameSite=Strict`, dan ditandatangani HMAC. Percobaan PIN salah dibatasi 5 kali per 15 menit untuk fingerprint perangkat/jaringan yang sama, lalu dikunci sementara 15 menit.
+Mengubah hash PIN di database otomatis menaikkan `pin_version`, sehingga seluruh sesi lama langsung tidak valid.
 
 ## Environment
 
+Aplikasi hanya membutuhkan konfigurasi publik berikut:
+
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://suiiaiuxkhdsqufswpfv.supabase.co
-SUPABASE_SECRET_KEY=<sb_secret_...>
-ADMIN_PIN=<pin-admin>
-AH_SESSION_SECRET=<random-secret-minimal-32-karakter>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<sb_publishable_...>
 APP_TIMEZONE=Asia/Makassar
 ```
+
+Tidak ada service-role/secret Supabase, PIN plaintext, atau session signing secret di Vercel.
 
 ## Modul
 
@@ -68,8 +65,10 @@ Google Docs untuk notulensi tetap berada di Google Drive; database hanya menyimp
 
 ## Local Development
 
+Salin `.env.example` menjadi `.env.local`, isi publishable key, lalu:
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -86,8 +85,8 @@ Supabase project ref: `suiiaiuxkhdsqufswpfv`.
 
 Migration berada di `supabase/migrations/`. CI menolak filename migration yang tidak menggunakan timestamp 14 digit atau memiliki version duplikat.
 
-Tabel `admin_pin_attempts` digunakan hanya untuk rate limiting login PIN. Akses `anon` dan `authenticated` dicabut; akses aplikasi dilakukan oleh secret key server-side.
+Tabel konfigurasi PIN, sesi, dan rate-limit berada di schema `private`. Tabel operasional di `public` tetap memakai RLS. Role `anon` hanya dapat membaca/menulis row ketika header `x-ah-session` membawa token sesi yang masih valid.
 
 ## Git Flow
 
-Pengembangan aktif berada di branch `feat/ah-center-fullstack`. PR ke `main` belum boleh di-merge sebelum environment production, login PIN end-to-end, dan preview Vercel terverifikasi.
+Pengembangan aktif berada di branch `feat/ah-center-fullstack`. PR ke `main` belum boleh di-merge sebelum preview Vercel, login PIN, CRUD, Kinerja, dan logout diuji end-to-end.
