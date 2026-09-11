@@ -9,6 +9,7 @@ const menu = [
   ['Agenda & Tugas', '/agenda'],
   ['Tim Analisis', '/tim-analisis'],
   ['Kinerja & Honor', '/kinerja'],
+  ['Pengaturan', '/pengaturan'],
 ]
 
 export function AppShell({
