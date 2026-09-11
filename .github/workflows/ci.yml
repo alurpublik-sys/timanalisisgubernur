@@ -2,7 +2,7 @@ name: AH Center CI
 
 on:
   push:
-    branches: ["feat/ah-center-fullstack"]
+    branches: ["main", "feat/ah-center-fullstack"]
   pull_request:
     branches: ["main"]
 
