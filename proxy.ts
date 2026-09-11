@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { ADMIN_SESSION_COOKIE } from '@/lib/pin-session'
+
+const ADMIN_SESSION_COOKIE = 'ah_admin_session'
 
 export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
