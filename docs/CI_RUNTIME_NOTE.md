@@ -1,1 +1,0 @@
-AH Center CI uses current GitHub Actions runtimes. The main workflow should use `actions/checkout@v7` and `actions/setup-node@v5` to avoid deprecated Node.js action runtimes.
