@@ -1,32 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { ADMIN_SESSION_COOKIE, verifySessionValue } from '@/lib/pin-session'
+import { ADMIN_SESSION_COOKIE } from '@/lib/pin-session'
 
 export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
   const isLogin = path.startsWith('/login')
-  const cookieValue = request.cookies.get(ADMIN_SESSION_COOKIE)?.value
-  const hasValidSession = verifySessionValue(cookieValue)
+  const hasSessionCookie = !!request.cookies.get(ADMIN_SESSION_COOKIE)?.value
 
-  if (isLogin && hasValidSession) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
-  }
-
-  if (!isLogin && !hasValidSession) {
+  if (!isLogin && !hasSessionCookie) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    const response = NextResponse.redirect(url)
-    if (cookieValue) {
-      response.cookies.set(ADMIN_SESSION_COOKIE, '', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-        maxAge: 0,
-      })
-    }
-    return response
+    return NextResponse.redirect(url)
   }
 
   return NextResponse.next()
