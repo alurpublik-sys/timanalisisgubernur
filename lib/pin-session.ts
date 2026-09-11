@@ -11,13 +11,24 @@ function requireSessionSecret() {
   return secret
 }
 
+function requireAdminPin() {
+  const pin = process.env.ADMIN_PIN
+  if (!pin) throw new Error('ADMIN_PIN belum dikonfigurasi di server.')
+  return pin
+}
+
+function pinFingerprint() {
+  return createHash('sha256').update(requireAdminPin()).digest('hex')
+}
+
 function sessionSignature(expiresAt: number) {
-  return createHmac('sha256', requireSessionSecret()).update(`ah-admin:${expiresAt}`).digest('hex')
+  return createHmac('sha256', requireSessionSecret())
+    .update(`ah-admin:${expiresAt}:${pinFingerprint()}`)
+    .digest('hex')
 }
 
 export function verifyAdminPin(input: string) {
-  const expected = process.env.ADMIN_PIN
-  if (!expected) throw new Error('ADMIN_PIN belum dikonfigurasi di server.')
+  const expected = requireAdminPin()
   const a = createHash('sha256').update(input).digest()
   const b = createHash('sha256').update(expected).digest()
   return timingSafeEqual(a, b)
