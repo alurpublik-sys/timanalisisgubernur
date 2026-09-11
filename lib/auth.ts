@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { hasAdminSession } from '@/lib/pin-session'
+import { getAdminSessionToken } from '@/lib/pin-session'
 
 export type AppRole = 'admin'
 
@@ -14,10 +14,14 @@ const PIN_ADMIN_PROFILE = {
 }
 
 export async function getAuthContext() {
-  const active = await hasAdminSession()
-  if (!active) return { supabase: null, user: null, profile: null }
+  const token = await getAdminSessionToken()
+  if (!token) return { supabase: null, user: null, profile: null }
 
-  const supabase = await createClient()
+  const supabase = await createClient(token)
+  const { data, error } = await supabase.rpc('ah_admin_session_check')
+  if (error) throw new Error(`Gagal memvalidasi sesi admin: ${error.message}`)
+  if (!data) return { supabase: null, user: null, profile: null }
+
   return { supabase, user: PIN_ADMIN_USER, profile: PIN_ADMIN_PROFILE }
 }
 
