@@ -91,7 +91,7 @@ export async function createAgenda(formData: FormData) {
 }
 
 export async function updateTimLinks(formData: FormData) {
-  const { supabase } = await requireActionUser()
+  const { supabase } = await requireActionUser(['admin'])
   const id = Number(required(formData, 'id', 'ID tim'))
   if (!Number.isFinite(id)) throw new Error('ID anggota tidak valid.')
   const { error } = await supabase
