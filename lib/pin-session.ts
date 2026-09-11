@@ -1,64 +1,31 @@
 import 'server-only'
-import { createHmac, createHash, timingSafeEqual } from 'node:crypto'
 import { cookies } from 'next/headers'
 
 export const ADMIN_SESSION_COOKIE = 'ah_admin_session'
 const SESSION_SECONDS = 12 * 60 * 60
 
-function requireSessionSecret() {
-  const secret = process.env.AH_SESSION_SECRET
-  if (!secret || secret.length < 32) throw new Error('AH_SESSION_SECRET wajib diisi minimal 32 karakter.')
-  return secret
-}
-
-function requireAdminPin() {
-  const pin = process.env.ADMIN_PIN
-  if (!pin) throw new Error('ADMIN_PIN belum dikonfigurasi di server.')
-  return pin
-}
-
-function pinFingerprint() {
-  return createHash('sha256').update(requireAdminPin()).digest('hex')
-}
-
-function sessionSignature(expiresAt: number) {
-  return createHmac('sha256', requireSessionSecret())
-    .update(`ah-admin:${expiresAt}:${pinFingerprint()}`)
-    .digest('hex')
-}
-
-export function verifyAdminPin(input: string) {
-  const expected = requireAdminPin()
-  const a = createHash('sha256').update(input).digest()
-  const b = createHash('sha256').update(expected).digest()
-  return timingSafeEqual(a, b)
-}
-
-export function verifySessionValue(value?: string | null) {
-  if (!value) return false
-  const [expiresRaw, signature] = value.split('.')
-  const expiresAt = Number(expiresRaw)
-  if (!Number.isFinite(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000) || !signature) return false
-  const expected = sessionSignature(expiresAt)
-  const a = Buffer.from(signature, 'hex')
-  const b = Buffer.from(expected, 'hex')
-  return a.length === b.length && timingSafeEqual(a, b)
-}
-
-export async function hasAdminSession() {
+export async function getAdminSessionToken() {
   const store = await cookies()
-  return verifySessionValue(store.get(ADMIN_SESSION_COOKIE)?.value)
+  return store.get(ADMIN_SESSION_COOKIE)?.value || null
 }
 
-export async function createAdminSession() {
+export async function hasAdminSessionCookie() {
+  return !!(await getAdminSessionToken())
+}
+
+export async function createAdminSession(token: string, expiresAt?: string | null) {
+  if (!token || token.length < 32) throw new Error('Token sesi admin tidak valid.')
   const store = await cookies()
-  const expiresAt = Math.floor(Date.now() / 1000) + SESSION_SECONDS
-  store.set(ADMIN_SESSION_COOKIE, `${expiresAt}.${sessionSignature(expiresAt)}`, {
+  const expires = expiresAt ? new Date(expiresAt) : new Date(Date.now() + SESSION_SECONDS * 1000)
+  const maxAge = Math.max(1, Math.floor((expires.getTime() - Date.now()) / 1000))
+
+  store.set(ADMIN_SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
-    maxAge: SESSION_SECONDS,
+    maxAge,
+    expires,
   })
 }
 
