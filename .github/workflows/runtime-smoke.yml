@@ -1,0 +1,41 @@
+name: AH Center Runtime Smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://suiiaiuxkhdsqufswpfv.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_dtMWWlvdj-Qzui7DFQfGTw_SRlc5SDh
+      APP_TIMEZONE: Asia/Makassar
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - name: Start production server
+        run: |
+          npm start > /tmp/ah-center-next.log 2>&1 &
+          echo $! > /tmp/ah-center-next.pid
+          for i in {1..30}; do
+            if curl -sS -o /tmp/login.html -w '%{http_code}' http://127.0.0.1:3000/login | grep -q '^200$'; then
+              echo 'Login route returned HTTP 200'
+              exit 0
+            fi
+            sleep 1
+          done
+          echo '--- next server log ---'
+          cat /tmp/ah-center-next.log
+          echo '--- login response ---'
+          cat /tmp/login.html || true
+          exit 1
