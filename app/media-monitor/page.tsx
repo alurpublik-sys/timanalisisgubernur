@@ -15,7 +15,8 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
-  const { supabase, user } = await requireUser()
+  const { supabase, user, profile } = await requireUser()
+  const canEdit = profile.role === 'admin' || profile.role === 'editor'
   let query = supabase
     .from('media_monitoring')
     .select('*', { count: 'exact' })
@@ -40,8 +41,9 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
   }
 
   return <AppShell active="/media-monitor" title="Media Monitor" email={user.email}>
-    <section className="module-grid">
-      <form action={createMedia} className="panel form-card">
+    {!canEdit ? <div className="notice notice-info">Mode viewer aktif. Data media dapat dicari dan dibaca, tetapi penambahan berita hanya tersedia untuk editor dan admin.</div> : null}
+    <section className={`module-grid${canEdit ? '' : ' single-module'}`}>
+      {canEdit ? <form action={createMedia} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">MONITORING MEDIA</p><h2>Tambah Berita</h2></div>
         <label>Judul Berita<input name="judul" required /></label>
         <label>Nama Media<input name="media" /></label>
@@ -49,7 +51,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
         <label>Sentimen<select name="sentimen"><option>Positif</option><option>Netral</option><option>Negatif</option></select></label>
         <label>Link Berita<input name="link" type="url" /></label>
         <button className="primary-button" type="submit">Simpan Berita</button>
-      </form>
+      </form> : null}
 
       <section className="panel table-panel">
         <div className="section-heading table-heading-with-filter">
