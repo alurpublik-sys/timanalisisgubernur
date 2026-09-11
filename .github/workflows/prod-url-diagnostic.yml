@@ -1,0 +1,26 @@
+name: Production URL Diagnostic
+
+on:
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe production login URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://timanalisisgubernur-rho.vercel.app/login"
+          echo "Probing $url"
+          status=$(curl -sS -L -D headers.txt -o body.txt -w '%{http_code}' "$url" || true)
+          echo "HTTP_STATUS=$status"
+          echo '--- RESPONSE HEADERS ---'
+          cat headers.txt || true
+          echo '--- RESPONSE BODY (first 120 lines) ---'
+          sed -n '1,120p' body.txt || true
+          test "$status" = "200"
