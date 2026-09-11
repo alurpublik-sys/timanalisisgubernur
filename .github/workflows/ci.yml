@@ -18,6 +18,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify Supabase migration versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(supabase/migrations/*.sql)
+          if (( ${#files[@]} == 0 )); then
+            echo "::error::No Supabase migrations found"
+            exit 1
+          fi
+          versions=()
+          for file in "${files[@]}"; do
+            name="$(basename "$file")"
+            if [[ ! "$name" =~ ^([0-9]{14})_[a-z0-9_]+\.sql$ ]]; then
+              echo "::error file=$file::Migration filename must use 14-digit timestamp and snake_case name"
+              exit 1
+            fi
+            versions+=("${BASH_REMATCH[1]}")
+          done
+          duplicates="$(printf '%s\n' "${versions[@]}" | sort | uniq -d)"
+          if [[ -n "$duplicates" ]]; then
+            echo "::error::Duplicate migration versions: $duplicates"
+            exit 1
+          fi
+          echo "Validated ${#files[@]} unique migration versions."
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm run build
