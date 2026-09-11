@@ -2,18 +2,25 @@ import 'server-only'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
 
-export async function createClient() {
+export async function createClient(
+  sessionToken?: string | null,
+  extraHeaders: Record<string, string> = {},
+) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const secretKey = process.env.SUPABASE_SECRET_KEY
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
   if (!url) throw new Error('NEXT_PUBLIC_SUPABASE_URL belum dikonfigurasi.')
-  if (!secretKey) throw new Error('SUPABASE_SECRET_KEY belum dikonfigurasi di server.')
+  if (!publishableKey) throw new Error('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY belum dikonfigurasi.')
 
-  return createSupabaseClient<Database>(url, secretKey, {
+  const headers: Record<string, string> = { ...extraHeaders }
+  if (sessionToken) headers['x-ah-session'] = sessionToken
+
+  return createSupabaseClient<Database>(url, publishableKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,
     },
+    global: { headers },
   })
 }
