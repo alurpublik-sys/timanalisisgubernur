@@ -1,19 +1,50 @@
+import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { requireUser } from '@/lib/auth'
-import { addMasterAgenda, addMasterContribution, addTeamMember, updateKinerjaSetting, updateMasterAgenda, updateMasterContribution, updateTeamMember } from '@/lib/actions/settings'
+import {
+  addAccessProfile, addMasterAgenda, addMasterContribution, addTeamMember,
+  updateAccessProfile, updateKinerjaSetting, updateMasterAgenda,
+  updateMasterContribution, updateTeamMember,
+} from '@/lib/actions/settings'
 
 export default async function PengaturanPage() {
-  const { supabase, user } = await requireUser()
-  const [teamRes, agendaRes, contributionRes, settingsRes] = await Promise.all([
+  const { supabase, profile } = await requireUser()
+  if (profile.role !== 'admin') redirect('/dashboard')
+
+  const [profilesRes, teamRes, agendaRes, contributionRes, settingsRes] = await Promise.all([
+    supabase.from('profiles').select('*').order('created_at'),
     supabase.from('tim_analisis').select('*').order('id'),
     supabase.from('master_agenda').select('*').order('id'),
     supabase.from('master_kontribusi').select('*').order('id'),
     supabase.from('pengaturan_kinerja').select('*').order('kunci'),
   ])
-  for (const result of [teamRes, agendaRes, contributionRes, settingsRes]) if (result.error) throw new Error(result.error.message)
+  for (const result of [profilesRes, teamRes, agendaRes, contributionRes, settingsRes]) if (result.error) throw new Error(result.error.message)
 
-  return <AppShell active="/pengaturan" title="Pengaturan & Master Data" email={user.email}>
-    <div className="notice notice-info">Halaman ini menggantikan fungsi Google Sheets sebagai tempat pengelolaan master data AH Center. Perubahan bobot, kewajiban, pengecualian, jenis kontribusi, dan parameter honor langsung dipakai oleh mesin evaluasi.</div>
+  return <AppShell active="/pengaturan" title="Pengaturan & Master Data">
+    <div className="notice notice-info">Halaman ini menggantikan Google Sheets sebagai pusat master data AH Center. Hanya admin yang dapat mengubah akses user, anggota tim, bobot agenda, jenis kontribusi, dan parameter honor.</div>
+
+    <section className="settings-section">
+      <div className="section-heading"><p className="eyebrow">AKSES APLIKASI</p><h2>User, Role & Status</h2></div>
+      <div className="settings-grid">
+        <form action={addAccessProfile} className="panel form-card compact-form">
+          <h3>Aktifkan User Auth</h3>
+          <label>User ID<input name="user_id" placeholder="UUID dari Supabase Auth" required /></label>
+          <label>Email<input name="email" type="email" /></label>
+          <label>Nama<input name="full_name" /></label>
+          <label>Role<select name="role" defaultValue="viewer"><option value="viewer">Viewer</option><option value="editor">Editor</option><option value="admin">Admin</option></select></label>
+          <input type="hidden" name="active" value="true" />
+          <button className="primary-button">Aktifkan Akses</button>
+        </form>
+        {(profilesRes.data || []).map((row) => <form action={updateAccessProfile} className="panel form-card compact-form" key={row.user_id}>
+          <input type="hidden" name="user_id" value={row.user_id} /><p className="eyebrow">{row.user_id}</p>
+          <label>Email<input name="email" type="email" defaultValue={row.email || ''} /></label>
+          <label>Nama<input name="full_name" defaultValue={row.full_name || ''} /></label>
+          <label>Role<select name="role" defaultValue={row.role}><option value="viewer">Viewer</option><option value="editor">Editor</option><option value="admin">Admin</option></select></label>
+          <label>Status<select name="active" defaultValue={row.active ? 'true' : 'false'}><option value="true">Aktif</option><option value="false">Nonaktif</option></select></label>
+          <button className="secondary-button">Simpan Akses</button>
+        </form>)}
+      </div>
+    </section>
 
     <section className="settings-section">
       <div className="section-heading"><p className="eyebrow">TIM ANALISIS</p><h2>Anggota & Peran</h2></div>
