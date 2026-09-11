@@ -11,12 +11,12 @@ export default async function AccessPendingPage() {
     <section className="auth-card">
       <p className="eyebrow">ANWAR HAFID STRATEGIC CENTER</p>
       <h1>Akses belum diaktifkan</h1>
-      <p>Akun Auth berhasil masuk, tetapi belum memiliki profile AH Center yang aktif. Admin perlu mendaftarkan akun ini ke tabel profiles.</p>
+      <p>Akun Supabase Auth sudah valid. Untuk keamanan, akun baru otomatis dibuat sebagai <b>viewer nonaktif</b> dan baru dapat membaca data AH Center setelah diaktifkan admin.</p>
       <div className="notice notice-info">
         <b>Email</b><br />{user.email || '-'}<br /><br />
         <b>User ID</b><br /><code>{user.id}</code>
       </div>
-      <p className="muted">Role tersedia: viewer, editor, admin. Akun tanpa profile aktif tidak dapat membaca data internal.</p>
+      <p className="muted">Berikan email atau User ID ini kepada admin AH Center. Admin dapat mengaktifkan akun dan memilih role viewer, editor, atau admin dari menu Pengaturan.</p>
       <SignOutButton />
     </section>
   </main>
