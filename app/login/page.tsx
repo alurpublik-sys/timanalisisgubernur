@@ -1,44 +1,38 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useActionState } from 'react'
+import { loginWithPin, type LoginState } from '@/lib/actions/pin-auth'
+
+const initialState: LoginState = { error: '' }
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  async function submit(e: FormEvent) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) {
-      setError(error.message)
-      return
-    }
-    router.replace('/dashboard')
-    router.refresh()
-  }
+  const [state, formAction, pending] = useActionState(loginWithPin, initialState)
 
   return (
     <main className="auth-page">
       <section className="auth-card">
         <p className="eyebrow">ANWAR HAFID STRATEGIC CENTER</p>
-        <h1>Masuk AH Center</h1>
-        <p>Gunakan akun internal yang terdaftar pada Supabase Auth.</p>
-        <form className="auth-form" onSubmit={submit}>
-          <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
-          <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
-          {error ? <div className="error-text">{error}</div> : null}
-          <button disabled={loading}>{loading ? 'Memproses...' : 'Masuk'}</button>
+        <h1>Masuk Admin</h1>
+        <p>Cukup masukkan PIN admin. Tidak ada username atau email.</p>
+        <form className="auth-form" action={formAction}>
+          <label>PIN Admin
+            <input
+              name="pin"
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              minLength={6}
+              autoComplete="current-password"
+              placeholder="••••••"
+              required
+              autoFocus
+            />
+          </label>
+          {state.error ? <div className="error-text">{state.error}</div> : null}
+          <button disabled={pending}>{pending ? 'Memeriksa...' : 'Masuk'}</button>
         </form>
-        <p className="muted">Akses data akan dibatasi oleh Supabase Auth + RLS.</p>
+        <p className="muted">Sesi admin diproteksi cookie HTTP-only dan validasi server-side.</p>
       </section>
     </main>
   )

@@ -1,33 +1,34 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { hasAdminSession } from '@/lib/pin-session'
 
 export type AppRole = 'admin' | 'editor' | 'viewer'
 
+const PIN_ADMIN_USER = { id: 'pin-admin', email: null as string | null }
+const PIN_ADMIN_PROFILE = {
+  user_id: 'pin-admin',
+  email: null as string | null,
+  full_name: 'Administrator',
+  role: 'admin' as const,
+  active: true,
+}
+
 export async function getAuthContext() {
   const supabase = await createClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
-  if (error || !user) return { supabase, user: null, profile: null }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('user_id,email,full_name,role,active')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  return { supabase, user, profile }
+  const active = await hasAdminSession()
+  if (!active) return { supabase, user: null, profile: null }
+  return { supabase, user: PIN_ADMIN_USER, profile: PIN_ADMIN_PROFILE }
 }
 
 export async function requireUser() {
   const context = await getAuthContext()
-  if (!context.user) redirect('/login')
-  if (!context.profile || !context.profile.active) redirect('/access-pending')
-  return context as typeof context & { user: NonNullable<typeof context.user>; profile: NonNullable<typeof context.profile> }
+  if (!context.user || !context.profile) redirect('/login')
+  return context as typeof context & { user: typeof PIN_ADMIN_USER; profile: typeof PIN_ADMIN_PROFILE }
 }
 
-export async function requireActionUser(allowedRoles: AppRole[] = ['admin', 'editor']) {
+export async function requireActionUser(allowedRoles: AppRole[] = ['admin']) {
   const { supabase, user, profile } = await getAuthContext()
-  if (!user) throw new Error('Sesi login tidak valid. Silakan masuk kembali.')
-  if (!profile || !profile.active) throw new Error('Akses AH Center belum diaktifkan.')
-  if (!allowedRoles.includes(profile.role as AppRole)) throw new Error('Anda tidak memiliki izin untuk melakukan tindakan ini.')
+  if (!user || !profile) throw new Error('Sesi admin tidak valid. Masukkan PIN kembali.')
+  if (!allowedRoles.includes('admin')) throw new Error('Tindakan ini tidak tersedia untuk mode admin PIN.')
   return { supabase, user, profile }
 }

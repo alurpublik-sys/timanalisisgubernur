@@ -1,28 +1,19 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import 'server-only'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
 
 export async function createClient() {
-  const cookieStore = await cookies()
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const secretKey = process.env.SUPABASE_SECRET_KEY
 
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // Server Components cannot always write cookies. Auth refresh is handled in middleware/proxy.
-          }
-        },
-      },
-    }
-  )
+  if (!url) throw new Error('NEXT_PUBLIC_SUPABASE_URL belum dikonfigurasi.')
+  if (!secretKey) throw new Error('SUPABASE_SECRET_KEY belum dikonfigurasi di server.')
+
+  return createSupabaseClient<Database>(url, secretKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  })
 }

@@ -1,15 +1,7 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { logoutPinAdmin } from '@/lib/actions/pin-auth'
 
 export function SignOutButton() {
-  const router = useRouter()
-  async function signOut() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.replace('/login')
-    router.refresh()
-  }
-  return <button type="button" className="secondary-button" onClick={signOut}>Keluar</button>
+  return <form action={logoutPinAdmin}>
+    <button type="submit" className="secondary-button">Keluar</button>
+  </form>
 }

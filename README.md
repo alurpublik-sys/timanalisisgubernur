@@ -1,21 +1,43 @@
 # Anwar Hafid Strategic Center (AH Center)
 
-Migrasi penuh AH Center dari Google Apps Script + Google Sheets menjadi aplikasi full-stack modern.
+AH Center adalah migrasi full-stack dari Google Apps Script + Google Sheets ke Next.js + Supabase.
 
 ## Arsitektur
 
-- Next.js 16 App Router + TypeScript
+- Next.js App Router + TypeScript
 - Supabase PostgreSQL
-- Supabase Auth + Row Level Security
-- Server Components + Server Actions
-- GitHub CI untuk typecheck dan production build
+- Akses administrator PIN-only
+- Supabase secret key hanya di server
+- Cookie sesi HTTP-only yang ditandatangani
+- Rate limit percobaan PIN
+- GitHub CI untuk migration validation, typecheck, dan production build
 - Target deployment: Vercel
 
-## Prinsip penyimpanan data
+## Akses Admin
 
-Seluruh data operasional/tabular AH Center disimpan di Supabase PostgreSQL. Google Sheets/Apps Script tidak lagi menjadi backend aplikasi.
+AH Center tidak memakai username, email, atau akun Supabase Auth untuk login aplikasi. Administrator cukup memasukkan satu PIN.
 
-**Pengecualian:** notulensi Kunjungan OPD tetap sebagai Google Docs di Google Drive. AH Center hanya menyimpan URL dokumen pada `kunjungan.link_notulen`, sehingga dokumen asli tetap menjadi sumber utama dan tidak diduplikasi ke PostgreSQL.
+Nilai PIN **tidak boleh disimpan di repository**. Konfigurasikan di environment server:
+
+```bash
+ADMIN_PIN=<pin-admin>
+AH_SESSION_SECRET=<random-secret-minimal-32-karakter>
+SUPABASE_SECRET_KEY=<sb_secret_...>
+```
+
+Untuk deployment utama, `ADMIN_PIN` diisi dengan PIN yang sudah ditetapkan pemilik aplikasi. Secret Supabase hanya boleh berada di backend/server dan tidak boleh memakai prefix `NEXT_PUBLIC_`.
+
+Sesi admin berlaku 12 jam, disimpan dalam cookie HTTP-only, `SameSite=Strict`, dan ditandatangani HMAC. Percobaan PIN salah dibatasi 5 kali per 15 menit untuk fingerprint perangkat/jaringan yang sama, lalu dikunci sementara 15 menit.
+
+## Environment
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://suiiaiuxkhdsqufswpfv.supabase.co
+SUPABASE_SECRET_KEY=<sb_secret_...>
+ADMIN_PIN=<pin-admin>
+AH_SESSION_SECRET=<random-secret-minimal-32-karakter>
+APP_TIMEZONE=Asia/Makassar
+```
 
 ## Modul
 
@@ -29,77 +51,20 @@ Seluruh data operasional/tabular AH Center disimpan di Supabase PostgreSQL. Goog
 - Kinerja & Honor
 - Pengaturan & Master Data
 
-## Kinerja & Honor
+Google Docs untuk notulensi tetap berada di Google Drive; database hanya menyimpan link dokumennya.
 
-Mesin evaluasi mempertahankan aturan aplikasi lama:
+## Kinerja & Honor
 
 - Hadir = faktor 1
 - Izin = faktor 0,5
 - Tidak Hadir = faktor 0
-- Kunjungan OPD mengecualikan anggota sesuai Master Agenda
-- agenda `Semua Tim` mewajibkan seluruh anggota relevan
-- kontribusi berpoin hanya dihitung selesai
-- Kunjungan OPD dan Rapat Internal dapat menjadi batas bawah evaluasi jika jumlah agenda inti memenuhi minimum
-- rekomendasi honor bulan berjalan disembunyikan
-- periode lampau dapat difinalisasi sebagai snapshot
-- snapshot final dapat dibuka kembali untuk koreksi dan difinalisasi ulang
-- hanya admin yang dapat finalisasi/buka ulang snapshot honor
-- database mencegah dua snapshot `FINAL` aktif untuk anggota dan periode yang sama
-
-## Access Model
-
-AH Center menggunakan tiga role:
-
-- `viewer`: baca data internal
-- `editor`: baca + input/update data operasional, absensi, dan kontribusi
-- `admin`: editor + kelola user, Tim Analisis, master agenda, master kontribusi, parameter honor, finalisasi, dan buka ulang evaluasi
-
-User baru dari Supabase Auth otomatis mendapat row `public.profiles` dengan `role = viewer` dan `active = false`. Akun tersebut belum dapat membaca data internal sampai admin mengaktifkannya. Halaman `Akses belum diaktifkan` menampilkan email dan User ID untuk proses aktivasi.
-
-### Bootstrap admin pertama
-
-Project sengaja **tidak** otomatis mempromosikan user pertama menjadi admin. Ini mencegah akun pertama yang tidak disengaja mengambil hak akses tertinggi.
-
-1. Buat akun pertama yang memang ditetapkan sebagai admin melalui Supabase Auth.
-2. Pastikan email/UUID Auth benar.
-3. Promote profile yang sudah dibuat otomatis oleh trigger:
-
-```sql
-update public.profiles
-set role = 'admin',
-    active = true,
-    updated_at = now()
-where user_id = (
-  select id
-  from auth.users
-  where lower(email) = lower('ADMIN_EMAIL_HERE')
-  limit 1
-);
-```
-
-4. Pastikan hanya akun yang dimaksud yang aktif sebagai admin:
-
-```sql
-select user_id, email, full_name, role, active
-from public.profiles
-where role = 'admin' and active = true;
-```
-
-5. Login ke AH Center. User berikutnya otomatis muncul sebagai profile nonaktif dan dapat diaktifkan/diubah rolenya dari menu **Pengaturan**.
-
-Runbook lengkap tersedia di `docs/ADMIN_BOOTSTRAP.md`.
-
-## Environment
-
-Salin `.env.example` menjadi `.env.local`:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://suiiaiuxkhdsqufswpfv.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
-APP_TIMEZONE=Asia/Makassar
-```
-
-Publishable key boleh digunakan oleh client, tetapi jangan pernah commit service-role key atau credential sensitif ke repository.
+- Kunjungan OPD menghormati pengecualian Master Agenda
+- Agenda `Semua Tim` mewajibkan seluruh anggota relevan
+- Kontribusi berpoin hanya dihitung bila selesai
+- Kunjungan OPD/Rapat Internal dapat menjadi batas bawah evaluasi jika minimum agenda terpenuhi
+- Rekomendasi honor bulan berjalan disembunyikan
+- Periode lampau dapat difinalisasi sebagai snapshot
+- Snapshot dapat dibuka kembali untuk koreksi lalu difinalisasi ulang
 
 ## Local Development
 
@@ -108,7 +73,7 @@ npm install
 npm run dev
 ```
 
-Verifikasi sebelum merge:
+Verifikasi:
 
 ```bash
 npm run typecheck
@@ -119,25 +84,10 @@ npm run build
 
 Supabase project ref: `suiiaiuxkhdsqufswpfv`.
 
-Data produksi yang dimigrasikan dari workbook AH Center tidak disimpan di repository publik. Repository hanya menyimpan schema/migration, aplikasi, dan dokumentasi audit migrasi.
+Migration berada di `supabase/migrations/`. CI menolak filename migration yang tidak menggunakan timestamp 14 digit atau memiliki version duplikat.
 
-Baseline dan perubahan schema disimpan di `supabase/migrations/` agar environment baru dapat direproduksi dari repository.
-
-Audit migrasi produksi: `docs/DATA_MIGRATION_2026-09-11.md`.
-
-## Deployment checklist
-
-Sebelum merge/deploy production:
-
-- CI branch hijau (`npm install`, `npm run typecheck`, `npm run build`)
-- Supabase Security Advisor tidak memiliki finding
-- akun admin pertama sudah dibuat dan diverifikasi
-- login admin, editor, viewer, dan access-pending diuji end-to-end
-- Vercel project yang benar sudah dipastikan
-- Vercel env memiliki `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, dan `APP_TIMEZONE`
-- preview deployment diuji sebelum production promotion
-- PR tetap draft sampai checklist di atas selesai
+Tabel `admin_pin_attempts` digunakan hanya untuk rate limiting login PIN. Akses `anon` dan `authenticated` dicabut; akses aplikasi dilakukan oleh secret key server-side.
 
 ## Git Flow
 
-Pengembangan aktif dilakukan pada branch `feat/ah-center-fullstack`. PR ke `main` tidak boleh di-merge sebelum CI hijau dan verifikasi fungsi selesai.
+Pengembangan aktif berada di branch `feat/ah-center-fullstack`. PR ke `main` belum boleh di-merge sebelum environment production, login PIN end-to-end, dan preview Vercel terverifikasi.
