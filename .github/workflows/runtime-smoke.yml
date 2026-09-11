@@ -23,19 +23,34 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run build
-      - name: Start production server
+      - name: Start production server and verify login boundary
         run: |
+          set -euo pipefail
           npm start > /tmp/ah-center-next.log 2>&1 &
           echo $! > /tmp/ah-center-next.pid
+
+          ready=0
           for i in {1..30}; do
-            if curl -sS -o /tmp/login.html -w '%{http_code}' http://127.0.0.1:3000/login | grep -q '^200$'; then
-              echo 'Login route returned HTTP 200'
-              exit 0
+            status=$(curl -sS -o /tmp/login.html -w '%{http_code}' http://127.0.0.1:3000/login || true)
+            if [ "$status" = "200" ]; then
+              ready=1
+              break
             fi
             sleep 1
           done
-          echo '--- next server log ---'
-          cat /tmp/ah-center-next.log
-          echo '--- login response ---'
-          cat /tmp/login.html || true
-          exit 1
+
+          if [ "$ready" != "1" ]; then
+            echo '--- next server log ---'
+            cat /tmp/ah-center-next.log
+            echo '--- login response ---'
+            cat /tmp/login.html || true
+            exit 1
+          fi
+          echo 'Login route returned HTTP 200'
+
+          dashboard_status=$(curl -sS -o /tmp/dashboard.html -D /tmp/dashboard.headers -w '%{http_code}' http://127.0.0.1:3000/dashboard || true)
+          echo "Dashboard unauthenticated status: $dashboard_status"
+          cat /tmp/dashboard.headers
+          test "$dashboard_status" = "307"
+          grep -Eiq '^location: .*/login' /tmp/dashboard.headers
+          echo 'Dashboard unauthenticated request redirects to /login'
