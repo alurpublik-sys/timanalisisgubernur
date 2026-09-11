@@ -1,6 +1,7 @@
 import Link from 'next/link'
+import { requireUser } from '@/lib/auth'
 
-const menu = [
+const baseMenu = [
   ['Dashboard', '/dashboard'],
   ['Kunjungan OPD', '/kunjungan'],
   ['Isu Strategis', '/isu-strategis'],
@@ -9,13 +10,11 @@ const menu = [
   ['Agenda & Tugas', '/agenda'],
   ['Tim Analisis', '/tim-analisis'],
   ['Kinerja & Honor', '/kinerja'],
-  ['Pengaturan', '/pengaturan'],
 ]
 
-export function AppShell({
+export async function AppShell({
   active,
   title,
-  email,
   children,
 }: {
   active: string
@@ -23,6 +22,9 @@ export function AppShell({
   email?: string | null
   children: React.ReactNode
 }) {
+  const { user, profile } = await requireUser()
+  const menu = profile.role === 'admin' ? [...baseMenu, ['Pengaturan', '/pengaturan']] : baseMenu
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -39,7 +41,7 @@ export function AppShell({
       <main className="main-content">
         <header className="topbar">
           <div><p className="eyebrow">ANWAR HAFID STRATEGIC CENTER</p><h1>{title}</h1></div>
-          {email ? <div className="user-chip">{email}</div> : null}
+          <div className="user-chip">{profile.full_name || user.email} · {profile.role}</div>
         </header>
         {children}
       </main>
