@@ -1,72 +1,38 @@
 'use server'
 
-import { createHash } from 'node:crypto'
-import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { clearAdminSession, createAdminSession, verifyAdminPin } from '@/lib/pin-session'
+import { clearAdminSession, createAdminSession, getAdminSessionToken } from '@/lib/pin-session'
 
 export type LoginState = { error: string }
 
-const MAX_ATTEMPTS = 5
-const WINDOW_MS = 15 * 60 * 1000
-const BLOCK_MS = 15 * 60 * 1000
-
-async function requestFingerprint() {
-  const h = await headers()
-  const forwarded = h.get('x-forwarded-for')?.split(',')[0]?.trim()
-  const ip = forwarded || h.get('x-real-ip') || 'unknown'
-  const agent = h.get('user-agent') || 'unknown'
-  return createHash('sha256').update(`${ip}|${agent}`).digest('hex')
+function errorMessage(code?: string | null) {
+  if (code === 'rate_limited') return 'Terlalu banyak percobaan. Akses dikunci sementara selama 15 menit.'
+  if (code === 'configuration_missing') return 'PIN admin belum dikonfigurasi.'
+  return 'PIN admin salah.'
 }
 
 export async function loginWithPin(_state: LoginState, formData: FormData): Promise<LoginState> {
   const pin = String(formData.get('pin') ?? '').trim()
-  const fingerprint = await requestFingerprint()
+  if (!/^\d{6}$/.test(pin)) return { error: 'PIN harus terdiri dari 6 angka.' }
+
   const supabase = await createClient()
-  const now = new Date()
+  const { data, error } = await supabase.rpc('ah_admin_login', { p_pin: pin })
+  if (error) throw new Error(`Gagal memproses login admin: ${error.message}`)
 
-  const { data: row, error: readError } = await supabase
-    .from('admin_pin_attempts')
-    .select('attempt_count,window_started_at,blocked_until')
-    .eq('fingerprint_hash', fingerprint)
-    .maybeSingle()
-  if (readError) throw new Error(readError.message)
+  const row = Array.isArray(data) ? data[0] : null
+  if (!row?.success || !row.session_token) return { error: errorMessage(row?.error_code) }
 
-  if (row?.blocked_until && new Date(row.blocked_until).getTime() > now.getTime()) {
-    return { error: 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.' }
-  }
-
-  if (!verifyAdminPin(pin)) {
-    const previousWindowStart = row?.window_started_at ? new Date(row.window_started_at).getTime() : 0
-    const stillInWindow = now.getTime() - previousWindowStart < WINDOW_MS
-    const nextCount = stillInWindow ? Number(row?.attempt_count || 0) + 1 : 1
-    const blockedUntil = nextCount >= MAX_ATTEMPTS ? new Date(now.getTime() + BLOCK_MS).toISOString() : null
-
-    const { error: writeError } = await supabase.from('admin_pin_attempts').upsert({
-      fingerprint_hash: fingerprint,
-      attempt_count: nextCount,
-      window_started_at: stillInWindow && row?.window_started_at ? row.window_started_at : now.toISOString(),
-      blocked_until: blockedUntil,
-      updated_at: now.toISOString(),
-    })
-    if (writeError) throw new Error(writeError.message)
-
-    await new Promise((resolve) => setTimeout(resolve, 450))
-    return { error: blockedUntil ? 'Terlalu banyak percobaan. Akses dikunci sementara.' : 'PIN admin salah.' }
-  }
-
-  const { error: clearError } = await supabase
-    .from('admin_pin_attempts')
-    .delete()
-    .eq('fingerprint_hash', fingerprint)
-  if (clearError) throw new Error(clearError.message)
-
-  await createAdminSession()
+  await createAdminSession(row.session_token, row.expires_at)
   redirect('/dashboard')
 }
 
 export async function logoutPinAdmin() {
+  const token = await getAdminSessionToken()
+  if (token) {
+    const supabase = await createClient(token)
+    await supabase.rpc('ah_admin_logout')
+  }
   await clearAdminSession()
   redirect('/login')
 }
