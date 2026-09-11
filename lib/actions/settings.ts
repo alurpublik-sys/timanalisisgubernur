@@ -21,9 +21,42 @@ function refreshAll() {
   revalidatePath('/tim-analisis')
   revalidatePath('/dashboard')
 }
+async function adminClient() {
+  return (await requireActionUser(['admin'])).supabase
+}
+
+export async function addAccessProfile(formData: FormData) {
+  const supabase = await adminClient()
+  const role = required(formData, 'role', 'Role')
+  if (!['admin', 'editor', 'viewer'].includes(role)) throw new Error('Role tidak valid.')
+  const { error } = await supabase.from('profiles').insert({
+    user_id: required(formData, 'user_id', 'User ID'),
+    email: text(formData, 'email'),
+    full_name: text(formData, 'full_name'),
+    role,
+    active: text(formData, 'active') !== 'false',
+  })
+  if (error) throw new Error(error.message)
+  refreshAll()
+}
+
+export async function updateAccessProfile(formData: FormData) {
+  const supabase = await adminClient()
+  const role = required(formData, 'role', 'Role')
+  if (!['admin', 'editor', 'viewer'].includes(role)) throw new Error('Role tidak valid.')
+  const userId = required(formData, 'user_id', 'User ID')
+  const { error } = await supabase.from('profiles').update({
+    email: text(formData, 'email'),
+    full_name: text(formData, 'full_name'),
+    role,
+    active: text(formData, 'active') === 'true',
+  }).eq('user_id', userId)
+  if (error) throw new Error(error.message)
+  refreshAll()
+}
 
 export async function addTeamMember(formData: FormData) {
-  const { supabase } = await requireActionUser()
+  const supabase = await adminClient()
   const { error } = await supabase.from('tim_analisis').insert({
     nama: required(formData, 'nama', 'Nama'),
     peran: text(formData, 'peran'),
@@ -36,7 +69,7 @@ export async function addTeamMember(formData: FormData) {
 }
 
 export async function updateTeamMember(formData: FormData) {
-  const { supabase } = await requireActionUser()
+  const supabase = await adminClient()
   const id = Number(required(formData, 'id', 'ID tim'))
   if (!Number.isFinite(id)) throw new Error('ID anggota tidak valid.')
   const { error } = await supabase.from('tim_analisis').update({
@@ -51,7 +84,7 @@ export async function updateTeamMember(formData: FormData) {
 }
 
 export async function addMasterAgenda(formData: FormData) {
-  const { supabase } = await requireActionUser()
+  const supabase = await adminClient()
   const { error } = await supabase.from('master_agenda').insert({
     nama_agenda: required(formData, 'nama_agenda', 'Nama agenda'),
     bobot: numberValue(formData, 'bobot', 'Bobot'),
@@ -64,7 +97,7 @@ export async function addMasterAgenda(formData: FormData) {
 }
 
 export async function updateMasterAgenda(formData: FormData) {
-  const { supabase } = await requireActionUser()
+  const supabase = await adminClient()
   const id = Number(required(formData, 'id', 'ID agenda'))
   const { error } = await supabase.from('master_agenda').update({
     nama_agenda: required(formData, 'nama_agenda', 'Nama agenda'),
@@ -78,7 +111,7 @@ export async function updateMasterAgenda(formData: FormData) {
 }
 
 export async function addMasterContribution(formData: FormData) {
-  const { supabase } = await requireActionUser()
+  const supabase = await adminClient()
   const { error } = await supabase.from('master_kontribusi').insert({
     nama_kontribusi: required(formData, 'nama_kontribusi', 'Nama kontribusi'),
     bobot: numberValue(formData, 'bobot', 'Bobot'),
@@ -90,7 +123,7 @@ export async function addMasterContribution(formData: FormData) {
 }
 
 export async function updateMasterContribution(formData: FormData) {
-  const { supabase } = await requireActionUser()
+  const supabase = await adminClient()
   const id = Number(required(formData, 'id', 'ID kontribusi'))
   const { error } = await supabase.from('master_kontribusi').update({
     nama_kontribusi: required(formData, 'nama_kontribusi', 'Nama kontribusi'),
@@ -103,7 +136,7 @@ export async function updateMasterContribution(formData: FormData) {
 }
 
 export async function updateKinerjaSetting(formData: FormData) {
-  const { supabase } = await requireActionUser()
+  const supabase = await adminClient()
   const kunci = required(formData, 'kunci', 'Kunci pengaturan')
   const { error } = await supabase.from('pengaturan_kinerja').update({
     nilai: numberValue(formData, 'nilai', 'Nilai'),
