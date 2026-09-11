@@ -13,7 +13,7 @@ function required(fd: FormData, key: string, label: string) {
 function refreshKinerja() { revalidatePath('/kinerja'); revalidatePath('/dashboard') }
 
 async function assertOpen(period: string) {
-  const { supabase } = await requireActionUser()
+  const { supabase } = await requireActionUser(['admin', 'editor'])
   const { data, error } = await supabase.from('finalisasi_honor').select('id').eq('periode', period).eq('status', 'FINAL').limit(1)
   if (error) throw new Error(error.message)
   if (data?.length) throw new Error(`Periode ${period} sudah difinalisasi. Buka evaluasi terlebih dahulu sebelum mengubah data.`)
@@ -75,7 +75,7 @@ export async function saveKontribusiKerja(formData: FormData) {
 
 export async function finalizeKinerjaPeriod(formData: FormData) {
   const period = normalizePeriod(required(formData, 'period', 'Periode'))
-  const { supabase } = await requireActionUser()
+  const { supabase } = await requireActionUser(['admin'])
   const data = await getKinerjaData(period)
   if (!data.finalization.canFinalize) {
     if (data.finalization.periodState === 'current') throw new Error('Evaluasi honorarium baru dapat dibuka setelah bulan benar-benar berakhir.')
@@ -102,7 +102,7 @@ export async function finalizeKinerjaPeriod(formData: FormData) {
 export async function reopenKinerjaPeriod(formData: FormData) {
   const period = normalizePeriod(required(formData, 'period', 'Periode'))
   const note = text(formData, 'note')
-  const { supabase } = await requireActionUser()
+  const { supabase } = await requireActionUser(['admin'])
   const data = await getKinerjaData(period)
   if (!data.finalization.isFinalized || !data.finalization.finalizationId) throw new Error(`Periode ${period} belum difinalisasi.`)
   const reopenedAt = new Date().toISOString()
