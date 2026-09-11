@@ -4,6 +4,7 @@ import { ANWAR_HAFID_PHOTO, APP_NAME } from '@/lib/branding'
 import './globals.css'
 import './admin.css'
 import './dashboard.css'
+import './responsive.css'
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' })
 
