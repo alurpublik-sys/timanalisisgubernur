@@ -26,7 +26,7 @@ export async function loginWithPin(_state: LoginState, formData: FormData): Prom
   const supabase = await createClient()
   const now = new Date()
 
-  const { data: row, error: readError } = await (supabase as any)
+  const { data: row, error: readError } = await supabase
     .from('admin_pin_attempts')
     .select('attempt_count,window_started_at,blocked_until')
     .eq('fingerprint_hash', fingerprint)
@@ -43,7 +43,7 @@ export async function loginWithPin(_state: LoginState, formData: FormData): Prom
     const nextCount = stillInWindow ? Number(row?.attempt_count || 0) + 1 : 1
     const blockedUntil = nextCount >= MAX_ATTEMPTS ? new Date(now.getTime() + BLOCK_MS).toISOString() : null
 
-    const { error: writeError } = await (supabase as any).from('admin_pin_attempts').upsert({
+    const { error: writeError } = await supabase.from('admin_pin_attempts').upsert({
       fingerprint_hash: fingerprint,
       attempt_count: nextCount,
       window_started_at: stillInWindow && row?.window_started_at ? row.window_started_at : now.toISOString(),
@@ -56,7 +56,7 @@ export async function loginWithPin(_state: LoginState, formData: FormData): Prom
     return { error: blockedUntil ? 'Terlalu banyak percobaan. Akses dikunci sementara.' : 'PIN admin salah.' }
   }
 
-  const { error: clearError } = await (supabase as any)
+  const { error: clearError } = await supabase
     .from('admin_pin_attempts')
     .delete()
     .eq('fingerprint_hash', fingerprint)
