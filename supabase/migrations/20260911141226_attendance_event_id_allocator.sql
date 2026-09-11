@@ -1,0 +1,2 @@
+-- State is included in the squashed core schema. Version retained to match production migration history.
+-- Attendance event sequence/function are created by the core schema.

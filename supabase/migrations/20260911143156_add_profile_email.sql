@@ -1,0 +1,2 @@
+-- State is included in the squashed core schema. Version retained to match production migration history.
+-- profiles.email and its supporting index are created by the core schema.
