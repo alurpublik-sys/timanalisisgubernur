@@ -9,7 +9,8 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
   const params = await searchParams
   const q = String(params.q || '').trim()
   const status = String(params.status || '').trim()
-  const { supabase, user } = await requireUser()
+  const { supabase, user, profile } = await requireUser()
+  const canEdit = profile.role === 'admin' || profile.role === 'editor'
 
   let query = supabase.from('kunjungan').select('*').order('tanggal', { ascending: false }).order('id', { ascending: false })
   if (q) query = query.or(`nama_opd.ilike.%${q}%,pejabat.ilike.%${q}%,topik.ilike.%${q}%,legacy_id.ilike.%${q}%`)
@@ -19,8 +20,9 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
 
   return <AppShell active="/kunjungan" title="Kunjungan OPD" email={user.email}>
     <div className="notice notice-info">Notulensi tetap disimpan sebagai Google Docs di Google Drive. AH Center hanya menyimpan tautan dokumennya agar dokumen asli tetap menjadi sumber utama.</div>
-    <section className="module-grid">
-      <form action={createKunjungan} className="panel form-card">
+    {!canEdit ? <div className="notice notice-info">Mode viewer aktif. Riwayat kunjungan dan notulensi dapat dibaca, tetapi penambahan data hanya tersedia untuk editor dan admin.</div> : null}
+    <section className={`module-grid${canEdit ? '' : ' single-module'}`}>
+      {canEdit ? <form action={createKunjungan} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">DATA BARU</p><h2>Catat Kunjungan OPD</h2></div>
         <label>Nama OPD<input name="opd" required /></label>
         <label>Tanggal<input name="tanggal" type="date" required /></label>
@@ -30,7 +32,7 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
         <label>Status<select name="status"><option>Terjadwal</option><option>Selesai</option><option>Ditunda</option></select></label>
         <label>Google Docs Notulensi<input name="link_notulen" type="url" placeholder="https://docs.google.com/document/..." /></label>
         <button className="primary-button" type="submit">Simpan Kunjungan</button>
-      </form>
+      </form> : null}
 
       <section className="panel table-panel">
         <div className="section-heading table-heading-with-filter">
