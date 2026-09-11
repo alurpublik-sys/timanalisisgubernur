@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { requireUser } from '@/lib/auth'
 import {
-  addAccessProfile, addMasterAgenda, addMasterContribution, addTeamMember,
+  addMasterAgenda, addMasterContribution, addTeamMember,
   updateAccessProfile, updateKinerjaSetting, updateMasterAgenda,
   updateMasterContribution, updateTeamMember,
 } from '@/lib/actions/settings'
@@ -12,7 +12,7 @@ export default async function PengaturanPage() {
   if (profile.role !== 'admin') redirect('/dashboard')
 
   const [profilesRes, teamRes, agendaRes, contributionRes, settingsRes] = await Promise.all([
-    supabase.from('profiles').select('*').order('created_at'),
+    supabase.from('profiles').select('*').order('active', { ascending: true }).order('created_at'),
     supabase.from('tim_analisis').select('*').order('id'),
     supabase.from('master_agenda').select('*').order('id'),
     supabase.from('master_kontribusi').select('*').order('id'),
@@ -20,44 +20,54 @@ export default async function PengaturanPage() {
   ])
   for (const result of [profilesRes, teamRes, agendaRes, contributionRes, settingsRes]) if (result.error) throw new Error(result.error.message)
 
+  const profiles = profilesRes.data || []
+  const team = teamRes.data || []
+  const usedUserIds = new Set(team.map((row) => row.user_id).filter(Boolean))
+  const activeUsers = profiles.filter((row) => row.active).length
+  const pendingUsers = profiles.length - activeUsers
+
   return <AppShell active="/pengaturan" title="Pengaturan & Master Data">
-    <div className="notice notice-info">Halaman ini menggantikan Google Sheets sebagai pusat master data AH Center. Hanya admin yang dapat mengubah akses user, anggota tim, bobot agenda, jenis kontribusi, dan parameter honor.</div>
+    <div className="notice notice-info">Halaman ini menggantikan Google Sheets sebagai pusat master data AH Center. Hanya admin yang dapat mengubah akses user, anggota tim, bobot agenda, jenis kontribusi, parameter honor, serta finalisasi evaluasi.</div>
+
+    <section className="summary-grid settings-summary">
+      <article className="panel summary-card"><p className="eyebrow">USER AUTH</p><strong>{profiles.length}</strong><span className="muted">profile terdeteksi</span></article>
+      <article className="panel summary-card"><p className="eyebrow">AKTIF</p><strong>{activeUsers}</strong><span className="muted">akun memiliki akses</span></article>
+      <article className="panel summary-card"><p className="eyebrow">MENUNGGU</p><strong>{pendingUsers}</strong><span className="muted">perlu aktivasi admin</span></article>
+      <article className="panel summary-card"><p className="eyebrow">TIM</p><strong>{team.filter((row) => row.active).length}</strong><span className="muted">anggota aktif</span></article>
+    </section>
 
     <section className="settings-section">
       <div className="section-heading"><p className="eyebrow">AKSES APLIKASI</p><h2>User, Role & Status</h2></div>
+      <div className="notice notice-info">Buat user baru melalui <b>Supabase Auth</b>. Trigger database otomatis membuat profile <b>viewer nonaktif</b>; akun tersebut lalu muncul di bawah ini untuk diaktifkan atau diubah rolenya. Tidak perlu lagi menyalin UUID secara manual ke database.</div>
       <div className="settings-grid">
-        <form action={addAccessProfile} className="panel form-card compact-form">
-          <h3>Aktifkan User Auth</h3>
-          <label>User ID<input name="user_id" placeholder="UUID dari Supabase Auth" required /></label>
-          <label>Email<input name="email" type="email" /></label>
-          <label>Nama<input name="full_name" /></label>
-          <label>Role<select name="role" defaultValue="viewer"><option value="viewer">Viewer</option><option value="editor">Editor</option><option value="admin">Admin</option></select></label>
-          <input type="hidden" name="active" value="true" />
-          <button className="primary-button">Aktifkan Akses</button>
-        </form>
-        {(profilesRes.data || []).map((row) => <form action={updateAccessProfile} className="panel form-card compact-form" key={row.user_id}>
-          <input type="hidden" name="user_id" value={row.user_id} /><p className="eyebrow">{row.user_id}</p>
+        {profiles.map((row) => <form action={updateAccessProfile} className={`panel form-card compact-form${row.active ? '' : ' pending-card'}`} key={row.user_id}>
+          <input type="hidden" name="user_id" value={row.user_id} />
+          <div className="settings-card-head"><div><p className="eyebrow">{row.active ? 'AKTIF' : 'MENUNGGU AKTIVASI'}</p><h3>{row.full_name || row.email || 'User baru'}</h3></div><span className="status-pill">{row.role}</span></div>
           <label>Email<input name="email" type="email" defaultValue={row.email || ''} /></label>
           <label>Nama<input name="full_name" defaultValue={row.full_name || ''} /></label>
           <label>Role<select name="role" defaultValue={row.role}><option value="viewer">Viewer</option><option value="editor">Editor</option><option value="admin">Admin</option></select></label>
           <label>Status<select name="active" defaultValue={row.active ? 'true' : 'false'}><option value="true">Aktif</option><option value="false">Nonaktif</option></select></label>
+          <p className="muted break-id">User ID: {row.user_id}</p>
           <button className="secondary-button">Simpan Akses</button>
         </form>)}
+        {!profiles.length ? <div className="panel empty-state"><p className="eyebrow">BELUM ADA USER AUTH</p><h3>Profile akan muncul otomatis</h3><p className="muted">Buat akun pertama di Supabase Auth, lalu bootstrap satu admin terverifikasi sesuai <code>docs/ADMIN_BOOTSTRAP.md</code>.</p></div> : null}
       </div>
     </section>
 
     <section className="settings-section">
-      <div className="section-heading"><p className="eyebrow">TIM ANALISIS</p><h2>Anggota & Peran</h2></div>
+      <div className="section-heading"><p className="eyebrow">TIM ANALISIS</p><h2>Anggota, Peran & Akun Login</h2></div>
       <div className="settings-grid">
         <form action={addTeamMember} className="panel form-card compact-form">
           <h3>Tambah Anggota</h3>
           <label>Nama<input name="nama" required /></label><label>Peran<input name="peran" /></label>
+          <label>Akun Login<select name="user_id" defaultValue=""><option value="">Belum dihubungkan</option>{profiles.filter((p) => !usedUserIds.has(p.user_id)).map((p) => <option key={p.user_id} value={p.user_id}>{p.full_name || p.email || p.user_id} · {p.role}{p.active ? '' : ' · nonaktif'}</option>)}</select></label>
           <label>Link Foto<input name="link_foto" type="url" /></label><label>Link CV<input name="link_cv" type="url" /></label>
           <button className="primary-button">Tambah</button>
         </form>
-        {(teamRes.data || []).map((row) => <form action={updateTeamMember} className="panel form-card compact-form" key={row.id}>
-          <input type="hidden" name="id" value={row.id} /><p className="eyebrow">{row.kode}</p>
+        {team.map((row) => <form action={updateTeamMember} className="panel form-card compact-form" key={row.id}>
+          <input type="hidden" name="id" value={row.id} /><p className="eyebrow">{row.legacy_id || row.kode}</p>
           <label>Nama<input name="nama" defaultValue={row.nama} required /></label><label>Peran<input name="peran" defaultValue={row.peran || ''} /></label>
+          <label>Akun Login<select name="user_id" defaultValue={row.user_id || ''}><option value="">Belum dihubungkan</option>{profiles.filter((p) => !usedUserIds.has(p.user_id) || p.user_id === row.user_id).map((p) => <option key={p.user_id} value={p.user_id}>{p.full_name || p.email || p.user_id} · {p.role}{p.active ? '' : ' · nonaktif'}</option>)}</select></label>
           <label>Link Foto<input name="link_foto" type="url" defaultValue={row.link_foto || ''} /></label><label>Link CV<input name="link_cv" type="url" defaultValue={row.link_cv || ''} /></label>
           <label>Status<select name="active" defaultValue={row.active ? 'true' : 'false'}><option value="true">Aktif</option><option value="false">Nonaktif</option></select></label>
           <button className="secondary-button">Simpan Perubahan</button>
