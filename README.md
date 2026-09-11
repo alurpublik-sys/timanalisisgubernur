@@ -38,6 +38,29 @@ Mesin evaluasi mempertahankan aturan aplikasi lama:
 - periode lampau dapat difinalisasi sebagai snapshot
 - snapshot final dapat dibuka kembali untuk koreksi dan difinalisasi ulang
 
+## Access Model
+
+AH Center menggunakan tiga role:
+
+- `viewer`: baca data internal
+- `editor`: baca + input/update data operasional
+- `admin`: editor + kelola user, Tim Analisis, master agenda, master kontribusi, dan parameter honor
+
+Login Supabase Auth saja tidak otomatis memberikan akses. User juga harus memiliki row aktif pada `public.profiles`. User Auth tanpa profile aktif akan diarahkan ke halaman `Akses belum diaktifkan` yang menampilkan User ID untuk proses aktivasi.
+
+### Bootstrap admin pertama
+
+1. Buat user pertama melalui Supabase Auth.
+2. Ambil UUID user tersebut dari Auth Users atau halaman `Akses belum diaktifkan`.
+3. Dari Supabase SQL Editor, masukkan profile admin pertama:
+
+```sql
+insert into public.profiles (user_id, email, full_name, role, active)
+values ('<AUTH_USER_UUID>', '<EMAIL>', '<NAMA>', 'admin', true);
+```
+
+Setelah admin pertama aktif, user berikutnya dapat dikelola dari menu **Pengaturan** di AH Center tanpa SQL manual.
+
 ## Environment
 
 Salin `.env.example` menjadi `.env.local`:
@@ -69,6 +92,8 @@ npm run build
 Supabase project ref: `suiiaiuxkhdsqufswpfv`.
 
 Core data lama dipetakan dari Google Sheets menjadi tabel PostgreSQL, termasuk kunjungan, isu strategis, rekomendasi, media, agenda, tim, master agenda, master kontribusi, absensi agenda, kontribusi kerja, pengaturan kinerja, dan snapshot finalisasi honor.
+
+Baseline schema disimpan di `supabase/migrations/` agar environment baru dapat direproduksi dari repository.
 
 ## Git Flow
 
