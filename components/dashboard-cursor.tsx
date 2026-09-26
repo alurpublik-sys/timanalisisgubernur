@@ -17,7 +17,12 @@ export function DashboardCursor() {
       // Smoothness comes from hover/size transitions, not positional lag.
       ring.style.left = `${event.clientX}px`
       ring.style.top = `${event.clientY}px`
-      document.documentElement.classList.add('dashboard-pointer-live')
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest('.dashboard-cursor-zone')) document.documentElement.classList.add('dashboard-pointer-live')
+      else {
+        document.documentElement.classList.remove('dashboard-pointer-live')
+        ring.classList.remove('is-active')
+      }
     }
 
     const onWindowLeave = () => {
