@@ -35,7 +35,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
   }
 
   return <AppShell active="/media-monitor" title="Media Monitor" adminMode={adminMode}>
-    <section className="module-grid">
+    <section className={`module-grid${adminMode ? "" : " read-only-module-grid"}`}>
       {adminMode ? <form action={createMedia} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">MONITORING MEDIA</p><h2>Tambah Berita</h2></div>
         <label>Judul Berita<input name="judul" required /></label>
