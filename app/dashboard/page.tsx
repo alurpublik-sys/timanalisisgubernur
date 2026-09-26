@@ -21,7 +21,7 @@ const emptyOverview = {
 
 export default async function DashboardPage() {
   const supabase = await createClient(null)
-  const [{ data: overviewRow }, { data: recentAgenda }] = await Promise.all([
+  const [{ data: overviewRow }, { data: recentAgenda }, { data: recentBerani }, { data: beraniPrograms }] = await Promise.all([
     supabase.from('dashboard_overview').select('*').single(),
     supabase
       .from('agenda')
@@ -29,9 +29,16 @@ export default async function DashboardPage() {
       .order('tanggal', { ascending: false })
       .order('id', { ascending: false })
       .limit(5),
+    supabase
+      .from('berani_updates')
+      .select('id,program_id,title,period_label,row_count,created_at')
+      .order('created_at', { ascending: false })
+      .limit(3),
+    supabase.from('berani_programs').select('id,name,slug').eq('active', true),
   ])
 
   const overview = { ...emptyOverview, ...(overviewRow ?? {}) }
+  const beraniMap = new Map((beraniPrograms ?? []).map((program) => [program.id, program]))
   const cards = [
     ['Kunjungan OPD', overview.total_kunjungan ?? 0, '/kunjungan', 'Relasi lapangan & notulensi'],
     ['Isu Strategis', overview.total_isu ?? 0, '/isu-strategis', 'Isu prioritas yang dipantau'],
@@ -47,10 +54,10 @@ export default async function DashboardPage() {
         <div className="hero-copy">
           <p className="eyebrow hero-eyebrow">STRATEGIC INTELLIGENCE HUB</p>
           <h2>Satu pusat kerja untuk membaca situasi, merumuskan arah, dan menjaga tindak lanjut.</h2>
-          <p>AH Center menyatukan kunjungan OPD, isu strategis, policy brief, media monitoring, agenda, dan kolaborasi Tim Analisis dalam satu dashboard yang ringkas.</p>
+          <p>AH Center menyatukan kunjungan OPD, isu strategis, policy brief, media monitoring, agenda, data 9 BERANI, temuan OPD, dan kolaborasi Tim Analisis dalam satu dashboard yang ringkas.</p>
           <div className="hero-actions">
-            <Link className="primary-button hero-primary" href="/isu-strategis" prefetch>Lihat Isu Strategis</Link>
-            <Link className="ghost-button" href="/policy-brief" prefetch>Buka Policy Brief</Link>
+            <Link className="primary-button hero-primary" href="/berani" prefetch>Buka 9 BERANI</Link>
+            <Link className="ghost-button" href="/temuan-opd" prefetch>Lihat Temuan OPD</Link>
           </div>
         </div>
         <div className="hero-portrait-stage" aria-label="Anwar Hafid">
@@ -99,6 +106,21 @@ export default async function DashboardPage() {
         </article>
       </section>
 
+      <section className="panel knowledge-dashboard-panel">
+        <div className="panel-head"><div><p className="eyebrow">9 BERANI</p><h2>Update Program Terbaru</h2></div><Link href="/berani" prefetch>Lihat semua</Link></div>
+        <div className="knowledge-dashboard-grid">
+          {(recentBerani ?? []).map((update) => {
+            const program = beraniMap.get(update.program_id)
+            return <Link href={program ? `/berani/${program.slug}?update=${update.id}` : '/berani'} className="knowledge-dashboard-item" key={update.id}>
+              <span>{program?.name || '9 BERANI'}</span>
+              <strong>{update.title}</strong>
+              <small>{update.period_label || 'Update terbaru'} · {update.row_count} baris data</small>
+            </Link>
+          })}
+          {(recentBerani ?? []).length === 0 ? <div className="empty">Belum ada update 9 BERANI.</div> : null}
+        </div>
+      </section>
+
       <section className="content-grid dashboard-bottom-grid">
         <article className="panel">
           <div className="panel-head"><div><p className="eyebrow">AKTIVITAS TERBARU</p><h2>Agenda & Tugas</h2></div><Link href="/agenda" prefetch>Lihat semua</Link></div>
@@ -114,8 +136,8 @@ export default async function DashboardPage() {
         <article className="panel command-card">
           <p className="eyebrow">AH CENTER</p>
           <h2>Fokus pada data yang mendorong keputusan.</h2>
-          <p>Dashboard dirancang untuk bergerak cepat tanpa login umum. Pengaturan sistem dan pengelolaan aset Tim Analisis tetap dikunci dengan PIN administrator.</p>
-          <Link className="secondary-button" href="/tim-analisis" prefetch>Kenali Tim Analisis</Link>
+          <p>Dashboard dirancang untuk bergerak cepat tanpa login umum. Data kunjungan, 9 BERANI, dan temuan OPD dapat dibaca bersama agar informasi penting tidak berhenti sebagai dokumen terpisah.</p>
+          <Link className="secondary-button" href="/temuan-opd" prefetch>Buka Temuan OPD</Link>
         </article>
       </section>
     </AppShell>

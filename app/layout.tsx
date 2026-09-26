@@ -5,12 +5,13 @@ import './globals.css'
 import './admin.css'
 import './dashboard.css'
 import './responsive.css'
+import './knowledge.css'
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' })
 
 export const metadata: Metadata = {
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
-  description: 'Pusat analisis, monitoring isu, rekomendasi kebijakan, media, agenda, dan koordinasi strategis.',
+  description: 'Pusat analisis, monitoring isu, rekomendasi kebijakan, media, agenda, 9 BERANI, temuan OPD, dan koordinasi strategis.',
   icons: {
     icon: [{ url: ANWAR_HAFID_PHOTO, type: 'image/png' }],
     shortcut: [ANWAR_HAFID_PHOTO],
