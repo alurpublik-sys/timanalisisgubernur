@@ -1,6 +1,9 @@
-export const APP_NAME = 'Anwar Hafid Strategic Center'
-export const APP_SHORT_NAME = 'AH Center'
-export const ANWAR_HAFID_PHOTO = 'https://ppid.sultengprov.go.id/wp-content/uploads/2025/10/FOTO-GUBERNUR-1-768x768.png'
+export const APP_NAME = 'Tim Analisis dan Komunikasi Strategis (Independen)'
+export const APP_SHORT_NAME = 'Tim Analisis Strategis'
+export const APP_TAGLINE = 'Data Akurat · Analisis Tajam · Komunikasi Berdampak'
+export const GOVERNOR_PHOTO = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Anwar_Hafid,_Portrait_Governor_of_Central_Sulawesi.png'
+export const VICE_GOVERNOR_PHOTO = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Reny_Lamadjido,_Wakil_Gubernur_Sulteng.png'
+export const ANWAR_HAFID_PHOTO = GOVERNOR_PHOTO
 export const SUPABASE_URL = 'https://suiiaiuxkhdsqufswpfv.supabase.co'
 export const TEAM_ASSET_BUCKET = 'team-assets'
 

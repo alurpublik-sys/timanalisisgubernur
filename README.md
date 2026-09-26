@@ -1,6 +1,6 @@
-# Anwar Hafid Strategic Center (AH Center)
+# Tim Analisis dan Komunikasi Strategis (Independen)
 
-AH Center adalah aplikasi full-stack Next.js + Supabase untuk monitoring kunjungan OPD, analisis isu, media, data 9 BERANI, temuan OPD, referensi informasi publik, dan koordinasi Tim Analisis.
+Aplikasi full-stack Next.js + Supabase untuk monitoring kunjungan OPD, media, data 9 BERANI, temuan OPD, referensi informasi publik, dan koordinasi tim analisis-komunikasi strategis.
 
 ## Arsitektur
 
@@ -17,7 +17,6 @@ AH Center adalah aplikasi full-stack Next.js + Supabase untuk monitoring kunjung
 
 - Dashboard Strategis
 - Kunjungan OPD
-- Isu Strategis
 - Media Monitor
 - 9 BERANI
 - Temuan OPD
@@ -25,17 +24,23 @@ AH Center adalah aplikasi full-stack Next.js + Supabase untuk monitoring kunjung
 - Tim Analisis
 - Pengaturan
 
-Policy Brief dan Agenda & Tugas tidak lagi ditampilkan sebagai fitur aplikasi. Tabel lama tetap dipertahankan di database sebagai arsip.
+Policy Brief, Agenda & Tugas, dan Isu Strategis tidak lagi ditampilkan sebagai fitur aplikasi. Tabel lama tetap dipertahankan sebagai arsip database.
 
-## Knowledge Center
+## 9 BERANI Knowledge Center
 
 - Satu program 9 BERANI dapat memiliki banyak update dari banyak OPD.
-- Satu update dapat menyimpan banyak PDF, Excel, atau Word.
-- Excel `.xlsx` dibaca menjadi tabel dinamis; dokumen Word dapat diekstrak menjadi teks.
-- Satu OPD dapat memiliki banyak Temuan OPD, dan setiap temuan dapat memiliki banyak lampiran.
-- Referensi Konten memiliki status Draft, Perlu Verifikasi, dan Siap Dibagikan.
-- Mode Bagikan hanya menampilkan informasi yang berstatus Siap Dibagikan.
-- Perubahan Referensi Konten disiarkan melalui Supabase Realtime.
+- Satu update dapat menyimpan banyak PDF, Excel, Word, PowerPoint, CSV, dan foto.
+- Excel/CSV disajikan sebagai tabel responsif; Word/PowerPoint serta PDF bertulisan diekstrak menjadi panel ringkasan; foto ditampilkan sebagai preview.
+- Update BERANI dapat memiliki panel data terolah seperti KPI, perbandingan wilayah, tren indikator, fakta kunci, dan kapasitas layanan.
+- Tabel memiliki mode kartu pada layar portrait/mobile agar tetap nyaman dibaca.
+- Satu OPD dapat memiliki banyak Temuan OPD dan banyak lampiran pada setiap temuan.
+- Referensi Konten memiliki status Draft, Perlu Verifikasi, dan Siap Dibagikan serta disiarkan melalui Supabase Realtime.
+
+## Brand
+
+Nama aplikasi: **Tim Analisis dan Komunikasi Strategis (Independen)**.
+
+Favicon/app icon menggunakan identitas TKS + 9 BERANI. Open Graph image tersedia untuk preview saat link dibagikan.
 
 ## Environment
 

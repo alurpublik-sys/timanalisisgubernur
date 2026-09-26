@@ -7,11 +7,11 @@ import { createClient } from '@/lib/supabase/server'
 const BERANI_BUCKET = 'berani-documents'
 const FINDING_BUCKET = 'finding-documents'
 const NOTULENSI_BUCKET = 'kunjungan-notulensi'
-const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024
+const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
 const MAX_PDF_BYTES = 10 * 1024 * 1024
 const MAX_FILES_PER_SUBMISSION = 10
 const FINDING_CATEGORIES = ['Temuan', 'Positif', 'Perlu Perhatian', 'Potensi', 'Tindak Lanjut'] as const
-const ALLOWED_EXTENSIONS = new Set(['pdf', 'xlsx', 'xls', 'docx', 'doc'])
+const ALLOWED_EXTENSIONS = new Set(['pdf', 'xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt', 'csv', 'png', 'jpg', 'jpeg', 'webp'])
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? '').trim()
@@ -61,8 +61,8 @@ function documentFiles(formData: FormData, key: string) {
   const files = formData.getAll(key).filter((entry): entry is File => entry instanceof File && entry.size > 0)
   if (files.length > MAX_FILES_PER_SUBMISSION) throw new Error(`Maksimum ${MAX_FILES_PER_SUBMISSION} dokumen dalam sekali upload.`)
   for (const file of files) {
-    if (file.size > MAX_DOCUMENT_BYTES) throw new Error(`${file.name} melebihi batas 15 MB.`)
-    if (!ALLOWED_EXTENSIONS.has(extension(file.name))) throw new Error(`${file.name} bukan PDF, Excel, atau Word yang didukung.`)
+    if (file.size > MAX_DOCUMENT_BYTES) throw new Error(`${file.name} melebihi batas 20 MB.`)
+    if (!ALLOWED_EXTENSIONS.has(extension(file.name))) throw new Error(`${file.name} bukan PDF, Excel, Word, PowerPoint, CSV, atau gambar yang didukung.`)
   }
   return files
 }
@@ -104,6 +104,8 @@ async function uploadBeraniDocuments(
       if (uploadError) throw new Error(`Upload ${file.name} gagal: ${uploadError.message}`)
       uploadedPaths.push(path)
 
+      const displayTitle = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim()
+      const summary = imported.extractedText ? imported.extractedText.slice(0, 1200) : null
       const { data: document, error: documentError } = await supabase.from('berani_update_documents').insert({
         update_id: updateId,
         file_path: path,
@@ -114,6 +116,10 @@ async function uploadBeraniDocuments(
         columns: imported.columns,
         row_count: imported.rows.length,
         extracted_text: imported.extractedText,
+        document_kind: imported.kind,
+        display_title: displayTitle || file.name,
+        summary,
+        metadata: { auto_processed: true },
       }).select('id').single()
       if (documentError || !document) throw new Error(documentError?.message || 'Metadata dokumen gagal disimpan.')
 
@@ -127,6 +133,30 @@ async function uploadBeraniDocuments(
           const { error: rowsError } = await supabase.from('berani_document_rows').insert(batch)
           if (rowsError) throw new Error(`Data ${file.name} gagal disimpan: ${rowsError.message}`)
         }
+      }
+
+      if (imported.extractedText) {
+        const { error: sectionError } = await supabase.from('berani_update_sections').insert({
+          update_id: updateId,
+          document_id: document.id,
+          section_key: `auto-doc-${document.id}`,
+          title: displayTitle || file.name,
+          section_type: 'text',
+          payload: { text: imported.extractedText.slice(0, 6000), source: file.name },
+          sort_order: 800,
+        })
+        if (sectionError) throw new Error(`Ringkasan ${file.name} gagal disimpan: ${sectionError.message}`)
+      } else if (imported.kind === 'image') {
+        const { error: sectionError } = await supabase.from('berani_update_sections').insert({
+          update_id: updateId,
+          document_id: document.id,
+          section_key: `auto-image-${document.id}`,
+          title: displayTitle || file.name,
+          section_type: 'image',
+          payload: { caption: file.name, path },
+          sort_order: 800,
+        })
+        if (sectionError) throw new Error(`Preview ${file.name} gagal disimpan: ${sectionError.message}`)
       }
 
       totalRows += imported.rows.length
@@ -287,7 +317,7 @@ export async function deleteBeraniUpdate(formData: FormData) {
     supabase.from('berani_updates').select('file_path').eq('id', id).single(),
     supabase.from('berani_update_documents').select('file_path').eq('update_id', id),
   ])
-  const paths = [...(docs ?? []).map((doc) => doc.file_path), ...(update?.file_path ? [update.file_path] : [])]
+  const paths = [...(docs ?? []).map((doc) => doc.file_path).filter((path): path is string => Boolean(path)), ...(update?.file_path ? [update.file_path] : [])]
   if (paths.length) await supabase.storage.from(BERANI_BUCKET).remove(paths)
   const { error } = await supabase.from('berani_updates').delete().eq('id', id)
   if (error) throw new Error(error.message)

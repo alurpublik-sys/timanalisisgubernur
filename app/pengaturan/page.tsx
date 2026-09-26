@@ -11,7 +11,7 @@ export default async function PengaturanPage() {
   if (error) throw new Error(error.message)
 
   return <AppShell active="/pengaturan" title="Pengaturan">
-    <div className="notice notice-success">Pengaturan adalah satu-satunya area yang dilindungi PIN. Modul operasional AH Center tetap dapat dibuka dan digunakan tanpa login.</div>
+    <div className="notice notice-success">Pengaturan adalah satu-satunya area yang dilindungi PIN. Modul operasional Tim Analisis dan Komunikasi Strategis tetap dapat dibuka dan digunakan tanpa login.</div>
 
     <section className="settings-overview-grid">
       <article className="panel settings-highlight"><p className="eyebrow">KEAMANAN</p><h2>PIN Administrator</h2><p>Gunakan PIN khusus untuk mengelola profil tim, file, dan konfigurasi sensitif.</p></article>
@@ -30,7 +30,7 @@ export default async function PengaturanPage() {
         </form>
         <form action={migrateLegacyTeamAssets} className="panel migration-card">
           <p className="eyebrow">MIGRASI ASET</p><h3>Google Drive → Supabase Storage</h3>
-          <p>Salin otomatis foto dan CV lama yang masih memakai tautan Google Drive ke bucket AH Center. File yang gagal diakses tetap mempertahankan tautan lama sebagai fallback.</p>
+          <p>Salin otomatis foto dan CV lama yang masih memakai tautan Google Drive ke storage tim.  File yang gagal diakses tetap mempertahankan tautan lama sebagai fallback.</p>
           <button className="secondary-button" type="submit">Migrasikan Aset Lama</button>
         </form>
       </div>

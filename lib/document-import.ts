@@ -1,11 +1,16 @@
 import 'server-only'
-import { inflateRawSync } from 'node:zlib'
+import { inflateRawSync, inflateSync } from 'node:zlib'
 
 export type ImportedDocument = {
+  kind: 'excel' | 'word' | 'powerpoint' | 'pdf' | 'image' | 'csv' | 'document'
   sheetName: string | null
   columns: string[]
   rows: Record<string, string | number | boolean | null>[]
   extractedText: string | null
+}
+
+function empty(kind: ImportedDocument['kind']): ImportedDocument {
+  return { kind, sheetName: null, columns: [], rows: [], extractedText: null }
 }
 
 function decodeXml(value: string) {
@@ -65,7 +70,9 @@ function columnIndex(reference: string) {
 }
 
 function textNodes(xml: string) {
-  return [...xml.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((match) => decodeXml(match[1])).join('')
+  return [...xml.matchAll(/<(?:\w+:)?t\b[^>]*>([\s\S]*?)<\/(?:\w+:)?t>/g)]
+    .map((match) => decodeXml(match[1]))
+    .join('')
 }
 
 function parseSharedStrings(xml?: Buffer) {
@@ -142,7 +149,7 @@ function parseXlsx(buffer: Buffer): ImportedDocument {
   if (!worksheet) throw new Error('Sheet pertama Excel tidak ditemukan.')
 
   const matrix = parseWorksheet(worksheet.toString('utf8'), sharedStrings)
-  if (!matrix.length) return { sheetName: sheet.name, columns: [], rows: [], extractedText: null }
+  if (!matrix.length) return { ...empty('excel'), sheetName: sheet.name }
   const headerIndex = detectHeader(matrix)
   const rawHeader = matrix[headerIndex] || []
   const maxColumns = Math.min(Math.max(rawHeader.length, ...matrix.slice(headerIndex + 1).map((row) => row.length)), 60)
@@ -155,7 +162,7 @@ function parseXlsx(buffer: Buffer): ImportedDocument {
     .slice(0, 5000)
     .map((row) => Object.fromEntries(columns.map((column, index) => [column, row[index] ?? null])))
 
-  return { sheetName: sheet.name, columns, rows: dataRows, extractedText: null }
+  return { kind: 'excel', sheetName: sheet.name, columns, rows: dataRows, extractedText: null }
 }
 
 function parseDocx(buffer: Buffer): ImportedDocument {
@@ -165,12 +172,80 @@ function parseDocx(buffer: Buffer): ImportedDocument {
   const paragraphs = [...xml.matchAll(/<w:p\b[^>]*>([\s\S]*?)<\/w:p>/g)]
     .map((match) => textNodes(match[1]).replace(/\s+/g, ' ').trim())
     .filter(Boolean)
-  return {
-    sheetName: null,
-    columns: [],
-    rows: [],
-    extractedText: paragraphs.join('\n').slice(0, 30000) || null,
+  return { ...empty('word'), extractedText: paragraphs.join('\n').slice(0, 40000) || null }
+}
+
+function parsePptx(buffer: Buffer): ImportedDocument {
+  const entries = readZip(buffer)
+  const slides = [...entries.entries()]
+    .filter(([name]) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+    .sort(([a], [b]) => Number(a.match(/slide(\d+)/)?.[1]) - Number(b.match(/slide(\d+)/)?.[1]))
+  const text = slides.map(([name, data], index) => {
+    const xml = data.toString('utf8')
+    const paragraphs = [...xml.matchAll(/<a:p\b[^>]*>([\s\S]*?)<\/a:p>/g)]
+      .map((match) => textNodes(match[1]).replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+    return paragraphs.length ? `Slide ${index + 1}\n${paragraphs.join('\n')}` : ''
+  }).filter(Boolean).join('\n\n')
+  return { ...empty('powerpoint'), extractedText: text.slice(0, 50000) || null }
+}
+
+function parseCsv(buffer: Buffer): ImportedDocument {
+  const source = buffer.toString('utf8').replace(/^\uFEFF/, '')
+  const lines = source.split(/\r?\n/).filter((line) => line.trim())
+  if (!lines.length) return empty('csv')
+
+  const parseLine = (line: string) => {
+    const values: string[] = []
+    let value = ''
+    let quoted = false
+    for (let index = 0; index < line.length; index += 1) {
+      const char = line[index]
+      if (char === '"') {
+        if (quoted && line[index + 1] === '"') { value += '"'; index += 1 }
+        else quoted = !quoted
+      } else if (char === ',' && !quoted) {
+        values.push(value.trim()); value = ''
+      } else value += char
+    }
+    values.push(value.trim())
+    return values
   }
+
+  const matrix = lines.slice(0, 5001).map(parseLine)
+  const seen = new Map<string, number>()
+  const columns = matrix[0].map((value, index) => normalizeHeader(value, index, seen))
+  const rows = matrix.slice(1).map((row) => Object.fromEntries(columns.map((column, index) => [column, row[index] ?? null])))
+  return { kind: 'csv', sheetName: 'CSV', columns, rows, extractedText: null }
+}
+
+function decodePdfString(value: string) {
+  return value
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\n')
+    .replace(/\\t/g, ' ')
+    .replace(/\\\(/g, '(')
+    .replace(/\\\)/g, ')')
+    .replace(/\\\\/g, '\\')
+}
+
+function parsePdf(buffer: Buffer): ImportedDocument {
+  const source = buffer.toString('latin1')
+  const chunks: string[] = []
+  const streams = [...source.matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)]
+  for (const match of streams.slice(0, 300)) {
+    let body = Buffer.from(match[1], 'latin1')
+    try { body = inflateSync(body) } catch {}
+    const text = body.toString('latin1')
+    for (const item of text.matchAll(/\(([^()]*(?:\\.[^()]*)*)\)\s*Tj/g)) chunks.push(decodePdfString(item[1]))
+    for (const item of text.matchAll(/\[([\s\S]*?)\]\s*TJ/g)) {
+      const parts = [...item[1].matchAll(/\(([^()]*(?:\\.[^()]*)*)\)/g)].map((part) => decodePdfString(part[1]))
+      if (parts.length) chunks.push(parts.join(''))
+    }
+  }
+  const extracted = chunks.join(' ').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '').replace(/\s+/g, ' ').trim()
+  const letters = extracted.match(/[A-Za-zÀ-ÿ]/g)?.length ?? 0
+  return { ...empty('pdf'), extractedText: letters >= 30 ? extracted.slice(0, 40000) : null }
 }
 
 export async function importDocument(file: File): Promise<ImportedDocument> {
@@ -178,5 +253,9 @@ export async function importDocument(file: File): Promise<ImportedDocument> {
   const buffer = Buffer.from(await file.arrayBuffer())
   if (name.endsWith('.xlsx')) return parseXlsx(buffer)
   if (name.endsWith('.docx')) return parseDocx(buffer)
-  return { sheetName: null, columns: [], rows: [], extractedText: null }
+  if (name.endsWith('.pptx')) return parsePptx(buffer)
+  if (name.endsWith('.csv')) return parseCsv(buffer)
+  if (name.endsWith('.pdf')) return parsePdf(buffer)
+  if (/\.(png|jpe?g|webp)$/.test(name)) return empty('image')
+  return empty('document')
 }
