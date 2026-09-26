@@ -20,7 +20,9 @@ function dateLabel(value: string) {
 }
 
 export default async function DashboardPage() {
-  const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
+  const auth = await getAuthContext()
+  const supabase = auth.supabase ?? await createClient(null)
+  const user = auth.user
   const [
     { data: overviewRow },
     { data: recentBerani },
