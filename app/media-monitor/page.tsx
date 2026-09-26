@@ -46,7 +46,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
         <button className="primary-button" type="submit">Simpan Berita</button>
       </form> : null}
 
-      <section className="panel table-panel">
+      <section className="panel table-panel premium-table-panel">
         <div className="section-heading table-heading-with-filter">
           <div><p className="eyebrow">MONITORING</p><h2>Media Terkini</h2><p className="muted-line">{total} berita ditemukan</p></div>
           <form method="get" className="filter-form compact-filter">
@@ -56,7 +56,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
             {(q || sentimen) ? <Link className="secondary-button" href="/media-monitor">Reset</Link> : null}
           </form>
         </div>
-        <div className="table-scroll"><table className="data-table"><thead><tr><th>Tanggal / ID</th><th>Berita</th><th>Media</th><th>Sentimen</th><th>Link</th></tr></thead><tbody>
+        <div className="table-scroll premium-table-scroll"><table className="data-table premium-table"><thead><tr><th>Tanggal / ID</th><th>Berita</th><th>Media</th><th>Sentimen</th><th>Link</th></tr></thead><tbody>
           {(rows ?? []).map((row) => <tr key={row.id}><td><b>{row.tanggal}</b><small>{row.legacy_id || row.kode}</small></td><td><b>{row.judul_berita}</b></td><td>{row.nama_media || '-'}</td><td><span className="status-pill">{row.sentimen || '-'}</span></td><td>{row.link_berita ? <a className="table-link" href={row.link_berita} target="_blank" rel="noreferrer">Buka</a> : '-'}</td></tr>)}
           {(rows ?? []).length === 0 ? <tr><td colSpan={5} className="empty-cell">Tidak ada data media yang cocok.</td></tr> : null}
         </tbody></table></div>
