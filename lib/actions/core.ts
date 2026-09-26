@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
 import { requireActionUser } from '@/lib/auth'
 
 const KUNJUNGAN_NOTULENSI_BUCKET = 'kunjungan-notulensi'
@@ -51,7 +50,4 @@ export async function createKunjungan(formData:FormData){
   if(error)throw new Error(error.message)
   refresh('/kunjungan','/dashboard')
 }
-export async function createIsu(formData:FormData){const supabase=await operationalClient();const payload={nama_isu:required(formData,'nama','Nama isu',1000),opd_terkait:optional(formData,'opd','OPD terkait',1000),prioritas:enumValue(formData,'prioritas','Prioritas',['Tinggi','Sedang','Rendah'],'Sedang'),ringkasan:optional(formData,'ringkasan','Ringkasan',50000),status_monitoring:enumValue(formData,'status','Status',['Aktif','Monitoring','Perlu Tindak Lanjut','Selesai'],'Monitoring')};const{error}=await supabase.from('isu_strategis').insert(payload);if(error)throw new Error(error.message);refresh('/isu-strategis','/dashboard')}
-export async function createPolicy(formData:FormData){const supabase=await operationalClient();const payload={judul:required(formData,'judul','Judul',1000),opd_terkait:optional(formData,'opd','OPD terkait',1000),ringkasan:optional(formData,'ringkasan','Ringkasan',50000),pic:optional(formData,'pic','PIC',500),status:enumValue(formData,'status','Status',['Draft','Review','Final'],'Draft'),link_doc:optionalUrl(formData,'link','Link dokumen')};const{error}=await supabase.from('rekomendasi').insert(payload);if(error)throw new Error(error.message);refresh('/policy-brief','/dashboard')}
 export async function createMedia(formData:FormData){const supabase=await operationalClient();const payload={judul_berita:required(formData,'judul','Judul berita',2000),nama_media:optional(formData,'media','Nama media',500),tanggal:dateValue(formData,'tanggal','Tanggal'),sentimen:enumValue(formData,'sentimen','Sentimen',['Positif','Netral','Negatif']),link_berita:optionalUrl(formData,'link','Link berita')};const{error}=await supabase.from('media_monitoring').insert(payload);if(error)throw new Error(error.message);refresh('/media-monitor','/dashboard')}
-export async function createAgenda(formData:FormData){const supabase=await operationalClient();const payload={nama_agenda:required(formData,'nama','Nama agenda',1000),tanggal:dateValue(formData,'tanggal','Tanggal'),tipe:enumValue(formData,'tipe','Tipe',['Rapat','Kunjungan','Tugas','Koordinasi']),status:enumValue(formData,'status','Status',['Terjadwal','Proses','Selesai','Ditunda'],'Terjadwal'),pic:optional(formData,'pic','PIC',500)};const{error}=await supabase.from('agenda').insert(payload);if(error)throw new Error(error.message);refresh('/agenda','/dashboard')}
