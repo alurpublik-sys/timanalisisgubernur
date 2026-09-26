@@ -6,7 +6,7 @@ import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/database.types'
 
-type Params = { opd?: string; status?: string; q?: string; mode?: string }
+type Params = { opd?: string; status?: string; q?: string; mode?: string; compose?: string }
 
 const statuses = ['Draft', 'Perlu Verifikasi', 'Siap Dibagikan'] as const
 
@@ -28,6 +28,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
   const selectedStatus = String(params.status || '').trim()
   const q = String(params.q || '').trim()
   const shareMode = params.mode === 'share'
+  const composeMode = params.compose === '1'
   const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
   const adminMode = Boolean(user)
 
@@ -74,7 +75,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
           ? <Link className="compact-action-button" href="/referensi-konten" title="Kembali"><span>←</span><small>Kembali</small></Link>
           : <Link className="compact-action-button" href="/referensi-konten?mode=share" title="Mode Bagikan"><span>↗</span><small>Bagikan</small></Link>}
         {!shareMode && !adminMode ? <Link className="icon-action-button" href="/login?next=%2Freferensi-konten" title="Masuk untuk mengedit" aria-label="Masuk untuk mengedit">✎</Link> : null}
-        {!shareMode && adminMode ? <a className="icon-action-button is-active" href="#tambah-referensi" title="Tambah referensi" aria-label="Tambah referensi">＋</a> : null}
+        {!shareMode && adminMode ? <a className="icon-action-button is-active" href="/referensi-konten?compose=1#tambah-referensi" title="Tambah referensi" aria-label="Tambah referensi">＋</a> : null}
       </div>
     </section>
 
@@ -89,7 +90,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
       <div className="premium-result-count"><strong>{references?.length ?? 0}</strong><span>bahan tampil</span></div>
     </section> : null}
 
-    {!shareMode && adminMode ? <details className="panel reference-admin-create" id="tambah-referensi">
+    {!shareMode && adminMode ? <details className="panel reference-admin-create" id="tambah-referensi" open={composeMode}>
       <summary><span>＋</span><div><strong>Tambah Referensi</strong><small>Form hanya tampil dalam mode edit administrator.</small></div></summary>
       <form action={createContentReference} className="mini-form reference-create-compact">
         <label>Nama OPD<input name="opd_name" list="content-opd-options" required placeholder="Pilih atau ketik OPD" /></label>
