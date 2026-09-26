@@ -21,10 +21,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
     shortcut: ['/icon.svg'],
-    apple: ['/apple-icon'],
+    apple: [{ url: '/icon.svg', type: 'image/svg+xml' }],
   },
   openGraph: {
     title: APP_NAME,
+    siteName: APP_NAME,
     description: 'Data · Analisis · Informasi untuk monitoring strategis Sulawesi Tengah.',
     type: 'website',
   },
