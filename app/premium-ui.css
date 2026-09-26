@@ -92,3 +92,179 @@
 .brand-icon-wrap:after{content:"";position:absolute;inset:8px;border-radius:16px;background:rgba(53,112,157,.18);filter:blur(13px);z-index:-1}
 .brand-app-icon{border-radius:17px!important;box-shadow:0 15px 30px -18px rgba(0,12,28,.72),0 0 0 1px rgba(255,255,255,.08);transform:translateZ(0)}
 .strategic-brand:hover .brand-app-icon{transform:translateY(-1px) scale(1.015)}
+
+
+/* BERANI source documents — readable, balanced, and consistent */
+.source-documents-panel{padding:22px 24px}
+.source-documents-panel .panel-head{align-items:flex-start;gap:18px}
+.source-documents-panel .panel-head>div{min-width:0}
+.source-documents-panel .panel-head>span{max-width:430px;text-align:right;line-height:1.55}
+.source-documents-panel .document-gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:12px;
+  margin-top:16px
+}
+.source-documents-panel .document-card.processed-source{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:0;
+  min-width:0;
+  min-height:210px;
+  padding:0;
+  overflow:hidden;
+  border:1px solid #dfe8ef;
+  border-radius:18px;
+  background:linear-gradient(160deg,#ffffff 0%,#fbfdfe 100%);
+  box-shadow:0 18px 38px -34px rgba(19,57,86,.42);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease
+}
+.source-documents-panel .document-card.processed-source:hover{
+  transform:translateY(-2px);
+  border-color:#cbdde9;
+  box-shadow:0 24px 46px -34px rgba(19,57,86,.5)
+}
+.document-card-main{
+  display:grid;
+  grid-template-columns:52px minmax(0,1fr);
+  gap:12px;
+  align-items:start;
+  min-width:0;
+  padding:16px 16px 12px
+}
+.source-documents-panel .document-icon{
+  display:grid;
+  place-items:center;
+  width:52px;
+  height:52px;
+  min-width:52px;
+  border-radius:14px;
+  background:#edf3f7;
+  color:#315f8b;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.07em;
+  box-shadow:inset 0 0 0 1px rgba(91,126,153,.07)
+}
+.source-documents-panel .document-icon-pdf{background:#fff0f0;color:#a74b53}
+.source-documents-panel .document-icon-ppt{background:#fff2e9;color:#9d5f2d}
+.source-documents-panel .document-icon-xls,
+.source-documents-panel .document-icon-csv{background:#eaf7f0;color:#2f745b}
+.source-documents-panel .document-icon-doc{background:#edf3ff;color:#4267a6}
+.source-documents-panel .document-icon-img{background:#f1efff;color:#6656a7}
+.source-documents-panel .document-card-copy{
+  display:grid;
+  gap:5px;
+  min-width:0
+}
+.document-card-kicker{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:5px;
+  min-height:21px
+}
+.source-documents-panel .document-card-copy .doc-kind,
+.doc-processed{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  min-height:20px;
+  padding:4px 7px;
+  border-radius:999px;
+  font-size:6.8px;
+  font-weight:900;
+  letter-spacing:.06em;
+  text-transform:uppercase
+}
+.source-documents-panel .document-card-copy .doc-kind{margin:0;background:#eef4f8;color:#55758e}
+.doc-processed{background:#eaf7f1;color:#2e7359}
+.source-documents-panel .document-card-copy strong{
+  display:-webkit-box;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  white-space:normal;
+  text-overflow:ellipsis;
+  overflow-wrap:anywhere;
+  font-size:11px;
+  line-height:1.4;
+  color:#213f58
+}
+.source-documents-panel .document-card-copy>span:not(.doc-kind){
+  font-size:8px;
+  color:#8394a2;
+  line-height:1.45
+}
+.source-documents-panel .document-card-copy p{
+  display:-webkit-box;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  margin:3px 0 0;
+  color:#6e8293;
+  font-size:8.5px;
+  line-height:1.55
+}
+.source-documents-panel .image-document-preview{
+  width:calc(100% - 32px);
+  max-height:220px;
+  margin:0 16px 12px;
+  border-radius:13px;
+  object-fit:cover;
+  border:1px solid #e5ecf1;
+  background:#f4f7f9
+}
+.source-documents-panel .document-card-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:auto;
+  padding:11px 13px;
+  border-top:1px solid #edf2f5;
+  background:#f8fafb
+}
+.source-documents-panel .document-card-actions form{margin:0}
+.document-open-action{
+  display:inline-flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;
+  padding:7px 9px;
+  border:1px solid #dce6ee;
+  border-radius:9px;
+  background:#fff;
+  color:#315f8b!important;
+  font-size:8px!important;
+  font-weight:850!important;
+  text-decoration:none;
+  white-space:nowrap
+}
+.document-open-action b{font-size:10px;font-weight:800}
+.document-source-state{font-size:8px;color:#8798a6}
+.source-documents-panel .icon-delete-button.compact{
+  width:30px;
+  height:30px;
+  border-radius:9px;
+  background:#fff
+}
+.legacy-source-card{min-height:150px!important}
+
+@media(max-width:1180px){
+  .source-documents-panel .document-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .source-documents-panel{padding:17px}
+  .source-documents-panel .panel-head{flex-direction:column;gap:6px}
+  .source-documents-panel .panel-head>span{max-width:none;text-align:left}
+  .source-documents-panel .document-gallery{grid-template-columns:1fr}
+  .source-documents-panel .document-card.processed-source{min-height:0}
+}
+@media(max-width:430px){
+  .document-card-main{grid-template-columns:44px minmax(0,1fr);gap:10px;padding:14px 13px 11px}
+  .source-documents-panel .document-icon{width:44px;height:44px;min-width:44px;border-radius:12px}
+  .source-documents-panel .document-card-actions{padding:10px 11px}
+}
