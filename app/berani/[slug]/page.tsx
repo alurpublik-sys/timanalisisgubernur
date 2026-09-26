@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app-shell'
 import { ProcessedBeraniSection } from '@/components/processed-berani-section'
 import { addBeraniDocuments, createBeraniUpdate, deleteBeraniDocument, deleteBeraniUpdate } from '@/lib/actions/knowledge'
 import { SUPABASE_URL } from '@/lib/branding'
+import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/database.types'
 
@@ -83,7 +84,8 @@ function DataTable({ columns, records, title, subtitle }: { columns: string[]; r
 export default async function BeraniDetailPage({ params, searchParams }: PageProps) {
   const { slug } = await params
   const query = await searchParams
-  const supabase = await createClient(null)
+  const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
+  const adminMode = Boolean(user)
 
   const { data: program, error: programError } = await supabase.from('berani_programs').select('*').eq('slug', slug).single()
   if (programError || !program) notFound()
@@ -129,7 +131,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
   const legacyColumns = selected ? stringColumns(selected.columns) : []
   const legacyRecords = (legacyRows ?? []).map((row) => asRecord(row.data))
 
-  return <AppShell active="/berani" title={program.name}>
+  return <AppShell active="/berani" title={program.name} adminMode={adminMode}>
     <div className="breadcrumb-line"><Link href="/berani">9 BERANI</Link><span>/</span><strong>{program.name}</strong></div>
 
     <section className="program-head panel berani-program-head">
@@ -141,8 +143,8 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
       <div className="program-head-meta"><strong>{updates?.length ?? 0}</strong><span>update tersimpan</span></div>
     </section>
 
-    <section className="module-grid knowledge-module-grid">
-      <form action={createBeraniUpdate} className="panel form-card">
+    <section className={`module-grid knowledge-module-grid${adminMode ? '' : ' berani-readonly-grid'}`}>
+      {adminMode ? <form action={createBeraniUpdate} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">UPDATE DATA</p><h2>Tambah Pembaruan</h2></div>
         <input type="hidden" name="program_id" value={program.id} />
         <input type="hidden" name="program_slug" value={program.slug} />
@@ -155,7 +157,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
           <small className="muted-line">Pilih hingga 10 file sekaligus: PDF, Excel, Word, PowerPoint, CSV, atau foto. Maksimum 20 MB per file. Excel/CSV menjadi tabel; Word/PowerPoint dan PDF bertulisan diringkas menjadi panel; foto mendapat preview visual.</small>
         </label>
         <button className="primary-button" type="submit">Simpan & Olah Update</button>
-      </form>
+      </form> : null}
 
       <section className="panel update-history-panel">
         <div className="section-heading"><p className="eyebrow">RIWAYAT UPDATE</p><h2>{program.name}</h2></div>
@@ -166,11 +168,11 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
               <strong>{update.title}</strong>
               <small>{update.opd_name || 'Sumber belum dicantumkan'} · {update.row_count || 0} data terstruktur</small>
             </Link>
-            <form action={deleteBeraniUpdate}>
+            {adminMode ? <form action={deleteBeraniUpdate}>
               <input type="hidden" name="id" value={update.id} />
               <input type="hidden" name="program_slug" value={program.slug} />
-              <button className="text-danger-button" type="submit">Hapus</button>
-            </form>
+              <button className="icon-delete-button" type="submit" aria-label="Hapus update" title="Hapus update">×</button>
+            </form> : null}
           </div>)}
           {(updates ?? []).length === 0 ? <div className="empty">Belum ada pembaruan untuk program ini.</div> : null}
         </div>
@@ -226,12 +228,12 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
               </div>
               <div className="document-card-actions">
                 {url ? <a href={url} target="_blank" rel="noreferrer">Sumber ↗</a> : <span className="muted-line">Sumber unggahan awal</span>}
-                <form action={deleteBeraniDocument}>
+                {adminMode ? <form action={deleteBeraniDocument}>
                   <input type="hidden" name="id" value={doc.id} />
                   <input type="hidden" name="update_id" value={selected.id} />
                   <input type="hidden" name="program_slug" value={program.slug} />
-                  <button className="inline-delete" type="submit">hapus</button>
-                </form>
+                  <button className="icon-delete-button compact" type="submit" aria-label="Hapus dokumen" title="Hapus dokumen">×</button>
+                </form> : null}
               </div>
             </article>
           })}
@@ -243,7 +245,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
           {!documents?.length && !selected.file_path ? <div className="empty">Belum ada dokumen sumber untuk update ini.</div> : null}
         </div>
 
-        <details className="append-documents">
+        {adminMode ? <details className="append-documents">
           <summary>+ Tambah sumber ke update ini</summary>
           <form action={addBeraniDocuments} className="notulensi-add-form">
             <input type="hidden" name="update_id" value={selected.id} />
@@ -252,7 +254,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
             <small className="muted-line">File baru ditambahkan tanpa menghapus sumber lama dan langsung diproses sesuai jenis file.</small>
             <button className="secondary-button" type="submit">Tambahkan & Olah</button>
           </form>
-        </details>
+        </details> : <div className="readonly-edit-note"><span>Data hanya dapat diubah dalam mode edit.</span><Link href={`/login?next=${encodeURIComponent(`/berani/${program.slug}`)}`}>✎</Link></div>}
       </section>
     </> : null}
   </AppShell>
