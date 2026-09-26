@@ -14,7 +14,7 @@ export default async function TimPage() {
 
   return <AppShell active="/tim-analisis" title="Tim Analisis">
     <section className="team-hero panel">
-      <div><p className="eyebrow">PEOPLE BEHIND THE INSIGHT</p><h2>Tim multidisiplin untuk membaca masalah dari banyak sudut.</h2></div>
+      <div><p className="eyebrow">TIM INDEPENDEN</p><h2>Analisis lintas bidang untuk data dan komunikasi strategis.</h2></div>
       <p>Profil anggota ditampilkan sebagai direktori profesional. Pengelolaan foto, CV, peran, dan data anggota dilakukan dari menu Pengaturan yang dilindungi PIN.</p>
     </section>
 
@@ -29,8 +29,8 @@ export default async function TimPage() {
           <div className="team-profile-body">
             <p className="eyebrow">TIM ANALISIS</p>
             <h2>{row.nama}</h2>
-            <p className="team-role">{row.peran || 'Analis AH Center'}</p>
-            {row.bio ? <p className="team-bio">{row.bio}</p> : <p className="team-bio muted">Profil singkat akan ditambahkan dari Pengaturan.</p>}
+            <p className="team-role">{row.peran || 'Tim Analisis dan Komunikasi Strategis'}</p>
+            {row.bio ? <p className="team-bio">{row.bio}</p> : <p className="team-bio muted">Profil singkat dapat ditambahkan dari Pengaturan.</p>}
             <div className="team-links">
               {photo ? <a className="secondary-button" href={photo} target="_blank" rel="noreferrer">Lihat Foto</a> : null}
               {(row.cv_url || row.link_cv) ? <a className="ghost-button dark" href={row.cv_url || row.link_cv || '#'} target="_blank" rel="noreferrer">Lihat CV</a> : <span className="asset-status">CV belum tersedia</span>}

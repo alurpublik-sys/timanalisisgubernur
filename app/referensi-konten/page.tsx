@@ -65,7 +65,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
       <div>
         <p className="eyebrow">{shareMode ? 'TAMPILAN UNTUK DIBAGIKAN' : 'PUSAT INFORMASI PUBLIK'}</p>
         <h2>{shareMode ? 'Hanya informasi yang berstatus siap dibagikan.' : 'Bahan program OPD yang mudah dibaca dan selalu terbarui.'}</h2>
-        <p>{shareMode ? 'Halaman ini menyembunyikan editor internal dan hanya menampilkan referensi yang telah ditandai siap dibagikan.' : 'Setiap OPD dapat memiliki banyak program atau angle informasi. Status membantu memisahkan draft internal, data yang masih perlu diverifikasi, dan bahan yang siap diberikan kepada influencer.'}</p>
+        <p>{shareMode ? 'Halaman ini menyembunyikan editor internal dan hanya menampilkan referensi yang telah ditandai siap dibagikan.' : 'Data awal halaman ini mengikuti dokumen “INFORMASI & REFERENSI UNTUK PEMBUATAN KONTEN PROGRAM PEMPROV SULTENG 2026”. Setiap OPD dapat memiliki banyak program atau angle informasi, lalu diperbarui secara real-time.'}</p>
       </div>
       <div className="hero-actions reference-mode-actions">
         {shareMode

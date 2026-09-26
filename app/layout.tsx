@@ -1,22 +1,36 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
-import { ANWAR_HAFID_PHOTO, APP_NAME } from '@/lib/branding'
+import { APP_NAME } from '@/lib/branding'
 import './globals.css'
 import './admin.css'
 import './dashboard.css'
 import './responsive.css'
 import './knowledge.css'
 import './knowledge-v2.css'
+import './berani-modern.css'
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://timanalisisgubernur-rho.vercel.app'),
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
-  description: 'Pusat analisis, monitoring isu, media, 9 BERANI, temuan OPD, referensi konten, dan koordinasi strategis.',
+  description: 'Dashboard independen untuk data, analisis, monitoring, 9 BERANI, temuan OPD, dan referensi komunikasi strategis Sulawesi Tengah.',
+  applicationName: APP_NAME,
+  manifest: '/manifest.webmanifest',
   icons: {
-    icon: [{ url: ANWAR_HAFID_PHOTO, type: 'image/png' }],
-    shortcut: [ANWAR_HAFID_PHOTO],
-    apple: [ANWAR_HAFID_PHOTO],
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    shortcut: ['/icon.svg'],
+    apple: ['/apple-icon'],
+  },
+  openGraph: {
+    title: APP_NAME,
+    description: 'Data · Analisis · Informasi untuk monitoring strategis Sulawesi Tengah.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: APP_NAME,
+    description: 'Data · Analisis · Informasi untuk monitoring strategis Sulawesi Tengah.',
   },
 }
 

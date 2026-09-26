@@ -122,40 +122,52 @@ export type Database = {
         Row: {
           columns: Json
           created_at: string
+          display_title: string | null
+          document_kind: string | null
           extracted_text: string | null
           file_name: string
-          file_path: string
+          file_path: string | null
           file_size: number | null
           id: number
+          metadata: Json
           mime_type: string | null
           row_count: number
           sheet_name: string | null
+          summary: string | null
           update_id: number
         }
         Insert: {
           columns?: Json
           created_at?: string
+          display_title?: string | null
+          document_kind?: string | null
           extracted_text?: string | null
           file_name: string
-          file_path: string
+          file_path?: string | null
           file_size?: number | null
           id?: number
+          metadata?: Json
           mime_type?: string | null
           row_count?: number
           sheet_name?: string | null
+          summary?: string | null
           update_id: number
         }
         Update: {
           columns?: Json
           created_at?: string
+          display_title?: string | null
+          document_kind?: string | null
           extracted_text?: string | null
           file_name?: string
-          file_path?: string
+          file_path?: string | null
           file_size?: number | null
           id?: number
+          metadata?: Json
           mime_type?: string | null
           row_count?: number
           sheet_name?: string | null
+          summary?: string | null
           update_id?: number
         }
         Relationships: [
@@ -193,6 +205,60 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "berani_update_rows_update_id_fkey"
+            columns: ["update_id"]
+            isOneToOne: false
+            referencedRelation: "berani_updates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      berani_update_sections: {
+        Row: {
+          created_at: string
+          document_id: number | null
+          id: number
+          payload: Json
+          section_key: string | null
+          section_type: string
+          sort_order: number
+          title: string
+          update_id: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_id?: number | null
+          id?: number
+          payload?: Json
+          section_key?: string | null
+          section_type: string
+          sort_order?: number
+          title: string
+          update_id: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: number | null
+          id?: number
+          payload?: Json
+          section_key?: string | null
+          section_type?: string
+          sort_order?: number
+          title?: string
+          update_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "berani_update_sections_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "berani_update_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "berani_update_sections_update_id_fkey"
             columns: ["update_id"]
             isOneToOne: false
             referencedRelation: "berani_updates"

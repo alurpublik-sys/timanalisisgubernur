@@ -1,0 +1,36 @@
+with p as (
+ select id from public.berani_programs where slug='berani-sehat'
+), upserted as (
+ insert into public.berani_updates(program_id,title,opd_name,period_label,summary,source_key,row_count)
+ select p.id,'Capaian BERANI Sehat - Dinas Kesehatan 2026','Dinas Kesehatan Provinsi Sulawesi Tengah','s.d. Agustus 2026',
+ 'Ringkasan terolah dari Realisasi Belanja BERANI Sehat, Capaian Cek Kesehatan Gratis (CKG), Capaian Program TBC 2024-2026, dan Analisis Situasi P2PM Sulawesi Tengah.',
+ 'seed:berani-sehat-dinkes-2026-08',13 from p
+ on conflict(source_key) do update set title=excluded.title,opd_name=excluded.opd_name,period_label=excluded.period_label,summary=excluded.summary,row_count=excluded.row_count,updated_at=now()
+ returning id
+), target as (
+ select id from upserted union all select id from public.berani_updates where source_key='seed:berani-sehat-dinkes-2026-08' limit 1
+), cleared_docs as (
+ delete from public.berani_update_documents where update_id=(select id from target)
+), cleared_sections as (
+ delete from public.berani_update_sections where update_id=(select id from target)
+)
+insert into public.berani_update_documents(update_id,file_path,file_name,mime_type,file_size,document_kind,display_title,summary,metadata)
+select (select id from target),v.file_path,v.file_name,v.mime_type,v.file_size,v.document_kind,v.display_title,v.summary,v.metadata
+from (values
+(null,'WhatsApp Image 2026-09-26 at 21.54.35.pdf','application/pdf',176128,'infografis','Realisasi Belanja BERANI Sehat','Infografis realisasi layanan, kepesertaan, dan anggaran BERANI Sehat tahun 2025 sampai 31 Agustus 2026.','{"source":"uploaded","processed":true}'::jsonb),
+(null,'Capaian CKG Sulteng Agt 2026.pdf','application/pdf',1992294,'infografis','Capaian Cek Kesehatan Gratis (CKG)','Capaian CKG Provinsi Sulawesi Tengah periode Januari sampai 19 Agustus 2026, termasuk perbandingan kabupaten/kota.','{"source":"uploaded","processed":true}'::jsonb),
+(null,'edit CAPAIAN PROGRAM TBC (2024 sd 2026)- WAMEN_New.pptx','application/vnd.openxmlformats-officedocument.presentationml.presentation',9639680,'presentasi','Capaian Program TBC 2024-2026','Paparan layanan TBC, treatment coverage, investigasi kontak, dan terapi pencegahan TBC di Sulawesi Tengah.','{"source":"uploaded","processed":true}'::jsonb),
+(null,'Ansit  P2PM Sulteng.pptx','application/vnd.openxmlformats-officedocument.presentationml.presentation',8978432,'presentasi','Analisis Situasi P2PM Sulawesi Tengah','Paparan pengendalian penyakit menular, TBC, HIV, tracing kontak terintegrasi CKG, dan indikator P2PM lainnya.','{"source":"uploaded","processed":true}'::jsonb)
+) as v(file_path,file_name,mime_type,file_size,document_kind,display_title,summary,metadata);
+
+with target as (select id from public.berani_updates where source_key='seed:berani-sehat-dinkes-2026-08')
+insert into public.berani_update_sections(update_id,section_key,title,section_type,payload,sort_order)
+select (select id from target),v.section_key,v.title,v.section_type,v.payload,v.sort_order
+from (values
+('berani-sehat-overview','Realisasi Belanja & Layanan BERANI Sehat','kpis','{"subtitle":"Data 2025 dan realisasi 2026 s.d. 31 Agustus","items":[{"label":"Pasien dilayani","value":"39.303 orang","note":"2026 s.d. 31 Agustus","secondary":"2025: 46.108 • Total 2025-2026: 85.411","tone":"blue"},{"label":"Jumlah dijamin","value":"207.067 jiwa","note":"2026 s.d. 31 Agustus","secondary":"2025: 137.358 jiwa","tone":"green"},{"label":"Alokasi anggaran 2026","value":"Rp121,0 miliar","note":"Realisasi s.d. 31 Agustus: Rp79,06 miliar","secondary":"2025: Rp68,78 miliar","tone":"amber"},{"label":"Peserta mandiri menunggak","value":"9.269 orang","note":"2026 s.d. 31 Agustus","secondary":"2025: 12.684 • Total 21.953","tone":"red"},{"label":"Tidak aktif / tanpa jaminan","value":"30.034 orang","note":"2026 s.d. 31 Agustus","secondary":"2025: 33.424 • Total 63.458","tone":"violet"}]}'::jsonb,10),
+('ckg-overview','Capaian Cek Kesehatan Gratis (CKG)','kpis','{"subtitle":"Periode Januari s.d. 19 Agustus 2026","items":[{"label":"Total penduduk","value":"3.174.998","note":"Provinsi Sulawesi Tengah","tone":"teal"},{"label":"Target CKG 46%","value":"1.461.157","note":"Target penduduk","tone":"green"},{"label":"Jumlah daftar","value":"1.015.528","note":"Pendaftar CKG","tone":"blue"},{"label":"Hadir & dilayani","value":"981.211","note":"Menerima layanan","tone":"violet"},{"label":"Capaian provinsi","value":"30,9%","note":"s.d. 19 Agustus 2026","tone":"amber"}]}'::jsonb,20),
+('ckg-kabupaten','Capaian CKG per Kabupaten/Kota','bar_chart','{"unit":"%","max":60,"thresholds":{"good":40,"warning":20},"items":[{"label":"Parigi Moutong","value":58.4},{"label":"Morowali Utara","value":47.6},{"label":"Banggai Kepulauan","value":41.6},{"label":"Morowali","value":39.2},{"label":"Donggala","value":35.9},{"label":"Sigi","value":31.8},{"label":"Banggai","value":26.3},{"label":"Toli-Toli","value":23.6},{"label":"Buol","value":22.4},{"label":"Tojo Una-Una","value":20.2},{"label":"Banggai Laut","value":17.8},{"label":"Poso","value":16.2},{"label":"Palu","value":10.4}]}'::jsonb,30),
+('tbc-services','Jaringan Layanan Tuberkulosis','stat_grid','{"subtitle":"Data layanan TBC Sulawesi Tengah pada bahan paparan 2026","items":[{"label":"Puskesmas","value":"221","icon":"PKM"},{"label":"RS Pemerintah","value":"29","icon":"RS"},{"label":"RS Swasta","value":"10","icon":"RS"},{"label":"Klinik Pemerintah","value":"21","icon":"Klinik"},{"label":"Lapas / Rutan","value":"12","icon":"Lapas"},{"label":"Klinik Swasta","value":"72","icon":"Klinik"},{"label":"TPMD","value":"62","icon":"TPMD"},{"label":"Mesin TCM","value":"41","icon":"TCM"},{"label":"Faskes TCM","value":"36","icon":"TCM"},{"label":"BD Max","value":"1","icon":"Lab"}],"hospitals":["RSUD Undata Palu","RSUD Anutapura","RSUD Luwuk (Banggai)","RSUD Poso","RSUD Mokopido","RSUD Anuntaloko Parigi","RSUD Morowali","RSUD Kolonodale","RSUD Trikora Salakan","RSUD Buol","RSUD Kabelota","RSUD Banggai (Banggai Laut)","RSUD Ampana"]}'::jsonb,40),
+('tbc-trends','Indikator Program TBC 2024-2026','trend','{"periodNote":"Angka 2026 pada bahan paparan menggunakan periode berjalan (Jan-Jul / s.d. Juli).","series":[{"label":"Treatment Coverage","values":[{"period":"2024","value":87},{"period":"2025","value":84},{"period":"2026","value":46}],"unit":"%"},{"label":"Investigasi Kontak","values":[{"period":"2024","value":48},{"period":"2025","value":66},{"period":"2026","value":35}],"unit":"%"},{"label":"Terapi Pencegahan TBC (TPT)","values":[{"period":"2024","value":3},{"period":"2025","value":13},{"period":"2026","value":7}],"unit":"%"}]}'::jsonb,50),
+('p2pm-highlight','Sorotan Pengendalian Penyakit Menular','facts','{"items":[{"title":"Tracing TB terintegrasi CKG","detail":"Integrasi tracing dan skrining kontak serumah/erat dengan layanan CKG untuk mempercepat penemuan kasus dan memperluas manfaat pemeriksaan."},{"title":"Skrining HIV Triwulan II 2026","detail":"Target nasional 93.920 orang; 32.946 tes HIV tercatat di Sulawesi Tengah dengan 313 hasil positif pada data tarikan 14 Juli 2026."},{"title":"Fokus kolaborasi","detail":"Penguatan peran kader, lintas sektor, mobilisasi kontak, serta upaya mengurangi stigma dan diskriminasi pada orang terdampak TBC."}]}'::jsonb,60)
+) as v(section_key,title,section_type,payload,sort_order);

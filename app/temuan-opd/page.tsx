@@ -97,8 +97,8 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
         <label>Nama Sumber<input name="source_label" placeholder="Contoh: Kunjungan OPD / Paparan Kadis" /></label>
         <label>Link Sumber<input name="source_url" type="url" placeholder="https://..." /></label>
         <label>Lampiran
-          <input name="finding_files" type="file" multiple accept=".pdf,.xlsx,.xls,.docx,.doc" />
-          <small className="muted-line">Bisa pilih hingga 10 PDF, Excel, atau Word sekaligus. Dokumen baru bisa ditambahkan lagi saat mengedit temuan.</small>
+          <input name="finding_files" type="file" multiple accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.png,.jpg,.jpeg,.webp" />
+          <small className="muted-line">Bisa pilih hingga 10 PDF, Excel, Word, PowerPoint, CSV, atau foto sekaligus. Dokumen baru dapat ditambahkan lagi saat mengedit temuan.</small>
         </label>
         <button className="primary-button" type="submit">Simpan Temuan</button>
       </form>
@@ -141,7 +141,7 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
                   <label>9 BERANI<select name="berani_program_id" defaultValue={finding.berani_program_id || ''}><option value="">Tidak terkait khusus</option>{(programs ?? []).map((program) => <option value={program.id} key={program.id}>{program.name}</option>)}</select></label>
                   <label>Sumber<input name="source_label" defaultValue={finding.source_label || ''} /></label>
                   <label>Link<input name="source_url" type="url" defaultValue={finding.source_url || ''} /></label>
-                  <label>Tambah lampiran<input name="finding_files" type="file" multiple accept=".pdf,.xlsx,.xls,.docx,.doc" /></label>
+                  <label>Tambah lampiran<input name="finding_files" type="file" multiple accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.png,.jpg,.jpeg,.webp" /></label>
                   <button className="secondary-button" type="submit">Simpan Perubahan</button>
                 </form>
               </details>
