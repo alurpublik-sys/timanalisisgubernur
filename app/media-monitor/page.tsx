@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { createMedia } from '@/lib/actions/core'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthContext } from '@/lib/auth'
 
 const PAGE_SIZE = 20
 type Params = { q?: string; sentimen?: string; page?: string }
@@ -13,7 +14,8 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
   const page = Math.max(1, Number(params.page) || 1)
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
-  const supabase = await createClient(null)
+  const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
+  const adminMode = Boolean(user)
 
   let query = supabase.from('media_monitoring').select('*', { count: 'exact' }).order('tanggal', { ascending: false }).order('id', { ascending: false })
   if (q) query = query.or(`judul_berita.ilike.%${q}%,nama_media.ilike.%${q}%,legacy_id.ilike.%${q}%`)
@@ -32,9 +34,9 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
     return `/media-monitor?${p.toString()}`
   }
 
-  return <AppShell active="/media-monitor" title="Media Monitor">
+  return <AppShell active="/media-monitor" title="Media Monitor" adminMode={adminMode}>
     <section className="module-grid">
-      <form action={createMedia} className="panel form-card">
+      {adminMode ? <form action={createMedia} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">MONITORING MEDIA</p><h2>Tambah Berita</h2></div>
         <label>Judul Berita<input name="judul" required /></label>
         <label>Nama Media<input name="media" /></label>
@@ -42,7 +44,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
         <label>Sentimen<select name="sentimen"><option>Positif</option><option>Netral</option><option>Negatif</option></select></label>
         <label>Link Berita<input name="link" type="url" /></label>
         <button className="primary-button" type="submit">Simpan Berita</button>
-      </form>
+      </form> : null}
 
       <section className="panel table-panel">
         <div className="section-heading table-heading-with-filter">
