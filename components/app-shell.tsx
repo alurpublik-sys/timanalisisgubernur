@@ -48,7 +48,7 @@ function Navigation({ active, onNavigate }: { active: string; onNavigate: (href:
               <span className="nav-glyph" aria-hidden>{glyph}</span>
               <span className="nav-label">{label}</span>
             </span>
-            {href === '/pengaturan' ? <small className="nav-lock">PIN</small> : null}
+            {(href === '/pengaturan' || href === '/temuan-opd') ? <small className="nav-lock">PIN</small> : null}
           </Link>
         )
       })}
