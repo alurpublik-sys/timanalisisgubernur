@@ -268,3 +268,96 @@
   .source-documents-panel .document-icon{width:44px;height:44px;min-width:44px;border-radius:12px}
   .source-documents-panel .document-card-actions{padding:10px 11px}
 }
+
+
+/* Cross-page visual polish */
+.panel-head,.section-heading,.reference-card-top,.finding-card-head{min-width:0}
+.panel-head>div,.section-heading>div,.reference-card-top>div,.finding-card-head>div{min-width:0}
+.panel-head h2,.section-heading h2,.reference-card h3,.finding-card h2,.team-profile-body h2{overflow-wrap:anywhere}
+.reference-card-top{align-items:flex-start}
+.reference-card-top>div:first-child{min-width:0;flex:1}
+.reference-card-tools{flex:0 0 auto}
+.reference-detail,.reference-facts p,.finding-detail,.team-bio{overflow-wrap:anywhere}
+.finding-card{overflow:hidden}
+.finding-card-head{gap:12px}
+.finding-card-head time{flex:0 0 auto;white-space:nowrap}
+.finding-document-list{align-items:stretch}
+.finding-document-chip{min-width:0;max-width:100%}
+.finding-document-chip>a{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.finding-actions{align-items:center;gap:8px}
+.finding-actions details{min-width:0}
+.team-profile-card{display:flex;flex-direction:column}
+.team-profile-body{display:flex;flex:1;flex-direction:column}
+.team-links{margin-top:auto;padding-top:17px}
+.team-role,.team-bio{overflow-wrap:anywhere}
+.premium-table-panel .pagination-bar{border-top:1px solid #edf1f4;background:#fbfcfd}
+
+/* Media Monitor portrait cards */
+.media-mobile-list{display:none}
+.media-mobile-card{
+  padding:15px;
+  border:1px solid #e1e9ef;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 14px 30px -28px rgba(18,52,78,.45)
+}
+.media-mobile-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.media-mobile-card-head>div{min-width:0}
+.media-mobile-card-head>div>span{font-size:7px;font-weight:850;color:#8b9aa7}
+.media-mobile-card-head h3{
+  margin:4px 0 0;
+  font-size:14px;
+  line-height:1.38;
+  color:#173750;
+  overflow-wrap:anywhere
+}
+.media-sentiment{
+  flex:0 0 auto;
+  padding:5px 8px;
+  border-radius:999px;
+  font-size:7px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  background:#eef2f5;
+  color:#657887
+}
+.sentiment-positif{background:#e7f7ef;color:#277355}
+.sentiment-negatif{background:#ffecee;color:#9f3f4a}
+.sentiment-netral{background:#eef2f5;color:#657887}
+.media-mobile-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:11px
+}
+.media-mobile-meta span{
+  padding:5px 7px;
+  border-radius:999px;
+  background:#f2f5f7;
+  color:#708698;
+  font-size:7.5px;
+  font-weight:750
+}
+.media-mobile-link,.media-mobile-no-link{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:12px;
+  padding-top:11px;
+  border-top:1px solid #edf1f4;
+  font-size:8.5px
+}
+.media-mobile-link{color:#315f8b;font-weight:850}
+.media-mobile-no-link{color:#8d9aa6}
+
+@media(max-width:760px){
+  .media-premium-scroll{display:none}
+  .media-mobile-list{display:grid;gap:10px;padding:12px}
+  .premium-table-panel .pagination-bar{padding:13px 12px}
+  .reference-card-top{gap:9px}
+  .reference-card-tools{gap:5px}
+  .finding-card-head{flex-direction:column;align-items:flex-start}
+  .finding-card-head time{white-space:normal}
+  .team-links .secondary-button,.team-links .ghost-button{flex:1;justify-content:center}
+}
