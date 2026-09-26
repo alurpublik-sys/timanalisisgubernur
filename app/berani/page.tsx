@@ -29,7 +29,7 @@ export default async function BeraniPage() {
       <div>
         <p className="eyebrow">PUSAT DATA PROGRAM</p>
         <h2>Update terbaru 9 BERANI dalam satu tempat.</h2>
-        <p>Pilih program untuk melihat pembaruan, dokumen sumber, dan tabel data terbaru. Setiap program dapat menerima dokumen PDF, Excel, atau Word.</p>
+        <p>Pilih program untuk melihat pembaruan, dokumen sumber, dan tabel data terbaru. Setiap program dapat menerima PDF, Excel, Word, PowerPoint, CSV, dan foto; data akan diolah ke tampilan yang lebih nyaman dibaca.</p>
       </div>
       <div className="knowledge-hero-stat"><strong>{(programs ?? []).length}</strong><span>program aktif</span></div>
     </section>
