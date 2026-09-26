@@ -131,7 +131,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
   const legacyColumns = selected ? stringColumns(selected.columns) : []
   const legacyRecords = (legacyRows ?? []).map((row) => asRecord(row.data))
 
-  return <AppShell active="/berani" title={program.name} adminMode={adminMode}>
+  return <AppShell active="/berani" title={program.name} adminMode={adminMode} editReturnTo={`/berani/${program.slug}`}>
     <div className="breadcrumb-line"><Link href="/berani">9 BERANI</Link><span>/</span><strong>{program.name}</strong></div>
 
     <section className="program-head panel berani-program-head">
