@@ -48,7 +48,7 @@ for(const actionFile of['lib/actions/core.ts','lib/actions/knowledge.ts','lib/ac
 }
 
 const login=readFileSync(join(root,'app/login/route.ts'),'utf8')
-if(!login.includes('[0-9]{6,8}')) failures.push('PIN login must accept the configured 6-8 digit format')
+if(!login.includes('[0-9]{5,8}')) failures.push('PIN login must accept the configured 5-8 digit format')
 if(!login.includes('next')) failures.push('PIN login must return users to the requested protected feature')
 
 const serverClient=readFileSync(join(root,'lib/supabase/server.ts'),'utf8')
