@@ -21,8 +21,8 @@ export default function OpenGraphImage() {
         </div>
       </div>
       <div style={{ width: '38%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-        <img src={GOVERNOR_PHOTO} width="265" height="500" style={{ objectFit: 'contain', objectPosition: 'bottom', position: 'absolute', left: 0, bottom: -5 }} />
-        <img src={VICE_GOVERNOR_PHOTO} width="250" height="485" style={{ objectFit: 'contain', objectPosition: 'bottom', position: 'absolute', right: -8, bottom: -5 }} />
+        <img src={GOVERNOR_PHOTO} width={265} height={500} style={{ objectFit: 'contain', objectPosition: 'bottom', position: 'absolute', left: 0, bottom: -5 }} />
+        <img src={VICE_GOVERNOR_PHOTO} width={250} height={485} style={{ objectFit: 'contain', objectPosition: 'bottom', position: 'absolute', right: -8, bottom: -5 }} />
       </div>
       <div style={{ position: 'absolute', left: 60, bottom: 34, width: 540, height: 5, borderRadius: 3, background: 'linear-gradient(90deg,#d9ad38,#fff0a5,transparent)' }} />
     </div>,
