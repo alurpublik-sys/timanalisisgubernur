@@ -12,6 +12,8 @@ const menu = [
   { label: 'Policy Brief', href: '/policy-brief', glyph: 'PB' },
   { label: 'Media Monitor', href: '/media-monitor', glyph: 'MM' },
   { label: 'Agenda & Tugas', href: '/agenda', glyph: 'AG' },
+  { label: '9 BERANI', href: '/berani', glyph: '9B' },
+  { label: 'Temuan OPD', href: '/temuan-opd', glyph: 'TO' },
   { label: 'Tim Analisis', href: '/tim-analisis', glyph: 'TA' },
   { label: 'Pengaturan', href: '/pengaturan', glyph: 'PG' },
 ] as const
