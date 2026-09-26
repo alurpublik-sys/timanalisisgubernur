@@ -15,7 +15,8 @@ export function DashboardCursor() {
     const onMove = (event: MouseEvent) => {
       // Keep the halo locked to the browser cursor hotspot.
       // Smoothness comes from hover/size transitions, not positional lag.
-      ring.style.transform = `translate3d(${event.clientX}px,${event.clientY}px,0)`
+      ring.style.left = `${event.clientX}px`
+      ring.style.top = `${event.clientY}px`
       document.documentElement.classList.add('dashboard-pointer-live')
     }
 
