@@ -56,7 +56,7 @@ function Navigation({ active, onNavigate }: { active: string; onNavigate: (href:
   )
 }
 
-export function AppShell({ active, title, children, adminMode = false }: { active: string; title: string; children: React.ReactNode; adminMode?: boolean }) {
+export function AppShell({ active, title, children, adminMode = false, editReturnTo }: { active: string; title: string; children: React.ReactNode; adminMode?: boolean; editReturnTo?: string }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [navigating, setNavigating] = useState(false)
 
@@ -139,7 +139,7 @@ export function AppShell({ active, title, children, adminMode = false }: { activ
           <div className="topbar-actions">
             <Link
               className={`admin-mode-chip${adminMode ? ' is-active' : ''}`}
-              href={adminMode ? '/pengaturan' : `/login?next=${encodeURIComponent(active)}`}
+              href={adminMode ? '/pengaturan' : `/login?next=${encodeURIComponent(editReturnTo || active)}`}
               title={adminMode ? 'Mode edit aktif' : 'Masuk untuk mengedit'}
               aria-label={adminMode ? 'Mode edit aktif' : 'Masuk untuk mengedit'}
             >
