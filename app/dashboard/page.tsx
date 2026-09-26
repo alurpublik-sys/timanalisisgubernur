@@ -47,7 +47,7 @@ export default async function DashboardPage() {
     ['Kunjungan OPD', overview.total_kunjungan ?? 0, '/kunjungan', 'Audiensi, notulensi & dokumen'],
     ['Media Monitor', overview.total_media ?? 0, '/media-monitor', 'Berita & sentimen publik'],
     ['9 BERANI', beraniPrograms?.length ?? 0, '/berani', 'Pusat data program unggulan'],
-    ['Temuan OPD', findingCount ?? 0, '/temuan-opd', 'Temuan menarik lintas OPD'],
+    ['Temuan OPD', user ? (findingCount ?? 0) : 'PIN', '/temuan-opd', user ? 'Temuan menarik lintas OPD' : 'Akses dilindungi PIN'],
     ['Referensi Konten', referenceCount ?? 0, '/referensi-konten', 'Bahan informasi berbasis sumber'],
     ['Tim Analisis', overview.total_tim ?? 0, '/tim-analisis', 'Direktori tim independen'],
   ] as const
