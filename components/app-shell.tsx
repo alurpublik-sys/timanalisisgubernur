@@ -125,7 +125,7 @@ export function AppShell({ active, title, children, adminMode = false, editRetur
             <div className="mobile-drawer-nav">
               <Navigation active={active} onNavigate={beginNavigation} />
             </div>
-            <div className="mobile-menu-note">Workspace independen. Pengaturan dilindungi PIN administrator.</div>
+            <div className="mobile-menu-note">Workspace independen. Mode edit dan Temuan OPD dilindungi PIN administrator.</div>
           </aside>
         </div>
       ) : null}
