@@ -3,7 +3,7 @@ name: Strategic Team Runtime Smoke
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: ["main", "feat/admin-lock-premium-ui"]
   pull_request:
     branches: ["main"]
 
