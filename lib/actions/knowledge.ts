@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { importDocument } from '@/lib/document-import'
-import { createClient } from '@/lib/supabase/server'
 import { requireActionUser } from '@/lib/auth'
 
 const BERANI_BUCKET = 'berani-documents'
