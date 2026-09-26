@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { importDocument } from '@/lib/document-import'
 import { createClient } from '@/lib/supabase/server'
+import { requireActionUser } from '@/lib/auth'
 
 const BERANI_BUCKET = 'berani-documents'
 const FINDING_BUCKET = 'finding-documents'
@@ -206,6 +207,8 @@ async function appendFindingDocuments(
   }
 }
 
+async function adminClient() { return (await requireActionUser(['admin'])).supabase }
+
 function refreshKnowledge(programSlug?: string) {
   revalidatePath('/berani')
   if (programSlug) revalidatePath(`/berani/${programSlug}`)
@@ -217,7 +220,7 @@ export async function addKunjunganDocument(formData: FormData) {
   const kunjunganId = positiveId(formData, 'kunjungan_id', 'ID kunjungan')
   const title = optional(formData, 'title', 'Judul dokumen', 200) || 'Notulensi'
   const file = pdfFile(formData)
-  const supabase = await createClient(null)
+  const supabase = await adminClient()
   const path = `${kunjunganId}/${Date.now()}-${crypto.randomUUID()}.pdf`
   const { error: uploadError } = await supabase.storage.from(NOTULENSI_BUCKET).upload(path, file, { contentType: 'application/pdf', cacheControl: '3600', upsert: false })
   if (uploadError) throw new Error(`Upload PDF gagal: ${uploadError.message}`)
@@ -231,7 +234,7 @@ export async function addKunjunganDocument(formData: FormData) {
 
 export async function deleteKunjunganDocument(formData: FormData) {
   const id = positiveId(formData, 'id', 'ID dokumen')
-  const supabase = await createClient(null)
+  const supabase = await adminClient()
   const { data, error: findError } = await supabase.from('kunjungan_documents').select('file_path').eq('id', id).single()
   if (findError) throw new Error(findError.message)
   if (data?.file_path) await supabase.storage.from(NOTULENSI_BUCKET).remove([data.file_path])
@@ -250,7 +253,7 @@ export async function createBeraniUpdate(formData: FormData) {
   const files = documentFiles(formData, 'document_files')
   if (!files.length && !summary) throw new Error('Isi ringkasan atau unggah minimal satu dokumen sumber.')
 
-  const supabase = await createClient(null)
+  const supabase = await adminClient()
   const { data: update, error } = await supabase.from('berani_updates').insert({
     program_id: programId, title, opd_name: opdName, period_label: periodLabel, summary,
   }).select('id').single()
@@ -282,7 +285,7 @@ export async function addBeraniDocuments(formData: FormData) {
   const programSlug = required(formData, 'program_slug', 'Slug program', 120)
   const files = documentFiles(formData, 'document_files')
   if (!files.length) throw new Error('Pilih minimal satu dokumen.')
-  const supabase = await createClient(null)
+  const supabase = await adminClient()
   await uploadBeraniDocuments(supabase, updateId, programSlug, files)
   const { data: docs, error } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', updateId)
   if (error) throw new Error(error.message)
@@ -296,7 +299,7 @@ export async function deleteBeraniDocument(formData: FormData) {
   const id = positiveId(formData, 'id', 'ID dokumen')
   const updateId = positiveId(formData, 'update_id', 'ID update')
   const programSlug = required(formData, 'program_slug', 'Slug program', 120)
-  const supabase = await createClient(null)
+  const supabase = await adminClient()
   const { data, error } = await supabase.from('berani_update_documents').select('file_path').eq('id', id).single()
   if (error) throw new Error(error.message)
   if (data.file_path) await supabase.storage.from(BERANI_BUCKET).remove([data.file_path])
@@ -312,7 +315,7 @@ export async function deleteBeraniDocument(formData: FormData) {
 export async function deleteBeraniUpdate(formData: FormData) {
   const id = positiveId(formData, 'id', 'ID update')
   const programSlug = required(formData, 'program_slug', 'Slug program', 120)
-  const supabase = await createClient(null)
+  const supabase = await adminClient()
   const [{ data: update }, { data: docs }] = await Promise.all([
     supabase.from('berani_updates').select('file_path').eq('id', id).single(),
     supabase.from('berani_update_documents').select('file_path').eq('update_id', id),
@@ -344,7 +347,7 @@ function findingPayload(formData: FormData) {
 
 export async function createFinding(formData: FormData) {
   const files = documentFiles(formData, 'finding_files')
-  const supabase = await createClient(null)
+  const supabase = await adminClient()
   const { data, error } = await supabase.from('opd_findings').insert(findingPayload(formData)).select('id').single()
   if (error || !data) throw new Error(error?.message || 'Temuan gagal disimpan.')
   try {
@@ -359,7 +362,7 @@ export async function createFinding(formData: FormData) {
 export async function updateFinding(formData: FormData) {
   const id = positiveId(formData, 'id', 'ID temuan')
   const files = documentFiles(formData, 'finding_files')
-  const supabase = await createClient(null)
+  const supabase = await adminClient()
   const { error } = await supabase.from('opd_findings').update(findingPayload(formData)).eq('id', id)
   if (error) throw new Error(error.message)
   if (files.length) await appendFindingDocuments(supabase, id, files)
@@ -368,7 +371,7 @@ export async function updateFinding(formData: FormData) {
 
 export async function deleteFindingDocument(formData: FormData) {
   const id = positiveId(formData, 'id', 'ID lampiran')
-  const supabase = await createClient(null)
+  const supabase = await adminClient()
   const { data, error } = await supabase.from('opd_finding_documents').select('file_path').eq('id', id).single()
   if (error) throw new Error(error.message)
   if (data.file_path) await supabase.storage.from(FINDING_BUCKET).remove([data.file_path])
@@ -379,7 +382,7 @@ export async function deleteFindingDocument(formData: FormData) {
 
 export async function deleteFinding(formData: FormData) {
   const id = positiveId(formData, 'id', 'ID temuan')
-  const supabase = await createClient(null)
+  const supabase = await adminClient()
   const { data: docs } = await supabase.from('opd_finding_documents').select('file_path').eq('finding_id', id)
   const paths = (docs ?? []).map((doc) => doc.file_path)
   if (paths.length) await supabase.storage.from(FINDING_BUCKET).remove(paths)
