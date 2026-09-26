@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { requireActionUser } from '@/lib/auth'
 
 const KUNJUNGAN_NOTULENSI_BUCKET = 'kunjungan-notulensi'
 const MAX_PDF_BYTES = 10 * 1024 * 1024
@@ -21,7 +22,7 @@ function optionalPdf(formData: FormData, key: string) {
   return entry
 }
 function refresh(...paths:string[]){paths.forEach((path)=>revalidatePath(path))}
-async function operationalClient(){return createClient(null)}
+async function operationalClient(){return (await requireActionUser(['admin'])).supabase}
 
 export async function createKunjungan(formData:FormData){
   const supabase=await operationalClient()
