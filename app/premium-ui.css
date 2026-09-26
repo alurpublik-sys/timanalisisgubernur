@@ -59,7 +59,7 @@
   .dashboard-pointer-live .dashboard-cursor-ring{opacity:1}
   .dashboard-cursor-ring.is-active{width:42px;height:42px;margin:-21px 0 0 -21px;background:rgba(93,144,185,.085);border-color:rgba(59,112,155,.68);box-shadow:0 0 0 7px rgba(93,144,185,.035)}
   .dashboard-cursor-zone .cursor-target-active{transform:translateY(-3px)!important;box-shadow:0 24px 52px -38px rgba(24,69,105,.58)!important;border-color:#cadbe7!important}
-  .dashboard-cursor-zone a,.dashboard-cursor-zone button,.dashboard-cursor-zone .panel,.dashboard-cursor-zone .stat-card{transition:transform .2s cubic-bezier(.2,.75,.2,1),box-shadow .2s ease,border-color .2s ease,background .2s ease}
+  .dashboard-cursor-zone .stat-card,.dashboard-cursor-zone .hero-actions a,.dashboard-cursor-zone .quick-link-grid a,.dashboard-cursor-zone .knowledge-dashboard-item,.dashboard-cursor-zone .panel-head>a{transition:transform .2s cubic-bezier(.2,.75,.2,1),box-shadow .2s ease,border-color .2s ease,background .2s ease}
 }
 
 @media(max-width:980px){
