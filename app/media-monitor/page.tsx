@@ -56,10 +56,24 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
             {(q || sentimen) ? <Link className="secondary-button" href="/media-monitor">Reset</Link> : null}
           </form>
         </div>
-        <div className="table-scroll premium-table-scroll"><table className="data-table premium-table"><thead><tr><th>Tanggal / ID</th><th>Berita</th><th>Media</th><th>Sentimen</th><th>Link</th></tr></thead><tbody>
+        <div className="table-scroll premium-table-scroll media-premium-scroll"><table className="data-table premium-table"><thead><tr><th>Tanggal / ID</th><th>Berita</th><th>Media</th><th>Sentimen</th><th>Link</th></tr></thead><tbody>
           {(rows ?? []).map((row) => <tr key={row.id}><td><b>{row.tanggal}</b><small>{row.legacy_id || row.kode}</small></td><td><b>{row.judul_berita}</b></td><td>{row.nama_media || '-'}</td><td><span className="status-pill">{row.sentimen || '-'}</span></td><td>{row.link_berita ? <a className="table-link" href={row.link_berita} target="_blank" rel="noreferrer">Buka</a> : '-'}</td></tr>)}
           {(rows ?? []).length === 0 ? <tr><td colSpan={5} className="empty-cell">Tidak ada data media yang cocok.</td></tr> : null}
         </tbody></table></div>
+        <div className="media-mobile-list">
+          {(rows ?? []).map((row) => <article className="media-mobile-card" key={row.id}>
+            <div className="media-mobile-card-head">
+              <div><span>{row.legacy_id || row.kode}</span><h3>{row.judul_berita}</h3></div>
+              <span className={`media-sentiment sentiment-${String(row.sentimen || 'netral').toLowerCase()}`}>{row.sentimen || 'Netral'}</span>
+            </div>
+            <div className="media-mobile-meta">
+              <span>{row.tanggal}</span>
+              <span>{row.nama_media || 'Media belum dicantumkan'}</span>
+            </div>
+            {row.link_berita ? <a className="media-mobile-link" href={row.link_berita} target="_blank" rel="noreferrer">Buka berita <span>↗</span></a> : <span className="media-mobile-no-link">Link belum tersedia</span>}
+          </article>)}
+          {(rows ?? []).length === 0 ? <div className="empty-document-panel compact-empty"><p>Tidak ada data media yang cocok.</p></div> : null}
+        </div>
         <div className="pagination-bar">
           <span>Halaman {safePage} dari {totalPages}</span>
           <div className="pagination-actions">
