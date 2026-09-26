@@ -64,7 +64,8 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
         <div className="visit-source-list">
           {visit.link_notulen ? <a href={visit.link_notulen} target="_blank" rel="noreferrer" className="visit-source-item"><span className="source-badge source-gdocs">G</span><div><strong>Google Docs</strong><small>Buka dokumen notulensi asli</small></div><i>↗</i></a> : null}
           {sourceFiles.map((file, index) => <a href={file.url} target="_blank" rel="noreferrer" className="visit-source-item" key={index}><span className="source-badge source-pdf">{file.type}</span><div><strong>{file.label}</strong><small>Buka dokumen PDF</small></div><i>↗</i></a>)}
-          {!visit.link_notulen && !sourceFiles.length ? <p className="muted-line">Belum ada dokumen sumber yang bisa dibuka.</p> : null}
+          {!pdf && visit.notulen_pdf_name ? <div className="visit-source-item archived-source"><span className="source-badge source-pdf">PDF</span><div><strong>{visit.notulen_pdf_name}</strong><small>Arsip awal · isi disajikan sebagai ringkasan di halaman ini</small></div><i>✓</i></div> : null}
+          {!visit.link_notulen && !sourceFiles.length && !visit.notulen_pdf_name ? <p className="muted-line">Belum ada dokumen sumber yang bisa dibuka.</p> : null}
         </div>
       </aside>
     </section>
