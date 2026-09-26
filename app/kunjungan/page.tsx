@@ -71,7 +71,7 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
         <span>Desktop & landscape</span>
       </div>
 
-      <div className="premium-table-scroll">
+      <div className="premium-table-scroll visit-premium-scroll">
         <table className="data-table premium-table visit-premium-table">
           <thead><tr><th>Waktu</th><th>OPD / Pejabat</th><th>Topik Pembahasan</th><th>Status</th><th>Notulensi</th><th /></tr></thead>
           <tbody>
