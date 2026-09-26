@@ -8,6 +8,7 @@ import './responsive.css'
 import './knowledge.css'
 import './knowledge-v2.css'
 import './berani-modern.css'
+import './premium-ui.css'
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' })
 
