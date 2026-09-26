@@ -3,8 +3,10 @@ import { AppShell } from '@/components/app-shell'
 import { createFinding, deleteFinding, deleteFindingDocument, updateFinding } from '@/lib/actions/knowledge'
 import { SUPABASE_URL } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
+import type { Database } from '@/lib/database.types'
 
 type Params = { opd?: string }
+type FindingDocument = Database['public']['Tables']['opd_finding_documents']['Row']
 
 function todayMakassar() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Makassar', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
@@ -49,7 +51,7 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
     : { data: [], error: null }
   if (documentError) throw new Error(documentError.message)
 
-  const documentsByFinding = new Map<number, NonNullable<typeof documents>>()
+  const documentsByFinding = new Map<number, FindingDocument[]>()
   for (const document of documents ?? []) {
     const list = documentsByFinding.get(document.finding_id) ?? []
     list.push(document)
