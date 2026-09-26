@@ -24,9 +24,9 @@ export default async function PengaturanPage() {
       <div className="section-heading"><p className="eyebrow">KEAMANAN</p><h2>PIN Pengaturan</h2></div>
       <div className="settings-grid settings-grid-two">
         <form action={changeAdminPin} className="panel form-card compact-form">
-          <h3>Ganti PIN</h3><p className="muted-line">PIN terdiri dari 6 sampai 8 angka. Mengganti PIN akan mencabut seluruh sesi edit aktif.</p>
-          <label>PIN Baru<input name="new_pin" type="password" inputMode="numeric" pattern="[0-9]{6,8}" minLength={6} maxLength={8} autoComplete="new-password" required /></label>
-          <label>Konfirmasi PIN<input name="confirm_pin" type="password" inputMode="numeric" pattern="[0-9]{6,8}" minLength={6} maxLength={8} autoComplete="new-password" required /></label>
+          <h3>Ganti PIN</h3><p className="muted-line">PIN terdiri dari 5 sampai 8 angka. Mengganti PIN akan mencabut seluruh sesi edit aktif.</p>
+          <label>PIN Baru<input name="new_pin" type="password" inputMode="numeric" pattern="[0-9]{5,8}" minLength={5} maxLength={8} autoComplete="new-password" required /></label>
+          <label>Konfirmasi PIN<input name="confirm_pin" type="password" inputMode="numeric" pattern="[0-9]{5,8}" minLength={5} maxLength={8} autoComplete="new-password" required /></label>
           <button className="primary-button" type="submit">Ganti PIN & Keluar</button>
         </form>
         <form action={migrateLegacyTeamAssets} className="panel migration-card">
