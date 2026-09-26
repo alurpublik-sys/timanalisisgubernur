@@ -3,35 +3,25 @@
 import { useEffect, useRef } from 'react'
 
 export function DashboardCursor() {
-  const dotRef = useRef<HTMLDivElement>(null)
   const ringRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const finePointer = window.matchMedia('(pointer: fine) and (hover: hover)')
     if (!finePointer.matches) return
 
-    let targetX = window.innerWidth / 2
-    let targetY = window.innerHeight / 2
-    let ringX = targetX
-    let ringY = targetY
-    let frame = 0
-
-    const dot = dotRef.current
     const ring = ringRef.current
-    if (!dot || !ring) return
+    if (!ring) return
 
     const onMove = (event: MouseEvent) => {
-      targetX = event.clientX
-      targetY = event.clientY
-      dot.style.transform = `translate3d(${targetX}px,${targetY}px,0)`
+      // Keep the halo locked to the browser cursor hotspot.
+      // Smoothness comes from hover/size transitions, not positional lag.
+      ring.style.transform = `translate3d(${event.clientX}px,${event.clientY}px,0)`
       document.documentElement.classList.add('dashboard-pointer-live')
     }
 
-    const animate = () => {
-      ringX += (targetX - ringX) * 0.17
-      ringY += (targetY - ringY) * 0.17
-      ring.style.transform = `translate3d(${ringX}px,${ringY}px,0)`
-      frame = requestAnimationFrame(animate)
+    const onWindowLeave = () => {
+      document.documentElement.classList.remove('dashboard-pointer-live')
+      ring.classList.remove('is-active')
     }
 
     const targets = Array.from(document.querySelectorAll<HTMLElement>(
@@ -40,25 +30,25 @@ export function DashboardCursor() {
 
     const enter = (event: Event) => {
       ring.classList.add('is-active')
-      const element = event.currentTarget as HTMLElement
-      element.classList.add('cursor-target-active')
+      ;(event.currentTarget as HTMLElement).classList.add('cursor-target-active')
     }
+
     const leave = (event: Event) => {
       ring.classList.remove('is-active')
-      const element = event.currentTarget as HTMLElement
-      element.classList.remove('cursor-target-active')
+      ;(event.currentTarget as HTMLElement).classList.remove('cursor-target-active')
     }
 
     targets.forEach((target) => {
       target.addEventListener('mouseenter', enter)
       target.addEventListener('mouseleave', leave)
     })
+
     window.addEventListener('mousemove', onMove, { passive: true })
-    frame = requestAnimationFrame(animate)
+    document.documentElement.addEventListener('mouseleave', onWindowLeave)
 
     return () => {
-      cancelAnimationFrame(frame)
       window.removeEventListener('mousemove', onMove)
+      document.documentElement.removeEventListener('mouseleave', onWindowLeave)
       targets.forEach((target) => {
         target.removeEventListener('mouseenter', enter)
         target.removeEventListener('mouseleave', leave)
@@ -68,8 +58,5 @@ export function DashboardCursor() {
     }
   }, [])
 
-  return <>
-    <div ref={ringRef} className="dashboard-cursor-ring" aria-hidden />
-    <div ref={dotRef} className="dashboard-cursor-dot" aria-hidden />
-  </>
+  return <div ref={ringRef} className="dashboard-cursor-ring" aria-hidden />
 }
