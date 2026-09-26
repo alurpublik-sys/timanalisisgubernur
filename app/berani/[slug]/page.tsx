@@ -48,14 +48,16 @@ function formatCell(column: string, value: Json | undefined) {
 }
 
 function fileKind(name: string, kind?: string | null) {
-  const raw = (kind || name.split('.').pop() || 'file').toLowerCase()
-  if (raw.includes('present') || raw === 'ppt' || raw === 'pptx' || raw === 'powerpoint') return 'PPT'
-  if (raw.includes('excel') || raw === 'xls' || raw === 'xlsx') return 'XLS'
-  if (raw.includes('word') || raw === 'doc' || raw === 'docx') return 'DOC'
-  if (raw.includes('image') || ['png','jpg','jpeg','webp'].includes(raw)) return 'IMG'
-  if (raw === 'csv') return 'CSV'
-  if (raw === 'pdf') return 'PDF'
-  return raw.slice(0, 4).toUpperCase()
+  const rawKind = (kind || '').toLowerCase()
+  const extension = (name.split('.').pop() || '').toLowerCase()
+  const values = [rawKind, extension].filter(Boolean)
+  if (values.some((raw) => raw.includes('present') || raw === 'ppt' || raw === 'pptx' || raw === 'powerpoint')) return 'PPT'
+  if (values.some((raw) => raw.includes('excel') || raw === 'xls' || raw === 'xlsx')) return 'XLS'
+  if (values.some((raw) => raw.includes('word') || raw === 'doc' || raw === 'docx')) return 'DOC'
+  if (values.some((raw) => raw.includes('image') || ['png','jpg','jpeg','webp'].includes(raw))) return 'IMG'
+  if (values.includes('csv')) return 'CSV'
+  if (values.includes('pdf')) return 'PDF'
+  return (extension || rawKind || 'file').slice(0, 4).toUpperCase()
 }
 
 function fileTypeLabel(name: string, kind?: string | null) {
