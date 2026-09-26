@@ -15,7 +15,15 @@ export function ProcessedBeraniSection({ title, type, payload }: Props) {
   if(type==='stat_grid'){ const items=array(data.items).map(object); const hospitals=array(data.hospitals); return <section className="processed-section panel"><div className="processed-section-head"><div><p className="eyebrow">KAPASITAS LAYANAN</p><h2>{title}</h2></div>{text(data.subtitle)?<span>{text(data.subtitle)}</span>:null}</div><div className="processed-stat-grid">{items.map((item,index)=><article key={index}><span>{text(item.icon)}</span><strong>{text(item.value)}</strong><small>{text(item.label)}</small></article>)}</div>{hospitals.length?<details className="processed-details"><summary>Lihat daftar RS layanan TBC RO ({hospitals.length})</summary><div className="hospital-chip-grid">{hospitals.map((name,index)=><span key={index}>{text(name)}</span>)}</div></details>:null}</section> }
   if(type==='trend'){ const series=array(data.series).map(object); return <section className="processed-section panel"><div className="processed-section-head"><div><p className="eyebrow">TREN INDIKATOR</p><h2>{title}</h2></div></div><div className="trend-grid">{series.map((serie,index)=><article className="trend-card" key={index}><h3>{text(serie.label)}</h3><div className="trend-values">{array(serie.values).map((entry,subIndex)=>{const value=object(entry); return <div key={subIndex}><span>{text(value.period)}</span><strong>{text(value.value)}{text(serie.unit)}</strong></div>})}</div></article>)}</div>{text(data.periodNote)?<p className="processed-note">{text(data.periodNote)}</p>:null}</section> }
   if(type==='facts'){ const items=array(data.items).map(object); return <section className="processed-section panel"><div className="processed-section-head"><div><p className="eyebrow">SOROTAN</p><h2>{title}</h2></div></div><div className="processed-fact-grid">{items.map((item,index)=><article key={index}><span>{String(index+1).padStart(2,'0')}</span><div><h3>{text(item.title)}</h3><p>{text(item.detail)}</p></div></article>)}</div></section> }
-  if(type==='text'){ return <section className="processed-section panel document-text-panel"><p className="eyebrow">RINGKASAN DOKUMEN</p><h2>{title}</h2><p>{text(data.text)}</p></section> }
+  if(type==='text'){
+    const full=text(data.text)
+    const preview=full.length>1800?`${full.slice(0,1800).trim()}…`:full
+    return <section className="processed-section panel document-text-panel">
+      <div className="processed-section-head"><div><p className="eyebrow">DOKUMEN TEROLAH</p><h2>{title}</h2></div><span>Isi dokumen dibaca otomatis</span></div>
+      <div className="processed-text-preview">{preview}</div>
+      {full.length>1800?<details className="processed-details processed-text-details"><summary>Baca hasil ekstraksi lebih lengkap</summary><div className="processed-text-full">{full}</div></details>:null}
+    </section>
+  }
   if(type==='image'){ const path=text(data.path); const url=path?`${SUPABASE_URL}/storage/v1/object/public/berani-documents/${encodeURI(path)}`:''; return <section className="processed-section panel document-image-panel"><p className="eyebrow">PREVIEW VISUAL</p><h2>{title}</h2>{url?<img src={url} alt={text(data.caption)||title} className="processed-image-preview"/>:null}</section> }
   return null
 }
