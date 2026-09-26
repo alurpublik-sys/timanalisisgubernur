@@ -24,5 +24,6 @@ export function getTeamPhotoUrl(row: { photo_path?: string | null; photo_url?: s
   const source = row.photo_url || row.link_foto
   const id = driveFileId(source)
   if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1200`
+  if (source?.startsWith('/team/')) return `${source}?v=20260926`
   return source || null
 }
