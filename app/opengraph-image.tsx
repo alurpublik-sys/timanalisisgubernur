@@ -34,7 +34,7 @@ export default function OpenGraphImage() {
 
         <div style={{ flex:1, padding:'24px 26px', display:'flex', flexDirection:'column', gap:14 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <div>
+            <div style={{ display:'flex', flexDirection:'column' }}>
               <div style={{ fontSize:7, fontWeight:900, letterSpacing:2, color:'#7a8fa1' }}>TIM ANALISIS DAN KOMUNIKASI STRATEGIS (INDEPENDEN)</div>
               <div style={{ marginTop:4, fontSize:24, fontWeight:900, letterSpacing:-1 }}>Dashboard Strategis</div>
             </div>
