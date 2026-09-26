@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
+import { DashboardCursor } from '@/components/dashboard-cursor'
+import { getAuthContext } from '@/lib/auth'
 import { APP_NAME, APP_TAGLINE, GOVERNOR_PHOTO, VICE_GOVERNOR_PHOTO } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
 
@@ -18,7 +20,7 @@ function dateLabel(value: string) {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient(null)
+  const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
   const [
     { data: overviewRow },
     { data: recentBerani },
@@ -49,7 +51,9 @@ export default async function DashboardPage() {
   ] as const
 
   return (
-    <AppShell active="/dashboard" title="Dashboard Strategis">
+    <AppShell active="/dashboard" title="Dashboard Strategis" adminMode={Boolean(user)}>
+      <DashboardCursor />
+      <div className="dashboard-cursor-zone">
       <section className="executive-hero dual-leader-hero">
         <div className="hero-copy">
           <p className="eyebrow hero-eyebrow">INDEPENDENT STRATEGIC ANALYSIS</p>
@@ -142,6 +146,7 @@ export default async function DashboardPage() {
           </div>
         </article>
       </section>
+      </div>
     </AppShell>
   )
 }
