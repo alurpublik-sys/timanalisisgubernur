@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { requireActionUser } from '@/lib/auth'
 
 const STATUSES = ['Draft', 'Perlu Verifikasi', 'Siap Dibagikan'] as const
 
@@ -61,7 +61,7 @@ function refresh() {
 }
 
 export async function createContentReference(fd: FormData) {
-  const supabase = await createClient(null)
+  const supabase = (await requireActionUser(['admin'])).supabase
   const { error } = await supabase.from('content_references').insert({
     opd_name: required(fd, 'opd_name', 'Nama OPD', 300),
     title: required(fd, 'title', 'Judul program', 300),
@@ -79,7 +79,7 @@ export async function createContentReference(fd: FormData) {
 }
 
 export async function updateContentReference(fd: FormData) {
-  const supabase = await createClient(null)
+  const supabase = (await requireActionUser(['admin'])).supabase
   const id = idValue(fd, 'id', 'ID referensi')
   const { error } = await supabase.from('content_references').update({
     opd_name: required(fd, 'opd_name', 'Nama OPD', 300),
@@ -98,7 +98,7 @@ export async function updateContentReference(fd: FormData) {
 }
 
 export async function deleteContentReference(fd: FormData) {
-  const supabase = await createClient(null)
+  const supabase = (await requireActionUser(['admin'])).supabase
   const id = idValue(fd, 'id', 'ID referensi')
   const { error } = await supabase.from('content_references').delete().eq('id', id)
   if (error) throw new Error(error.message)
