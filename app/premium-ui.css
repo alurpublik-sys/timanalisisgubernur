@@ -85,3 +85,9 @@
 .processed-text-preview,.processed-text-full{white-space:pre-wrap;color:#49657b;font-size:10px;line-height:1.8}
 .processed-text-preview{padding:15px;border:1px solid #e4ebf0;border-radius:14px;background:linear-gradient(145deg,#fafcfd,#f3f7f9)}
 .processed-text-details{margin-top:10px}.processed-text-full{margin-top:10px;padding:14px;border-radius:13px;background:#f8fafb;max-height:460px;overflow:auto}
+
+/* Premium app-mark presentation */
+.brand-icon-wrap{position:relative;overflow:visible!important;border:0!important;background:transparent!important;box-shadow:none!important}
+.brand-icon-wrap:after{content:"";position:absolute;inset:8px;border-radius:16px;background:rgba(53,112,157,.18);filter:blur(13px);z-index:-1}
+.brand-app-icon{border-radius:17px!important;box-shadow:0 15px 30px -18px rgba(0,12,28,.72),0 0 0 1px rgba(255,255,255,.08);transform:translateZ(0)}
+.strategic-brand:hover .brand-app-icon{transform:translateY(-1px) scale(1.015)}
