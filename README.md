@@ -6,8 +6,9 @@ Aplikasi full-stack Next.js + Supabase untuk monitoring kunjungan OPD, media, da
 
 - Next.js App Router + TypeScript
 - Supabase PostgreSQL + Realtime
-- Modul operasional dapat dibuka tanpa login umum
-- Pengaturan administrator dilindungi PIN server-side
+- Dashboard, Kunjungan OPD, Media Monitor, 9 BERANI, Referensi Konten, dan Tim Analisis dapat dibaca tanpa login umum
+- Temuan OPD hanya dapat dibuka setelah PIN administrator tervalidasi
+- Mode edit administrator dilindungi PIN server-side dan berlaku lintas fitur
 - Sesi admin memakai token acak di cookie HTTP-only
 - Supabase Storage untuk dokumen 9 BERANI, lampiran Temuan OPD, notulensi, foto, dan CV
 - GitHub CI menjalankan migration validation, architecture guard, typecheck, build, dan runtime smoke test
@@ -68,4 +69,4 @@ npm run build
 
 Supabase project ref: `suiiaiuxkhdsqufswpfv`.
 
-Migration berada di `supabase/migrations/`. Tabel operasional menggunakan RLS dan Pengaturan memakai sesi PIN yang divalidasi di database.
+Migration berada di `supabase/migrations/`. Operasi tulis Kunjungan OPD, Media Monitor, 9 BERANI, Temuan OPD, Referensi Konten, dan Pengaturan memakai sesi PIN yang divalidasi di database.
