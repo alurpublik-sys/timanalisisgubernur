@@ -35,7 +35,7 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
     ...(documents ?? []).map((document) => ({ label: document.title || document.file_name, url: notulenUrl(document.file_path) || '#', type: 'PDF' })),
   ]
 
-  return <AppShell active="/kunjungan" title="Detail Kunjungan" adminMode={Boolean(user)}>
+  return <AppShell active="/kunjungan" title="Detail Kunjungan" adminMode={Boolean(user)} editReturnTo={`/kunjungan/${visit.id}`}>
     <div className="breadcrumb-line"><Link href="/kunjungan">Kunjungan OPD</Link><span>/</span><strong>{visit.nama_opd}</strong></div>
 
     <section className="visit-detail-hero panel">
