@@ -25,9 +25,9 @@ export async function getAuthContext() {
   return { supabase, user: PIN_ADMIN_USER, profile: PIN_ADMIN_PROFILE }
 }
 
-export async function requireUser() {
+export async function requireUser(returnTo = '/pengaturan') {
   const context = await getAuthContext()
-  if (!context.user || !context.profile || !context.supabase) redirect('/login')
+  if (!context.user || !context.profile || !context.supabase) redirect(`/login?next=${encodeURIComponent(returnTo)}`)
   return context as {
     supabase: Awaited<ReturnType<typeof createClient>>
     user: typeof PIN_ADMIN_USER
