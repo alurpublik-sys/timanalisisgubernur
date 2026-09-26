@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
+import { DashboardCursor } from '@/components/dashboard-cursor'
+import { getAuthContext } from '@/lib/auth'
 import { APP_NAME, APP_TAGLINE, GOVERNOR_PHOTO, VICE_GOVERNOR_PHOTO } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
 
@@ -18,7 +20,9 @@ function dateLabel(value: string) {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient(null)
+  const auth = await getAuthContext()
+  const supabase = auth.supabase ?? await createClient(null)
+  const user = auth.user
   const [
     { data: overviewRow },
     { data: recentBerani },
@@ -43,13 +47,15 @@ export default async function DashboardPage() {
     ['Kunjungan OPD', overview.total_kunjungan ?? 0, '/kunjungan', 'Audiensi, notulensi & dokumen'],
     ['Media Monitor', overview.total_media ?? 0, '/media-monitor', 'Berita & sentimen publik'],
     ['9 BERANI', beraniPrograms?.length ?? 0, '/berani', 'Pusat data program unggulan'],
-    ['Temuan OPD', findingCount ?? 0, '/temuan-opd', 'Temuan menarik lintas OPD'],
+    ['Temuan OPD', user ? (findingCount ?? 0) : 'PIN', '/temuan-opd', user ? 'Temuan menarik lintas OPD' : 'Akses dilindungi PIN'],
     ['Referensi Konten', referenceCount ?? 0, '/referensi-konten', 'Bahan informasi berbasis sumber'],
     ['Tim Analisis', overview.total_tim ?? 0, '/tim-analisis', 'Direktori tim independen'],
   ] as const
 
   return (
-    <AppShell active="/dashboard" title="Dashboard Strategis">
+    <AppShell active="/dashboard" title="Dashboard Strategis" adminMode={Boolean(user)}>
+      <DashboardCursor />
+      <div className="dashboard-cursor-zone">
       <section className="executive-hero dual-leader-hero">
         <div className="hero-copy">
           <p className="eyebrow hero-eyebrow">INDEPENDENT STRATEGIC ANALYSIS</p>
@@ -142,6 +148,7 @@ export default async function DashboardPage() {
           </div>
         </article>
       </section>
+      </div>
     </AppShell>
   )
 }

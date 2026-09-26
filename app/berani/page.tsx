@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
+import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 
 function dateLabel(value?: string | null) {
@@ -8,7 +9,7 @@ function dateLabel(value?: string | null) {
 }
 
 export default async function BeraniPage() {
-  const supabase = await createClient(null)
+  const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
   const [{ data: programs, error: programError }, { data: updates, error: updateError }] = await Promise.all([
     supabase.from('berani_programs').select('*').eq('active', true).order('sort_order'),
     supabase.from('berani_updates').select('id,program_id,title,opd_name,period_label,row_count,created_at').order('created_at', { ascending: false }).limit(200),
@@ -23,12 +24,12 @@ export default async function BeraniPage() {
     if (!latest.has(update.program_id)) latest.set(update.program_id, update)
   }
 
-  return <AppShell active="/berani" title="9 BERANI">
+  return <AppShell active="/berani" title="9 BERANI" adminMode={Boolean(user)}>
     <section className="knowledge-hero panel">
       <div>
         <p className="eyebrow">PUSAT DATA PROGRAM</p>
         <h2>Update terbaru 9 BERANI dalam satu tempat.</h2>
-        <p>Pilih program untuk melihat pembaruan, dokumen sumber, dan tabel data terbaru. Setiap program dapat menerima dokumen PDF, Excel, atau Word.</p>
+        <p>Pilih program untuk melihat pembaruan, dokumen sumber, dan tabel data terbaru. Setiap program dapat menerima PDF, Excel, Word, PowerPoint, CSV, dan foto; data akan diolah ke tampilan yang lebih nyaman dibaca.</p>
       </div>
       <div className="knowledge-hero-stat"><strong>{(programs ?? []).length}</strong><span>program aktif</span></div>
     </section>

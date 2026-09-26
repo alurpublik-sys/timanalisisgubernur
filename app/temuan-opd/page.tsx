@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { createFinding, deleteFinding, deleteFindingDocument, updateFinding } from '@/lib/actions/knowledge'
 import { SUPABASE_URL } from '@/lib/branding'
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/auth'
 import type { Database } from '@/lib/database.types'
 
 type Params = { opd?: string }
@@ -29,7 +29,7 @@ const categories = ['Temuan', 'Positif', 'Perlu Perhatian', 'Potensi', 'Tindak L
 export default async function TemuanOpdPage({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams
   const selectedOpd = String(params.opd || '').trim()
-  const supabase = await createClient(null)
+  const { supabase } = await requireUser('/temuan-opd')
 
   const [{ data: programs, error: programError }, { data: visits, error: visitError }, { data: updates, error: updateError }] = await Promise.all([
     supabase.from('berani_programs').select('id,name').eq('active', true).order('sort_order'),
@@ -65,12 +65,12 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
   ].map((name) => name.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'))
   const programNames = new Map((programs ?? []).map((program) => [program.id, program.name]))
 
-  return <AppShell active="/temuan-opd" title="Temuan OPD">
+  return <AppShell active="/temuan-opd" title="Temuan OPD" adminMode>
     <section className="knowledge-hero panel compact-knowledge-hero">
       <div>
-        <p className="eyebrow">CATATAN INTELIJEN SEDERHANA</p>
+        <p className="eyebrow">RUANG KERJA TERLINDUNGI</p>
         <h2>Satu OPD bisa punya banyak temuan, tanpa dibatasi satu catatan.</h2>
-        <p>Simpan setiap hal menarik sebagai temuan terpisah. Masing-masing temuan dapat dikaitkan ke 9 BERANI dan memiliki beberapa PDF, Excel, atau Word sebagai bukti pendukung.</p>
+        <p>Halaman ini hanya dapat dibuka setelah PIN administrator benar. Setiap OPD dapat memiliki banyak temuan, lampiran, dan keterkaitan dengan 9 BERANI.</p>
       </div>
       <div className="knowledge-hero-stat"><strong>{findings?.length ?? 0}</strong><span>temuan tampil</span></div>
     </section>

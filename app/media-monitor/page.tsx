@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { createMedia } from '@/lib/actions/core'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthContext } from '@/lib/auth'
 
 const PAGE_SIZE = 20
 type Params = { q?: string; sentimen?: string; page?: string }
@@ -13,7 +14,8 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
   const page = Math.max(1, Number(params.page) || 1)
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
-  const supabase = await createClient(null)
+  const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
+  const adminMode = Boolean(user)
 
   let query = supabase.from('media_monitoring').select('*', { count: 'exact' }).order('tanggal', { ascending: false }).order('id', { ascending: false })
   if (q) query = query.or(`judul_berita.ilike.%${q}%,nama_media.ilike.%${q}%,legacy_id.ilike.%${q}%`)
@@ -32,9 +34,9 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
     return `/media-monitor?${p.toString()}`
   }
 
-  return <AppShell active="/media-monitor" title="Media Monitor">
-    <section className="module-grid">
-      <form action={createMedia} className="panel form-card">
+  return <AppShell active="/media-monitor" title="Media Monitor" adminMode={adminMode}>
+    <section className={`module-grid${adminMode ? "" : " read-only-module-grid"}`}>
+      {adminMode ? <form action={createMedia} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">MONITORING MEDIA</p><h2>Tambah Berita</h2></div>
         <label>Judul Berita<input name="judul" required /></label>
         <label>Nama Media<input name="media" /></label>
@@ -42,9 +44,9 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
         <label>Sentimen<select name="sentimen"><option>Positif</option><option>Netral</option><option>Negatif</option></select></label>
         <label>Link Berita<input name="link" type="url" /></label>
         <button className="primary-button" type="submit">Simpan Berita</button>
-      </form>
+      </form> : null}
 
-      <section className="panel table-panel">
+      <section className="panel table-panel premium-table-panel">
         <div className="section-heading table-heading-with-filter">
           <div><p className="eyebrow">MONITORING</p><h2>Media Terkini</h2><p className="muted-line">{total} berita ditemukan</p></div>
           <form method="get" className="filter-form compact-filter">
@@ -54,7 +56,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
             {(q || sentimen) ? <Link className="secondary-button" href="/media-monitor">Reset</Link> : null}
           </form>
         </div>
-        <div className="table-scroll"><table className="data-table"><thead><tr><th>Tanggal / ID</th><th>Berita</th><th>Media</th><th>Sentimen</th><th>Link</th></tr></thead><tbody>
+        <div className="table-scroll premium-table-scroll"><table className="data-table premium-table"><thead><tr><th>Tanggal / ID</th><th>Berita</th><th>Media</th><th>Sentimen</th><th>Link</th></tr></thead><tbody>
           {(rows ?? []).map((row) => <tr key={row.id}><td><b>{row.tanggal}</b><small>{row.legacy_id || row.kode}</small></td><td><b>{row.judul_berita}</b></td><td>{row.nama_media || '-'}</td><td><span className="status-pill">{row.sentimen || '-'}</span></td><td>{row.link_berita ? <a className="table-link" href={row.link_berita} target="_blank" rel="noreferrer">Buka</a> : '-'}</td></tr>)}
           {(rows ?? []).length === 0 ? <tr><td colSpan={5} className="empty-cell">Tidak ada data media yang cocok.</td></tr> : null}
         </tbody></table></div>

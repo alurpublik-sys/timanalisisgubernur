@@ -48,7 +48,7 @@ function Navigation({ active, onNavigate }: { active: string; onNavigate: (href:
               <span className="nav-glyph" aria-hidden>{glyph}</span>
               <span className="nav-label">{label}</span>
             </span>
-            {href === '/pengaturan' ? <small className="nav-lock">PIN</small> : null}
+            {(href === '/pengaturan' || href === '/temuan-opd') ? <small className="nav-lock">PIN</small> : null}
           </Link>
         )
       })}
@@ -56,7 +56,7 @@ function Navigation({ active, onNavigate }: { active: string; onNavigate: (href:
   )
 }
 
-export function AppShell({ active, title, children }: { active: string; title: string; children: React.ReactNode }) {
+export function AppShell({ active, title, children, adminMode = false, editReturnTo }: { active: string; title: string; children: React.ReactNode; adminMode?: boolean; editReturnTo?: string }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [navigating, setNavigating] = useState(false)
 
@@ -125,7 +125,7 @@ export function AppShell({ active, title, children }: { active: string; title: s
             <div className="mobile-drawer-nav">
               <Navigation active={active} onNavigate={beginNavigation} />
             </div>
-            <div className="mobile-menu-note">Workspace independen. Pengaturan dilindungi PIN administrator.</div>
+            <div className="mobile-menu-note">Workspace independen. Mode edit dan Temuan OPD dilindungi PIN administrator.</div>
           </aside>
         </div>
       ) : null}
@@ -136,7 +136,18 @@ export function AppShell({ active, title, children }: { active: string; title: s
             <p className="eyebrow">TIM ANALISIS DAN KOMUNIKASI STRATEGIS (INDEPENDEN)</p>
             <h1>{title}</h1>
           </div>
-          <div className="topbar-badge"><span className="online-dot" /> Sistem Aktif</div>
+          <div className="topbar-actions">
+            <Link
+              className={`admin-mode-chip${adminMode ? ' is-active' : ''}`}
+              href={adminMode ? '/pengaturan' : `/login?next=${encodeURIComponent(editReturnTo || active)}`}
+              title={adminMode ? 'Mode edit aktif' : 'Masuk untuk mengedit'}
+              aria-label={adminMode ? 'Mode edit aktif' : 'Masuk untuk mengedit'}
+            >
+              <span aria-hidden>{adminMode ? '✎' : '⌁'}</span>
+              <small>{adminMode ? 'Edit aktif' : 'Edit'}</small>
+            </Link>
+            <div className="topbar-badge"><span className="online-dot" /> Sistem Aktif</div>
+          </div>
         </header>
         <div className="route-stage" key={active} aria-busy={navigating}>{children}</div>
       </main>

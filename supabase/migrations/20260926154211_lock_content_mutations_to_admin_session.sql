@@ -1,0 +1,155 @@
+create or replace function private.ah_admin_change_pin_impl(p_new_pin text)
+returns boolean
+language plpgsql
+security definer
+set search_path = 'pg_catalog', 'private', 'extensions'
+as $$
+begin
+  if not private.ah_admin_session_valid() then
+    raise exception 'Sesi admin tidak valid.' using errcode = '42501';
+  end if;
+  if p_new_pin !~ '^[0-9]{6,8}$' then
+    raise exception 'PIN baru harus terdiri dari 6 sampai 8 angka.' using errcode = '22023';
+  end if;
+
+  update private.ah_admin_config
+  set pin_hash = extensions.crypt(p_new_pin, extensions.gen_salt('bf', 12))
+  where singleton = true;
+
+  delete from private.ah_admin_sessions;
+  delete from private.ah_admin_attempts;
+  return true;
+end;
+$$;
+
+create or replace function private.ah_admin_login_impl(p_pin text)
+returns table(success boolean, session_token text, expires_at timestamptz, error_code text)
+language plpgsql
+security definer
+set search_path = 'pg_catalog', 'private', 'extensions'
+as $$
+declare
+  v_fingerprint constant text := 'global';
+  v_attempt private.ah_admin_attempts%rowtype;
+  v_now timestamptz := now();
+  v_pin_hash text;
+  v_pin_version bigint;
+  v_still_in_window boolean;
+  v_next_count integer;
+  v_blocked_until timestamptz;
+  v_token text;
+  v_expires timestamptz;
+begin
+  select * into v_attempt from private.ah_admin_attempts where fingerprint_hash = v_fingerprint;
+
+  if found and v_attempt.blocked_until is not null and v_attempt.blocked_until > v_now then
+    success := false; session_token := null; expires_at := null; error_code := 'rate_limited';
+    return next; return;
+  end if;
+
+  select pin_hash, version into v_pin_hash, v_pin_version
+  from private.ah_admin_config where singleton = true;
+
+  if v_pin_hash is null then
+    success := false; session_token := null; expires_at := null; error_code := 'configuration_missing';
+    return next; return;
+  end if;
+
+  if p_pin !~ '^[0-9]{6,8}$' or extensions.crypt(p_pin, v_pin_hash) <> v_pin_hash then
+    v_still_in_window := found and (v_now - v_attempt.window_started_at) < interval '15 minutes';
+    v_next_count := case when v_still_in_window then v_attempt.attempt_count + 1 else 1 end;
+    v_blocked_until := case when v_next_count >= 5 then v_now + interval '15 minutes' else null end;
+
+    insert into private.ah_admin_attempts(fingerprint_hash,attempt_count,window_started_at,blocked_until,updated_at)
+    values (
+      v_fingerprint,
+      v_next_count,
+      case when v_still_in_window then v_attempt.window_started_at else v_now end,
+      v_blocked_until,
+      v_now
+    )
+    on conflict (fingerprint_hash) do update set
+      attempt_count=excluded.attempt_count,
+      window_started_at=excluded.window_started_at,
+      blocked_until=excluded.blocked_until,
+      updated_at=excluded.updated_at;
+
+    success := false; session_token := null; expires_at := null;
+    error_code := case when v_blocked_until is not null then 'rate_limited' else 'invalid_pin' end;
+    return next; return;
+  end if;
+
+  delete from private.ah_admin_attempts where fingerprint_hash=v_fingerprint;
+  delete from private.ah_admin_sessions s where s.expires_at <= v_now;
+
+  v_token := encode(extensions.gen_random_bytes(32), 'hex');
+  v_expires := v_now + interval '12 hours';
+
+  insert into private.ah_admin_sessions(token_hash,pin_version,expires_at)
+  values (extensions.digest(v_token,'sha256'),v_pin_version,v_expires);
+
+  success := true; session_token := v_token; expires_at := v_expires; error_code := null;
+  return next;
+end;
+$$;
+
+do $$
+declare
+  t text;
+begin
+  foreach t in array array[
+    'kunjungan','kunjungan_documents',
+    'berani_updates','berani_update_rows','berani_update_documents','berani_document_rows','berani_update_sections',
+    'opd_findings','opd_finding_documents','content_references'
+  ]
+  loop
+    execute format('drop policy if exists public_insert on public.%I',t);
+    execute format('drop policy if exists public_update on public.%I',t);
+    execute format('drop policy if exists public_delete on public.%I',t);
+    execute format('create policy public_insert on public.%I for insert to anon with check (public.ah_admin_session_check())',t);
+    execute format('create policy public_update on public.%I for update to anon using (public.ah_admin_session_check()) with check (public.ah_admin_session_check())',t);
+    execute format('create policy public_delete on public.%I for delete to anon using (public.ah_admin_session_check())',t);
+  end loop;
+end $$;
+
+drop policy if exists ah_berani_documents_insert on storage.objects;
+create policy ah_berani_documents_insert on storage.objects
+for insert to anon
+with check (
+  bucket_id='berani-documents'
+  and public.ah_admin_session_check()
+  and lower(storage.extension(name)) in ('pdf','xlsx','xls','docx','doc','pptx','ppt','csv','png','jpg','jpeg','webp')
+);
+
+drop policy if exists ah_berani_documents_delete on storage.objects;
+create policy ah_berani_documents_delete on storage.objects
+for delete to anon
+using (bucket_id='berani-documents' and public.ah_admin_session_check());
+
+drop policy if exists ah_finding_documents_insert on storage.objects;
+create policy ah_finding_documents_insert on storage.objects
+for insert to anon
+with check (
+  bucket_id='finding-documents'
+  and public.ah_admin_session_check()
+  and lower(storage.extension(name)) in ('pdf','xlsx','xls','docx','doc','pptx','ppt','csv','png','jpg','jpeg','webp')
+);
+
+drop policy if exists ah_finding_documents_delete on storage.objects;
+create policy ah_finding_documents_delete on storage.objects
+for delete to anon
+using (bucket_id='finding-documents' and public.ah_admin_session_check());
+
+drop policy if exists ah_kunjungan_notulensi_insert on storage.objects;
+create policy ah_kunjungan_notulensi_insert on storage.objects
+for insert to anon
+with check (
+  bucket_id='kunjungan-notulensi'
+  and public.ah_admin_session_check()
+  and lower(storage.extension(name))='pdf'
+);
+
+drop policy if exists ah_kunjungan_notulensi_delete on storage.objects;
+create policy ah_kunjungan_notulensi_delete on storage.objects
+for delete to anon
+using (bucket_id='kunjungan-notulensi' and public.ah_admin_session_check());

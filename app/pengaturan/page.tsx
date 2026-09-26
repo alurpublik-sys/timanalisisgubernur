@@ -2,16 +2,17 @@ import Image from 'next/image'
 import { AppShell } from '@/components/app-shell'
 import { changeAdminPin } from '@/lib/actions/pin-auth'
 import { addTeamMember, migrateLegacyTeamAssets, updateTeamMember } from '@/lib/actions/settings'
+import { createKunjungan } from '@/lib/actions/core'
 import { requireUser } from '@/lib/auth'
 import { getTeamPhotoUrl } from '@/lib/branding'
 
 export default async function PengaturanPage() {
-  const { supabase } = await requireUser()
+  const { supabase } = await requireUser('/pengaturan')
   const { data: team, error } = await supabase.from('tim_analisis').select('*').order('sort_order').order('id')
   if (error) throw new Error(error.message)
 
-  return <AppShell active="/pengaturan" title="Pengaturan">
-    <div className="notice notice-success">Pengaturan adalah satu-satunya area yang dilindungi PIN. Modul operasional Tim Analisis dan Komunikasi Strategis tetap dapat dibuka dan digunakan tanpa login.</div>
+  return <AppShell active="/pengaturan" title="Pengaturan" adminMode>
+    <div className="notice notice-success">Mode edit administrator sedang aktif. PIN yang sama melindungi Pengaturan, Temuan OPD, penambahan/edit Referensi Konten, pengelolaan 9 BERANI, dan penambahan Kunjungan OPD.</div>
 
     <section className="settings-overview-grid">
       <article className="panel settings-highlight"><p className="eyebrow">KEAMANAN</p><h2>PIN Administrator</h2><p>Gunakan PIN khusus untuk mengelola profil tim, file, dan konfigurasi sensitif.</p></article>
@@ -23,9 +24,9 @@ export default async function PengaturanPage() {
       <div className="section-heading"><p className="eyebrow">KEAMANAN</p><h2>PIN Pengaturan</h2></div>
       <div className="settings-grid settings-grid-two">
         <form action={changeAdminPin} className="panel form-card compact-form">
-          <h3>Ganti PIN</h3><p className="muted-line">PIN harus terdiri dari tepat 6 angka. Mengganti PIN akan mencabut seluruh sesi pengaturan aktif.</p>
-          <label>PIN Baru<input name="new_pin" type="password" inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete="new-password" required /></label>
-          <label>Konfirmasi PIN<input name="confirm_pin" type="password" inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete="new-password" required /></label>
+          <h3>Ganti PIN</h3><p className="muted-line">PIN terdiri dari 5 sampai 8 angka. Mengganti PIN akan mencabut seluruh sesi edit aktif.</p>
+          <label>PIN Baru<input name="new_pin" type="password" inputMode="numeric" pattern="[0-9]{5,8}" minLength={5} maxLength={8} autoComplete="new-password" required /></label>
+          <label>Konfirmasi PIN<input name="confirm_pin" type="password" inputMode="numeric" pattern="[0-9]{5,8}" minLength={5} maxLength={8} autoComplete="new-password" required /></label>
           <button className="primary-button" type="submit">Ganti PIN & Keluar</button>
         </form>
         <form action={migrateLegacyTeamAssets} className="panel migration-card">
@@ -34,6 +35,23 @@ export default async function PengaturanPage() {
           <button className="secondary-button" type="submit">Migrasikan Aset Lama</button>
         </form>
       </div>
+    </section>
+
+    <section className="settings-section">
+      <div className="section-heading"><p className="eyebrow">KUNJUNGAN OPD</p><h2>Tambah Kunjungan</h2><p className="muted-line">Form penambahan dipusatkan di Pengaturan agar halaman Kunjungan OPD tetap bersih dan fokus untuk membaca notulensi.</p></div>
+      <form action={createKunjungan} className="panel form-card settings-visit-form">
+        <div className="settings-form-grid">
+          <label>Nama OPD<input name="opd" required placeholder="Nama OPD" /></label>
+          <label>Tanggal<input name="tanggal" type="date" required /></label>
+          <label>Pejabat / Narasumber<input name="pejabat" placeholder="Nama pejabat atau narasumber" /></label>
+          <label>Anggota Tim<input name="anggota" placeholder="Nama anggota/peserta" /></label>
+          <label className="settings-field-wide">Topik Pembahasan<textarea name="topik" required placeholder="Topik utama kunjungan" /></label>
+          <label>Status<select name="status" defaultValue="Selesai"><option>Terjadwal</option><option>Selesai</option><option>Ditunda</option></select></label>
+          <label>Google Docs Notulensi<input name="link_notulen" type="url" placeholder="https://docs.google.com/document/..." /></label>
+          <label className="settings-field-wide">PDF Notulensi<input name="notulen_pdf" type="file" accept="application/pdf,.pdf" /><small className="muted-line">Opsional. PDF yang diunggah akan dapat dibuka langsung dari halaman Kunjungan OPD.</small></label>
+        </div>
+        <button className="primary-button" type="submit">Simpan Kunjungan</button>
+      </form>
     </section>
 
     <section className="settings-section">

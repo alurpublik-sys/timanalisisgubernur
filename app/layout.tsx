@@ -8,6 +8,7 @@ import './responsive.css'
 import './knowledge.css'
 import './knowledge-v2.css'
 import './berani-modern.css'
+import './premium-ui.css'
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' })
 
@@ -20,10 +21,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
     shortcut: ['/icon.svg'],
-    apple: ['/apple-icon'],
+    apple: [{ url: '/icon.svg', type: 'image/svg+xml' }],
   },
   openGraph: {
     title: APP_NAME,
+    siteName: APP_NAME,
     description: 'Data · Analisis · Informasi untuk monitoring strategis Sulawesi Tengah.',
     type: 'website',
   },
