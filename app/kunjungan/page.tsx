@@ -93,7 +93,7 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
                     {row.link_notulen ? <a className="note-chip note-gdocs" href={row.link_notulen} target="_blank" rel="noreferrer"><span>G</span> Google Docs</a> : null}
                     {pdf ? <a className="note-chip note-pdf" href={pdf} target="_blank" rel="noreferrer"><span>PDF</span> {row.notulen_pdf_name || 'Notulensi'}</a> : null}
                     {visitDocs.map((document) => <a className="note-chip note-pdf" key={document.id} href={notulenUrl(document.file_path) || '#'} target="_blank" rel="noreferrer"><span>PDF</span> {document.title || document.file_name}</a>)}
-                    {!pdf && row.notulen_pdf_name ? <Link className="note-chip note-summary" href={`/kunjungan/${row.id}`}><span>PDF</span> {row.notulen_pdf_name}</Link> : null}
+                    {!pdf && row.notulen_pdf_name ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi`} target="_blank" rel="noreferrer"><span>PDF</span> {row.notulen_pdf_name}</a> : null}
                     {!row.link_notulen && !pdf && !visitDocs.length && !row.notulen_pdf_name ? <span className="muted-line">Belum ada lampiran</span> : null}
                   </div>
                 </td>
@@ -120,7 +120,7 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
               {row.link_notulen ? <a className="note-chip note-gdocs" href={row.link_notulen} target="_blank" rel="noreferrer"><span>G</span> Google Docs</a> : null}
               {pdf ? <a className="note-chip note-pdf" href={pdf} target="_blank" rel="noreferrer"><span>PDF</span> Notulensi</a> : null}
               {visitDocs.map((document) => <a className="note-chip note-pdf" key={document.id} href={notulenUrl(document.file_path) || '#'} target="_blank" rel="noreferrer"><span>PDF</span> {document.title || 'Lampiran'}</a>)}
-              {!pdf && row.notulen_pdf_name ? <Link className="note-chip note-summary" href={`/kunjungan/${row.id}`}><span>PDF</span> Ringkasan PDF</Link> : null}
+              {!pdf && row.notulen_pdf_name ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi`} target="_blank" rel="noreferrer"><span>PDF</span> Notulensi</a> : null}
             </div>
             <Link className="visit-detail-link" href={`/kunjungan/${row.id}`}>Buka detail & ringkasan <span>→</span></Link>
           </article>
