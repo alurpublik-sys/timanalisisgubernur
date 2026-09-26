@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { importDocument } from '@/lib/document-import'
 import { requireActionUser } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 
 const BERANI_BUCKET = 'berani-documents'
 const FINDING_BUCKET = 'finding-documents'
