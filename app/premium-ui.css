@@ -53,11 +53,11 @@
 .finding-card{transition:transform .18s ease,border-color .18s ease}.finding-card:hover{transform:translateY(-1px);border-color:#cfdee8}
 
 /* Smooth dashboard cursor */
-.dashboard-cursor-ring{display:none;position:fixed;left:0;top:0;z-index:180;pointer-events:none;will-change:transform;opacity:0;transition:opacity .12s ease,width .18s ease,height .18s ease,margin .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}
+.dashboard-cursor-ring{display:none;position:fixed;left:0;top:0;z-index:180;pointer-events:none;transform:translate(-50%,-50%);will-change:left,top;opacity:0;transition:opacity .12s ease,width .16s ease,height .16s ease,background .16s ease,border-color .16s ease,box-shadow .16s ease}
 @media(pointer:fine) and (hover:hover){
-  .dashboard-cursor-ring{display:block;width:28px;height:28px;margin:-14px 0 0 -14px;border:1px solid rgba(73,126,169,.48);border-radius:50%;background:rgba(111,164,205,.045);box-shadow:0 0 0 4px rgba(93,144,185,.025)}
+  .dashboard-cursor-ring{display:block;width:22px;height:22px;border:1px solid rgba(73,126,169,.54);border-radius:50%;background:rgba(111,164,205,.035);box-shadow:0 0 0 3px rgba(93,144,185,.022)}
   .dashboard-pointer-live .dashboard-cursor-ring{opacity:1}
-  .dashboard-cursor-ring.is-active{width:42px;height:42px;margin:-21px 0 0 -21px;background:rgba(93,144,185,.085);border-color:rgba(59,112,155,.68);box-shadow:0 0 0 7px rgba(93,144,185,.035)}
+  .dashboard-cursor-ring.is-active{width:34px;height:34px;background:rgba(93,144,185,.075);border-color:rgba(59,112,155,.72);box-shadow:0 0 0 6px rgba(93,144,185,.03)}
   .dashboard-cursor-zone .cursor-target-active{transform:translateY(-3px)!important;box-shadow:0 24px 52px -38px rgba(24,69,105,.58)!important;border-color:#cadbe7!important}
   .dashboard-cursor-zone .stat-card,.dashboard-cursor-zone .hero-actions a,.dashboard-cursor-zone .quick-link-grid a,.dashboard-cursor-zone .knowledge-dashboard-item,.dashboard-cursor-zone .panel-head>a{transition:transform .2s cubic-bezier(.2,.75,.2,1),box-shadow .2s ease,border-color .2s ease,background .2s ease}
 }
