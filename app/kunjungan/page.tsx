@@ -17,7 +17,7 @@ function displayDate(value: string) {
   return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeZone: 'Asia/Makassar' }).format(new Date(`${value}T00:00:00+08:00`))
 }
 
-function visitCode(row: { id: number; kode: string; legacy_id: string | null }) {
+function visitCode(row: { id: number; kode: string | null; legacy_id: string | null }) {
   return row.legacy_id || row.kode || `OPD-${String(row.id).padStart(3, '0')}`
 }
 
