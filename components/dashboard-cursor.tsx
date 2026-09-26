@@ -25,7 +25,7 @@ export function DashboardCursor() {
     }
 
     const targets = Array.from(document.querySelectorAll<HTMLElement>(
-      '.dashboard-cursor-zone a,.dashboard-cursor-zone button,.dashboard-cursor-zone .stat-card,.dashboard-cursor-zone .panel'
+      '.dashboard-cursor-zone .stat-card,.dashboard-cursor-zone .hero-actions a,.dashboard-cursor-zone .quick-link-grid a,.dashboard-cursor-zone .knowledge-dashboard-item,.dashboard-cursor-zone .panel-head>a'
     ))
 
     const enter = (event: Event) => {
