@@ -1,8 +1,8 @@
 export const APP_NAME = 'Tim Analisis dan Komunikasi Strategis (Independen)'
 export const APP_SHORT_NAME = 'Tim Analisis Strategis'
 export const APP_TAGLINE = 'Data Akurat · Analisis Tajam · Komunikasi Berdampak'
-export const GOVERNOR_PHOTO = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Anwar_Hafid,_Portrait_Governor_of_Central_Sulawesi.png'
-export const VICE_GOVERNOR_PHOTO = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Reny_Lamadjido,_Wakil_Gubernur_Sulteng.png'
+export const GOVERNOR_PHOTO = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Anwar_Hafid,_Portrait_Governor_of_Central_Sulawesi.png?width=700'
+export const VICE_GOVERNOR_PHOTO = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Reny_Lamadjido,_Wakil_Gubernur_Sulteng.png?width=600'
 export const ANWAR_HAFID_PHOTO = GOVERNOR_PHOTO
 export const SUPABASE_URL = 'https://suiiaiuxkhdsqufswpfv.supabase.co'
 export const TEAM_ASSET_BUCKET = 'team-assets'
