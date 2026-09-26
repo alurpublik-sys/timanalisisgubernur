@@ -12,6 +12,10 @@ function notulenPdfUrl(path?: string | null) {
   return `${SUPABASE_URL}/storage/v1/object/public/kunjungan-notulensi/${encodeURI(path)}`
 }
 
+function displayDate(value: string) {
+  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeZone: 'Asia/Makassar' }).format(new Date(`${value}T00:00:00+08:00`))
+}
+
 export default async function KunjunganPage({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams
   const q = String(params.q || '').trim()
@@ -24,11 +28,9 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
   const { data: rows, error } = await query
   if (error) throw new Error(error.message)
 
-  const { data: documents, error: documentError } = await supabase
-    .from('kunjungan_documents')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const { data: documents, error: documentError } = await supabase.from('kunjungan_documents').select('*').order('created_at', { ascending: false })
   if (documentError) throw new Error(documentError.message)
+
   const documentsByVisit = new Map<number, NonNullable<typeof documents>>()
   for (const document of documents ?? []) {
     const items = documentsByVisit.get(document.kunjungan_id) ?? []
@@ -37,7 +39,8 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
   }
 
   return <AppShell active="/kunjungan" title="Kunjungan OPD">
-    <div className="notice notice-info">Setiap kunjungan sekarang dapat memiliki beberapa PDF notulensi/dokumen pendukung. Google Docs tetap dapat dipakai, dan PDF tambahan bisa dimasukkan kapan saja dari riwayat kunjungan.</div>
+    <div className="notice notice-info">Seluruh notulensi yang diberikan telah dimasukkan ke daftar kunjungan. Tanggal yang tidak tersedia atau diminta ditampilkan sebagai agenda September diberi label <b>estimasi</b>; bila dokumen mencantumkan tanggal berbeda, tanggal sumber tetap dicatat.</div>
+
     <section className="module-grid">
       <form action={createKunjungan} className="panel form-card">
         <div className="section-heading"><p className="eyebrow">DATA BARU</p><h2>Catat Kunjungan OPD</h2></div>
@@ -47,8 +50,8 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
         <label>Anggota Tim<input name="anggota" placeholder="Nama anggota/peserta" /></label>
         <label>Topik Pembahasan<textarea name="topik" required /></label>
         <label>Status<select name="status"><option>Terjadwal</option><option>Selesai</option><option>Ditunda</option></select></label>
-        <label>Google Docs Notulensi<input name="link_notulen" type="url" placeholder="https://docs.google.com/document/..." /><small className="muted-line">Opsional. Tetap dapat dipakai bila notulensi dikerjakan di Google Docs.</small></label>
-        <label>Upload PDF Awal<input name="notulen_pdf" type="file" accept="application/pdf,.pdf" /><small className="muted-line">Opsional. Setelah tersimpan, PDF tambahan dapat dimasukkan dari menu Notulensi pada riwayat.</small></label>
+        <label>Google Docs Notulensi<input name="link_notulen" type="url" placeholder="https://docs.google.com/document/..." /></label>
+        <label>Upload PDF Awal<input name="notulen_pdf" type="file" accept="application/pdf,.pdf" /><small className="muted-line">Opsional. PDF tambahan dapat ditambahkan lagi dari riwayat kunjungan.</small></label>
         <button className="primary-button" type="submit">Simpan Kunjungan</button>
       </form>
 
@@ -62,12 +65,18 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
             {(q || status) ? <Link className="secondary-button" href="/kunjungan">Reset</Link> : null}
           </form>
         </div>
+
         <div className="table-scroll"><table className="data-table kunjungan-table"><thead><tr><th>Tgl / ID</th><th>OPD & Pejabat</th><th>Topik</th><th>Status</th><th>Notulensi</th></tr></thead><tbody>
           {(rows ?? []).map((row) => {
             const legacyPdfUrl = notulenPdfUrl(row.notulen_pdf_path)
             const visitDocuments = documentsByVisit.get(row.id) ?? []
             return <tr key={row.id}>
-              <td><b>{row.tanggal}</b><small>{row.legacy_id || row.kode}</small></td>
+              <td className="visit-date-cell">
+                <b>{displayDate(row.tanggal)}</b>
+                <small>{row.legacy_id || row.kode || `OPD-${String(row.id).padStart(3, '0')}`}</small>
+                {row.tanggal_estimasi ? <span className="estimated-date-badge">Estimasi September</span> : null}
+                {row.tanggal_sumber ? <em>{row.tanggal_sumber}</em> : null}
+              </td>
               <td><b>{row.nama_opd}</b><small>{row.pejabat || '-'}</small></td>
               <td>{row.topik}</td>
               <td><span className="status-pill">{row.status}</span></td>
@@ -75,12 +84,18 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
                 <div className="notulensi-links">
                   {row.link_notulen ? <a className="table-link" href={row.link_notulen} target="_blank" rel="noreferrer">Google Docs</a> : null}
                   {legacyPdfUrl ? <a className="table-link" href={legacyPdfUrl} target="_blank" rel="noreferrer">PDF awal{row.notulen_pdf_name ? ` · ${row.notulen_pdf_name}` : ''}</a> : null}
+                  {!legacyPdfUrl && row.notulen_pdf_name ? <span className="source-file-label">Sumber: {row.notulen_pdf_name}</span> : null}
                   {visitDocuments.map((document) => <div className="document-line" key={document.id}>
                     <a className="table-link" href={notulenPdfUrl(document.file_path) || '#'} target="_blank" rel="noreferrer">{document.title} · {document.file_name}</a>
                     <form action={deleteKunjunganDocument}><input type="hidden" name="id" value={document.id} /><button type="submit" className="inline-delete">hapus</button></form>
                   </div>)}
-                  {!row.link_notulen && !legacyPdfUrl && visitDocuments.length === 0 ? <span className="muted-line">Belum ada dokumen.</span> : null}
                 </div>
+
+                {row.notulen_text ? <details className="notulensi-preview">
+                  <summary>Baca ringkasan notulensi</summary>
+                  <p>{row.notulen_text}</p>
+                </details> : null}
+
                 <details className="notulensi-manager">
                   <summary>+ Tambah PDF</summary>
                   <form action={addKunjunganDocument} className="notulensi-add-form">
