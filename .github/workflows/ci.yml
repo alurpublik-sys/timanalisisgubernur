@@ -1,4 +1,4 @@
-name: AH Center CI
+name: Strategic Team CI
 
 on:
   push:
