@@ -48,8 +48,19 @@ function formatCell(column: string, value: Json | undefined) {
 }
 
 function fileKind(name: string, kind?: string | null) {
-  if (kind) return kind.toUpperCase()
-  return name.split('.').pop()?.toUpperCase() || 'FILE'
+  const raw = (kind || name.split('.').pop() || 'file').toLowerCase()
+  if (raw.includes('present') || raw === 'ppt' || raw === 'pptx' || raw === 'powerpoint') return 'PPT'
+  if (raw.includes('excel') || raw === 'xls' || raw === 'xlsx') return 'XLS'
+  if (raw.includes('word') || raw === 'doc' || raw === 'docx') return 'DOC'
+  if (raw.includes('image') || ['png','jpg','jpeg','webp'].includes(raw)) return 'IMG'
+  if (raw === 'csv') return 'CSV'
+  if (raw === 'pdf') return 'PDF'
+  return raw.slice(0, 4).toUpperCase()
+}
+
+function fileTypeLabel(name: string, kind?: string | null) {
+  const code = fileKind(name, kind)
+  return ({ PPT: 'Presentasi', XLS: 'Spreadsheet', DOC: 'Dokumen', IMG: 'Gambar', CSV: 'Data CSV', PDF: 'PDF' } as Record<string, string>)[code] || 'Dokumen'
 }
 
 function mobileTitle(columns: string[], row: Record<string, Json>, index: number) {
@@ -217,17 +228,23 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
           {(documents ?? []).map((doc) => {
             const url = documentUrl(doc.file_path)
             const isImage = Boolean(doc.mime_type?.startsWith('image/'))
+            const kindCode = fileKind(doc.file_name, doc.document_kind)
             return <article className="document-card processed-source" key={doc.id}>
-              <div className="document-icon">{fileKind(doc.file_name, doc.document_kind)}</div>
-              <div className="document-card-copy">
-                <span className="doc-kind">{doc.document_kind || 'dokumen'}</span>
-                <strong>{doc.display_title || doc.file_name}</strong>
-                <span>{doc.row_count ? `${doc.row_count} baris data terstruktur` : doc.extracted_text ? 'Isi dokumen berhasil dibaca' : 'Sumber data tersimpan'}</span>
-                {doc.summary ? <p>{doc.summary.slice(0, 240)}</p> : null}
-                {isImage && url ? <img src={url} alt="" className="image-document-preview" /> : null}
+              <div className="document-card-main">
+                <div className={`document-icon document-icon-${kindCode.toLowerCase()}`}>{kindCode}</div>
+                <div className="document-card-copy">
+                  <div className="document-card-kicker">
+                    <span className="doc-kind">{fileTypeLabel(doc.file_name, doc.document_kind)}</span>
+                    <span className="doc-processed">Terolah</span>
+                  </div>
+                  <strong title={doc.display_title || doc.file_name}>{doc.display_title || doc.file_name}</strong>
+                  <span>{doc.row_count ? `${doc.row_count} baris data terstruktur` : doc.extracted_text ? 'Isi dokumen berhasil dibaca sistem' : 'Sumber data tersimpan'}</span>
+                  {doc.summary ? <p>{doc.summary.slice(0, 190)}</p> : null}
+                </div>
               </div>
+              {isImage && url ? <img src={url} alt="" className="image-document-preview" /> : null}
               <div className="document-card-actions">
-                {url ? <a href={url} target="_blank" rel="noreferrer">Sumber ↗</a> : <span className="muted-line">Sumber unggahan awal</span>}
+                {url ? <a className="document-open-action" href={url} target="_blank" rel="noreferrer"><span>Buka sumber</span><b>↗</b></a> : <span className="document-source-state">Sumber unggahan awal</span>}
                 {adminMode ? <form action={deleteBeraniDocument}>
                   <input type="hidden" name="id" value={doc.id} />
                   <input type="hidden" name="update_id" value={selected.id} />
@@ -237,10 +254,16 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
               </div>
             </article>
           })}
-          {selected.file_path ? <article className="document-card processed-source">
-            <div className="document-icon">{fileKind(selected.file_name || 'FILE')}</div>
-            <div className="document-card-copy"><span className="doc-kind">legacy</span><strong>{selected.file_name || 'Dokumen lama'}</strong><span>Dokumen dari versi sebelumnya</span></div>
-            <a href={documentUrl(selected.file_path) || '#'} target="_blank" rel="noreferrer">Sumber ↗</a>
+          {selected.file_path ? <article className="document-card processed-source legacy-source-card">
+            <div className="document-card-main">
+              <div className="document-icon">{fileKind(selected.file_name || 'FILE')}</div>
+              <div className="document-card-copy">
+                <div className="document-card-kicker"><span className="doc-kind">Dokumen lama</span></div>
+                <strong>{selected.file_name || 'Dokumen lama'}</strong>
+                <span>Sumber dari versi sebelumnya</span>
+              </div>
+            </div>
+            <div className="document-card-actions"><a className="document-open-action" href={documentUrl(selected.file_path) || '#'} target="_blank" rel="noreferrer"><span>Buka sumber</span><b>↗</b></a></div>
           </article> : null}
           {!documents?.length && !selected.file_path ? <div className="empty">Belum ada dokumen sumber untuk update ini.</div> : null}
         </div>
