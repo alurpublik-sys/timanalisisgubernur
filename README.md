@@ -1,15 +1,15 @@
 # Anwar Hafid Strategic Center (AH Center)
 
-AH Center adalah aplikasi full-stack Next.js + Supabase untuk monitoring, analisis isu, policy brief, media, agenda, dan koordinasi Tim Analisis.
+AH Center adalah aplikasi full-stack Next.js + Supabase untuk monitoring kunjungan OPD, analisis isu, media, data 9 BERANI, temuan OPD, referensi informasi publik, dan koordinasi Tim Analisis.
 
 ## Arsitektur
 
 - Next.js App Router + TypeScript
-- Supabase PostgreSQL
+- Supabase PostgreSQL + Realtime
 - Modul operasional dapat dibuka tanpa login umum
 - Pengaturan administrator dilindungi PIN server-side
 - Sesi admin memakai token acak di cookie HTTP-only
-- Supabase Storage untuk aset Tim Analisis
+- Supabase Storage untuk dokumen 9 BERANI, lampiran Temuan OPD, notulensi, foto, dan CV
 - GitHub CI menjalankan migration validation, architecture guard, typecheck, build, dan runtime smoke test
 - Deployment production melalui Vercel
 
@@ -18,20 +18,24 @@ AH Center adalah aplikasi full-stack Next.js + Supabase untuk monitoring, analis
 - Dashboard Strategis
 - Kunjungan OPD
 - Isu Strategis
-- Policy Brief / Rekomendasi
 - Media Monitor
-- Agenda & Tugas
+- 9 BERANI
+- Temuan OPD
+- Informasi & Referensi Konten
 - Tim Analisis
 - Pengaturan
 
-## UX & Performance
+Policy Brief dan Agenda & Tugas tidak lagi ditampilkan sebagai fitur aplikasi. Tabel lama tetap dipertahankan di database sebagai arsip.
 
-- Navigasi responsive untuk desktop, tablet, dan mobile
-- Drawer mobile dengan route feedback yang ringan
-- Route prefetch untuk perpindahan fitur yang cepat
-- Dashboard memakai view agregat `dashboard_overview` agar tidak mengunduh seluruh row hanya untuk ringkasan statistik
-- Foto executive memakai Next.js image optimization
-- Animasi menghormati `prefers-reduced-motion`
+## Knowledge Center
+
+- Satu program 9 BERANI dapat memiliki banyak update dari banyak OPD.
+- Satu update dapat menyimpan banyak PDF, Excel, atau Word.
+- Excel `.xlsx` dibaca menjadi tabel dinamis; dokumen Word dapat diekstrak menjadi teks.
+- Satu OPD dapat memiliki banyak Temuan OPD, dan setiap temuan dapat memiliki banyak lampiran.
+- Referensi Konten memiliki status Draft, Perlu Verifikasi, dan Siap Dibagikan.
+- Mode Bagikan hanya menampilkan informasi yang berstatus Siap Dibagikan.
+- Perubahan Referensi Konten disiarkan melalui Supabase Realtime.
 
 ## Environment
 
