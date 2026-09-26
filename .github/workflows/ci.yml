@@ -2,7 +2,7 @@ name: Strategic Team CI
 
 on:
   push:
-    branches: ["main", "feat/ah-center-fullstack", "feat/admin-lock-premium-ui"]
+    branches: ["main", "feat/ah-center-fullstack", "feat/admin-lock-premium-ui", "feat/ui-polish-round2"]
   pull_request:
     branches: ["main"]
 
