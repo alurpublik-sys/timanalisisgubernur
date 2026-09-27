@@ -21,7 +21,7 @@ export default async function TimPage() {
 
     <section className="team-showcase-grid">
       {(rows ?? []).map((row) => {
-        const photo = row.nama.trim().toLowerCase() === 'adiwarman' ? '/team/adiwarman.jpg?v=20260927' : getTeamPhotoUrl(row)
+        const photo = row.nama.trim().toLowerCase() === 'adiwarman' ? '/team/adiwarman.jpg?v=20260927-2' : getTeamPhotoUrl(row)
         return <article className="team-profile-card" key={row.id}>
           <div className="team-photo-frame">
             {photo ? <Image src={photo} alt={`Foto ${row.nama}`} fill sizes="(max-width: 760px) 100vw, (max-width: 1180px) 50vw, 33vw" className="team-photo" unoptimized /> : <div className="team-photo-fallback">{initials(row.nama)}</div>}
