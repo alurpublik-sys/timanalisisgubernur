@@ -666,3 +666,20 @@
   .reference-library-card-head{gap:8px}
   .reference-library-card .reference-status{max-width:112px;overflow:hidden;text-overflow:ellipsis}
 }
+
+
+/* Final dashboard cursor: browser-rendered circular pointer to avoid follower drift */
+@media(pointer:fine) and (hover:hover){
+  .dashboard-cursor-zone,
+  .dashboard-cursor-zone *{
+    cursor:url('/dashboard-cursor.svg') 14 14, auto;
+  }
+  .dashboard-cursor-zone a,
+  .dashboard-cursor-zone button,
+  .dashboard-cursor-zone .stat-card,
+  .dashboard-cursor-zone .quick-link-grid a,
+  .dashboard-cursor-zone .knowledge-dashboard-item,
+  .dashboard-cursor-zone .panel-head>a{
+    cursor:url('/dashboard-cursor-active.svg') 18 18, pointer;
+  }
+}
