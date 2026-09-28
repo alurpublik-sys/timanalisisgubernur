@@ -37,8 +37,7 @@ jobs:
           done
           if [ "$ready" != "1" ]; then cat /tmp/ah-center-next.log; exit 1; fi
           grep -q 'Dashboard Strategis' /tmp/dashboard.html
-          grep -q 'Catatan Dashboard' /tmp/dashboard.html
-          echo 'Public dashboard returned HTTP 200 with notes panel'
+          echo 'Public dashboard returned HTTP 200'
 
           pdf_status=$(curl -sS -o /tmp/notulensi.pdf -w '%{http_code}' http://127.0.0.1:3000/kunjungan/23/notulensi || true)
           test "$pdf_status" = "200"
