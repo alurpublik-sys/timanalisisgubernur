@@ -45,6 +45,13 @@ jobs:
           pdf_size=$(wc -c < /tmp/notulensi.pdf)
           test "$pdf_size" -gt 1000
           echo "Original notulensi PDF streamed intact: ${pdf_size} bytes"
+
+          legacy_status=$(curl -sS -o /tmp/legacy-notulensi.pdf -w '%{http_code}' 'http://127.0.0.1:3000/kunjungan/21/notulensi?v=20260928-full' || true)
+          test "$legacy_status" = "200"
+          test "$(head -c 5 /tmp/legacy-notulensi.pdf)" = "%PDF-"
+          legacy_size=$(wc -c < /tmp/legacy-notulensi.pdf)
+          test "$legacy_size" -gt 10000
+          echo "Complete legacy notulensi rendered: ${legacy_size} bytes"
           settings_status=$(curl -sS -o /tmp/settings.html -D /tmp/settings.headers -w '%{http_code}' http://127.0.0.1:3000/pengaturan || true)
           test "$settings_status" = "307"
           grep -Eiq '^location: .*/login' /tmp/settings.headers
