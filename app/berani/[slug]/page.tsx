@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { ProcessedBeraniSection } from '@/components/processed-berani-section'
+import { BeraniSmartUpload } from '@/components/berani-smart-upload'
 import { addBeraniDocuments, createBeraniUpdate, deleteBeraniDocument, deleteBeraniUpdate } from '@/lib/actions/knowledge'
 import { SUPABASE_URL } from '@/lib/branding'
 import { getAuthContext } from '@/lib/auth'
@@ -15,7 +16,10 @@ type PageProps = {
 }
 
 function documentUrl(path?: string | null) {
-  return path ? `${SUPABASE_URL}/storage/v1/object/public/berani-documents/${encodeURI(path)}` : null
+  if (!path) return null
+  if (/^https?:\/\//i.test(path)) return path
+  if (path.startsWith('/')) return path
+  return `${SUPABASE_URL}/storage/v1/object/public/berani-documents/${encodeURI(path)}`
 }
 
 function dateLabel(value?: string | null) {
@@ -152,7 +156,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
       <div>
         <p className="eyebrow">PROGRAM UNGGULAN</p>
         <h2>{program.name}</h2>
-        <p>{program.summary}</p>
+        <p>{program.summary}</p><div className="berani-live-note"><span>DATA AKTIF</span><strong>Dokumen baru diproses dan digabung ke basis data program, bukan mengganti seluruh riwayat.</strong></div>
       </div>
       <div className="program-head-meta"><strong>{updates?.length ?? 0}</strong><span>update tersimpan</span></div>
     </section>
@@ -165,12 +169,8 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
         <label>Judul Update<input name="title" required placeholder={`Contoh: Data ${program.name} September 2026`} /></label>
         <label>OPD Sumber<input name="opd_name" placeholder="Satu OPD boleh memiliki banyak update" /></label>
         <label>Periode<input name="period_label" placeholder="Contoh: September 2026 / Triwulan III" /></label>
-        <label>Ringkasan<textarea name="summary" placeholder="Sorotan utama. Sistem juga akan mengolah Excel, Word, PowerPoint, PDF bertulisan, dan gambar ke tampilan yang lebih rapi." /></label>
-        <label>Dokumen Sumber
-          <input name="document_files" type="file" multiple accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.png,.jpg,.jpeg,.webp" />
-          <small className="muted-line">Pilih hingga 10 file sekaligus: PDF, Excel, Word, PowerPoint, CSV, atau foto. Maksimum 20 MB per file. Excel/CSV menjadi tabel; Word/PowerPoint dan PDF bertulisan diringkas menjadi panel; foto mendapat preview visual.</small>
-        </label>
-        <button className="primary-button" type="submit">Simpan & Olah Update</button>
+        <label>Ringkasan<textarea name="summary" placeholder="Opsional. Data utama akan dibaca dari dokumen sumber dan digabung dengan data yang sudah ada." /></label>
+        <BeraniSmartUpload buttonLabel="Simpan & Olah Update" helpText="Maksimum 10 file dan 20 MB per file. PDF visual/scan akan dibaca dengan OCR; data terbaru digabung ke dashboard aktif tanpa menghapus indikator lama yang tidak berubah." />
       </form> : null}
 
       <section className="panel update-history-panel">
@@ -202,7 +202,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
         <div className="source-meta-line">
           <span>{selected.opd_name || 'OPD belum dicantumkan'}</span>
           <span>{selected.period_label || dateLabel(selected.created_at)}</span>
-          <span>Diperbarui {dateLabel(selected.updated_at)}</span>
+          <span>Diperbarui {dateLabel(selected.updated_at)}</span><span className="source-freshness-badge">Basis data aktif</span>
         </div>
         {selected.summary ? <p className="update-summary-copy">{selected.summary}</p> : null}
       </section>
@@ -276,9 +276,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
           <form action={addBeraniDocuments} className="notulensi-add-form">
             <input type="hidden" name="update_id" value={selected.id} />
             <input type="hidden" name="program_slug" value={program.slug} />
-            <input name="document_files" type="file" multiple accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.png,.jpg,.jpeg,.webp" required />
-            <small className="muted-line">File baru ditambahkan tanpa menghapus sumber lama dan langsung diproses sesuai jenis file.</small>
-            <button className="secondary-button" type="submit">Tambahkan & Olah</button>
+            <BeraniSmartUpload required buttonLabel="Tambahkan & Olah" buttonClassName="secondary-button" helpText="Sumber lama tetap tersimpan. Sistem membaca dokumen baru lalu memperbarui indikator yang ditemukan; data lain tetap dipertahankan." />
           </form>
         </details> : <div className="readonly-edit-note"><span>Data hanya dapat diubah dalam mode edit.</span><Link href={`/login?next=${encodeURIComponent(`/berani/${program.slug}`)}`}>✎</Link></div>}
       </section>
