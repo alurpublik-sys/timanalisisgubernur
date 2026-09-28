@@ -7,6 +7,7 @@ import { SUPABASE_URL } from '@/lib/branding'
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/database.types'
+import { FeatureNotes } from '@/components/feature-notes'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -282,5 +283,6 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
         </details> : <div className="readonly-edit-note"><span>Data hanya dapat diubah dalam mode edit.</span><Link href={`/login?next=${encodeURIComponent(`/berani/${program.slug}`)}`}>✎</Link></div>}
       </section>
     </> : null}
+    <FeatureNotes featureKey="berani" entityKey={selected ? `${program.slug}:${selected.id}` : program.slug} returnPath={`/berani/${program.slug}${selected ? `?update=${selected.id}` : ''}`} adminMode={adminMode} title={`Catatan ${program.name}`} description="Catatan khusus untuk program/update yang sedang dibuka." />
   </AppShell>
 }
