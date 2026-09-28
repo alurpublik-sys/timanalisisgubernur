@@ -60,6 +60,15 @@ function extension(name: string) {
   return name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] || ''
 }
 
+async function documentSha256(file: File) {
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+function jsonObject(value: Json | null | undefined): Record<string, Json> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, Json> : {}
+}
+
 function documentFiles(formData: FormData, key: string) {
   const files = formData.getAll(key).filter((entry): entry is File => entry instanceof File && entry.size > 0)
   if (files.length > MAX_FILES_PER_SUBMISSION) throw new Error(`Maksimum ${MAX_FILES_PER_SUBMISSION} dokumen dalam sekali upload.`)
@@ -157,6 +166,16 @@ async function uploadBeraniDocuments(
 
   try {
     for (const file of files) {
+      const fingerprint = await documentSha256(file)
+      const { data: existingDocs, error: duplicateCheckError } = await supabase
+        .from('berani_update_documents')
+        .select('id,metadata')
+        .eq('update_id', updateId)
+        .eq('file_size', file.size)
+      if (duplicateCheckError) throw new Error(duplicateCheckError.message)
+      const duplicate = (existingDocs ?? []).some((doc) => String(jsonObject(doc.metadata as Json).sha256 || '') === fingerprint)
+      if (duplicate) continue
+
       let imported = await importDocument(file)
       const serverExtractedText = imported.extractedText
       const browserOcrText = ocrTextByFile[file.name] || null
@@ -191,6 +210,7 @@ async function uploadBeraniDocuments(
           ocr_used: Boolean(!serverExtractedText && browserOcrText),
           extraction: serverExtractedText ? 'server-text' : browserOcrText ? 'browser-ocr' : 'stored-only',
           processed_at: new Date().toISOString(),
+          sha256: fingerprint,
         },
       }).select('id').single()
       if (documentError || !document) throw new Error(documentError?.message || 'Metadata dokumen gagal disimpan.')
