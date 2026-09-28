@@ -29,8 +29,8 @@ export default async function BeraniPage() {
     <section className="knowledge-hero panel">
       <div>
         <p className="eyebrow">PUSAT DATA PROGRAM</p>
-        <h2>Update terbaru 9 BERANI dalam satu tempat.</h2>
-        <p>Pilih program untuk melihat pembaruan, dokumen sumber, dan tabel data terbaru. Setiap program dapat menerima PDF, Excel, Word, PowerPoint, CSV, dan foto; data akan diolah ke tampilan yang lebih nyaman dibaca.</p>
+        <h2>Pusat data 9 BERANI yang selalu mengikuti sumber terbaru.</h2>
+        <p>Dokumen sumber tetap tersimpan sebagai arsip. PDF visual, spreadsheet, dokumen, presentasi, CSV, dan foto diproses menjadi indikator, tabel, dan grafik yang lebih mudah dibaca; pembaruan berikutnya digabung ke data aktif tanpa menghapus informasi lama yang masih relevan.</p>
       </div>
       <div className="knowledge-hero-stat"><strong>{(programs ?? []).length}</strong><span>program aktif</span></div>
     </section>

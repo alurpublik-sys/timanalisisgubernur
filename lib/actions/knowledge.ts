@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { importDocument } from '@/lib/document-import'
 import { requireActionUser } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
+import { deriveBeraniSections, mergeSectionPayload } from '@/lib/berani-auto-process'
+import type { Json } from '@/lib/database.types'
 
 const BERANI_BUCKET = 'berani-documents'
 const FINDING_BUCKET = 'finding-documents'
@@ -68,6 +70,66 @@ function documentFiles(formData: FormData, key: string) {
   return files
 }
 
+function documentOcrMap(formData: FormData) {
+  const raw = String(formData.get('document_ocr_json') ?? '').trim()
+  if (!raw) return {} as Record<string, string>
+  if (raw.length > 500000) throw new Error('Hasil pembacaan visual terlalu besar.')
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    return Object.fromEntries(
+      Object.entries(parsed)
+        .filter(([key, value]) => key.length <= 255 && typeof value === 'string')
+        .map(([key, value]) => [key, String(value).slice(0, 90000)]),
+    )
+  } catch {
+    return {} as Record<string, string>
+  }
+}
+
+async function upsertAutoSections(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  updateId: number,
+  documentId: number,
+  sections: ReturnType<typeof deriveBeraniSections>,
+) {
+  for (const section of sections) {
+    const { data: existing, error: existingError } = await supabase
+      .from('berani_update_sections')
+      .select('id,payload,section_type')
+      .eq('update_id', updateId)
+      .eq('section_key', section.section_key)
+      .maybeSingle()
+    if (existingError) throw new Error(existingError.message)
+
+    const payload = existing
+      ? mergeSectionPayload(section.section_type, existing.payload as Json, section.payload)
+      : section.payload
+
+    if (existing) {
+      const { error } = await supabase.from('berani_update_sections').update({
+        document_id: documentId,
+        title: section.title,
+        section_type: section.section_type,
+        payload,
+        sort_order: section.sort_order,
+        updated_at: new Date().toISOString(),
+      }).eq('id', existing.id)
+      if (error) throw new Error(`Data terolah gagal diperbarui: ${error.message}`)
+    } else {
+      const { error } = await supabase.from('berani_update_sections').insert({
+        update_id: updateId,
+        document_id: documentId,
+        section_key: section.section_key,
+        title: section.title,
+        section_type: section.section_type,
+        payload,
+        sort_order: section.sort_order,
+      })
+      if (error) throw new Error(`Data terolah gagal disimpan: ${error.message}`)
+    }
+  }
+}
+
 function pdfFile(formData: FormData) {
   const entry = formData.get('notulensi_pdf')
   if (!(entry instanceof File) || entry.size === 0) throw new Error('Pilih file PDF notulensi terlebih dahulu.')
@@ -85,6 +147,7 @@ async function uploadBeraniDocuments(
   updateId: number,
   programSlug: string,
   files: File[],
+  ocrTextByFile: Record<string, string> = {},
 ) {
   const uploadedPaths: string[] = []
   let totalRows = 0
@@ -94,7 +157,10 @@ async function uploadBeraniDocuments(
 
   try {
     for (const file of files) {
-      const imported = await importDocument(file)
+      let imported = await importDocument(file)
+      const serverExtractedText = imported.extractedText
+      const browserOcrText = ocrTextByFile[file.name] || null
+      if (!imported.extractedText && browserOcrText) imported = { ...imported, extractedText: browserOcrText }
       const ext = extension(file.name)
       const path = `${programSlug}/${todayMakassar()}/${updateId}/${Date.now()}-${crypto.randomUUID()}.${ext}`
       const { error: uploadError } = await supabase.storage.from(BERANI_BUCKET).upload(path, file, {
@@ -120,7 +186,12 @@ async function uploadBeraniDocuments(
         document_kind: imported.kind,
         display_title: displayTitle || file.name,
         summary,
-        metadata: { auto_processed: true },
+        metadata: {
+          auto_processed: true,
+          ocr_used: Boolean(!serverExtractedText && browserOcrText),
+          extraction: serverExtractedText ? 'server-text' : browserOcrText ? 'browser-ocr' : 'stored-only',
+          processed_at: new Date().toISOString(),
+        },
       }).select('id').single()
       if (documentError || !document) throw new Error(documentError?.message || 'Metadata dokumen gagal disimpan.')
 
@@ -136,18 +207,22 @@ async function uploadBeraniDocuments(
         }
       }
 
+      const derivedSections = deriveBeraniSections({ programSlug, fileName: file.name, documentId: document.id, imported })
+      if (derivedSections.length) await upsertAutoSections(supabase, updateId, document.id, derivedSections)
+
       if (imported.extractedText) {
         const { error: sectionError } = await supabase.from('berani_update_sections').insert({
           update_id: updateId,
           document_id: document.id,
-          section_key: `auto-doc-${document.id}`,
+          section_key: `source-text-${document.id}`,
           title: displayTitle || file.name,
           section_type: 'text',
-          payload: { text: imported.extractedText.slice(0, 6000), source: file.name },
-          sort_order: 800,
+          payload: { text: imported.extractedText.slice(0, 9000), source: file.name, extraction: serverExtractedText ? 'text' : 'ocr' },
+          sort_order: 900,
         })
         if (sectionError) throw new Error(`Ringkasan ${file.name} gagal disimpan: ${sectionError.message}`)
-      } else if (imported.kind === 'image') {
+      }
+      if (imported.kind === 'image') {
         const { error: sectionError } = await supabase.from('berani_update_sections').insert({
           update_id: updateId,
           document_id: document.id,
@@ -155,7 +230,7 @@ async function uploadBeraniDocuments(
           title: displayTitle || file.name,
           section_type: 'image',
           payload: { caption: file.name, path },
-          sort_order: 800,
+          sort_order: 850,
         })
         if (sectionError) throw new Error(`Preview ${file.name} gagal disimpan: ${sectionError.message}`)
       }
@@ -251,29 +326,94 @@ export async function createBeraniUpdate(formData: FormData) {
   const periodLabel = optional(formData, 'period_label', 'Periode', 100) || null
   let summary = optional(formData, 'summary', 'Ringkasan', 10000) || null
   const files = documentFiles(formData, 'document_files')
+  const ocrTextByFile = documentOcrMap(formData)
   if (!files.length && !summary) throw new Error('Isi ringkasan atau unggah minimal satu dokumen sumber.')
 
   const supabase = await adminClient()
-  const { data: update, error } = await supabase.from('berani_updates').insert({
-    program_id: programId, title, opd_name: opdName, period_label: periodLabel, summary,
-  }).select('id').single()
-  if (error || !update) throw new Error(error?.message || 'Update BERANI gagal disimpan.')
+  const liveKey = `live:${programSlug}`
+  const { data: currentLive, error: liveError } = await supabase
+    .from('berani_updates')
+    .select('id,summary')
+    .eq('program_id', programId)
+    .eq('source_key', liveKey)
+    .maybeSingle()
+  if (liveError) throw new Error(liveError.message)
+
+  let updateId = currentLive?.id ?? null
+
+  if (!updateId) {
+    const { data: latest, error: latestError } = await supabase
+      .from('berani_updates')
+      .select('id')
+      .eq('program_id', programId)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (latestError) throw new Error(latestError.message)
+
+    const { data: created, error } = await supabase.from('berani_updates').insert({
+      program_id: programId,
+      title,
+      opd_name: opdName,
+      period_label: periodLabel,
+      summary,
+      source_key: liveKey,
+    }).select('id').single()
+    if (error || !created) throw new Error(error?.message || 'Update BERANI gagal disimpan.')
+    updateId = created.id
+
+    if (latest?.id) {
+      const { data: previousSections, error: previousError } = await supabase
+        .from('berani_update_sections')
+        .select('section_key,title,section_type,payload,sort_order')
+        .eq('update_id', latest.id)
+        .order('sort_order')
+      if (previousError) throw new Error(previousError.message)
+      if (previousSections?.length) {
+        const { error: copyError } = await supabase.from('berani_update_sections').insert(
+          previousSections.map((section) => ({
+            update_id: updateId,
+            document_id: null,
+            section_key: section.section_key,
+            title: section.title,
+            section_type: section.section_type,
+            payload: section.payload,
+            sort_order: section.sort_order,
+          })),
+        )
+        if (copyError) throw new Error(copyError.message)
+      }
+    }
+  } else {
+    const { error } = await supabase.from('berani_updates').update({
+      title,
+      opd_name: opdName,
+      period_label: periodLabel,
+      summary: summary || currentLive?.summary || null,
+      updated_at: new Date().toISOString(),
+    }).eq('id', updateId)
+    if (error) throw new Error(error.message)
+  }
 
   try {
     if (files.length) {
-      const imported = await uploadBeraniDocuments(supabase, update.id, programSlug, files)
+      const imported = await uploadBeraniDocuments(supabase, updateId, programSlug, files, ocrTextByFile)
       if (!summary && imported.firstText) summary = imported.firstText.slice(0, 1200)
+      const { data: docs, error: docsError } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', updateId)
+      if (docsError) throw new Error(docsError.message)
+      const totalRows = (docs ?? []).reduce((sum, doc) => sum + doc.row_count, 0)
       const { error: patchError } = await supabase.from('berani_updates').update({
-        summary,
-        row_count: imported.totalRows,
+        summary: summary || currentLive?.summary || null,
+        row_count: totalRows,
         columns: imported.firstColumns,
         sheet_name: imported.firstSheet,
         extracted_text: imported.firstText,
-      }).eq('id', update.id)
+        updated_at: new Date().toISOString(),
+      }).eq('id', updateId)
       if (patchError) throw new Error(patchError.message)
     }
   } catch (uploadError) {
-    await supabase.from('berani_updates').delete().eq('id', update.id)
+    if (!currentLive) await supabase.from('berani_updates').delete().eq('id', updateId)
     throw uploadError
   }
 
@@ -284,9 +424,10 @@ export async function addBeraniDocuments(formData: FormData) {
   const updateId = positiveId(formData, 'update_id', 'ID update')
   const programSlug = required(formData, 'program_slug', 'Slug program', 120)
   const files = documentFiles(formData, 'document_files')
+  const ocrTextByFile = documentOcrMap(formData)
   if (!files.length) throw new Error('Pilih minimal satu dokumen.')
   const supabase = await adminClient()
-  await uploadBeraniDocuments(supabase, updateId, programSlug, files)
+  await uploadBeraniDocuments(supabase, updateId, programSlug, files, ocrTextByFile)
   const { data: docs, error } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', updateId)
   if (error) throw new Error(error.message)
   const totalRows = (docs ?? []).reduce((sum, doc) => sum + doc.row_count, 0)
