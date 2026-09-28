@@ -33,8 +33,8 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
 
   const pdf = notulenUrl(visit.notulen_pdf_path)
   const sourceFiles = [
-    ...(pdf ? [{ label: visit.notulen_pdf_name || 'Notulensi PDF', url: `/kunjungan/${visit.id}/notulensi`, type: 'PDF' }] : []),
-    ...(documents ?? []).map((document) => ({ label: document.title || document.file_name, url: notulenUrl(document.file_path) || '#', type: 'PDF' })),
+    ...(pdf ? [{ label: visit.notulen_pdf_name || 'Notulensi PDF', url: `/kunjungan/${visit.id}/notulensi?v=20260928-full`, type: 'PDF', note: 'Buka file PDF asli yang tersimpan' }] : []),
+    ...(documents ?? []).map((document) => ({ label: document.title || document.file_name, url: notulenUrl(document.file_path) || '#', type: 'PDF', note: 'Buka dokumen PDF' })),
   ]
 
   return <AppShell active="/kunjungan" title="Detail Kunjungan" adminMode={Boolean(user)} editReturnTo={`/kunjungan/${visit.id}`}>
@@ -49,7 +49,8 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
           <span>{dateLabel(visit.tanggal)}</span>
           <span>{visit.pejabat || 'Pejabat belum dicantumkan'}</span>
           <span>{visit.status}</span>
-          {visit.tanggal_estimasi ? <span>Waktu estimasi</span> : null}
+          {visit.tanggal_estimasi ? <span>Waktu estimasi</span> : <span>Tanggal terverifikasi</span>}
+          {visit.tanggal_sumber ? <span className="visit-date-source">{visit.tanggal_sumber}</span> : null}
         </div>
       </div>
       <Link href="/kunjungan" className="secondary-button">← Kembali</Link>
@@ -65,8 +66,8 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
         <div className="panel-head"><div><p className="eyebrow">DOKUMEN SUMBER</p><h2>Buka Notulensi</h2></div></div>
         <div className="visit-source-list">
           {visit.link_notulen ? <a href={visit.link_notulen} target="_blank" rel="noreferrer" className="visit-source-item"><span className="source-badge source-gdocs">G</span><div><strong>Google Docs</strong><small>Buka dokumen notulensi asli</small></div><i>↗</i></a> : null}
-          {sourceFiles.map((file, index) => <a href={file.url} target="_blank" rel="noreferrer" className="visit-source-item" key={index}><span className="source-badge source-pdf">{file.type}</span><div><strong>{file.label}</strong><small>Buka dokumen PDF</small></div><i>↗</i></a>)}
-          {!pdf && visit.notulen_pdf_name ? <div className="visit-source-item archived-source"><span className="source-badge">TXT</span><div><strong>{visit.notulen_pdf_name}</strong><small>File PDF asli tidak tersimpan pada data lama. Ringkasan teks ditampilkan di sebelah kiri.</small></div><i>•</i></div> : null}
+          {sourceFiles.map((file, index) => <a href={file.url} target="_blank" rel="noreferrer" className="visit-source-item" key={index}><span className="source-badge source-pdf">{file.type}</span><div><strong>{file.label}</strong><small>{file.note}</small></div><i>↗</i></a>)}
+          {!pdf && visit.notulen_pdf_name && visit.notulen_text ? <a href={`/kunjungan/${visit.id}/notulensi?v=20260928-full`} target="_blank" rel="noreferrer" className="visit-source-item legacy-source-ready"><span className="source-badge source-pdf">PDF</span><div><strong>{visit.notulen_pdf_name}</strong><small>Salinan terolah lengkap multi-halaman dari isi dokumen arsip; tidak dipotong menjadi ringkasan.</small></div><i>↗</i></a> : null}
           {!visit.link_notulen && !sourceFiles.length && !visit.notulen_pdf_name ? <p className="muted-line">Belum ada dokumen sumber yang bisa dibuka.</p> : null}
         </div>
       </aside>
