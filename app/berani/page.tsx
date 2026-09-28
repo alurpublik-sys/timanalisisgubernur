@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
+import { FeatureNotes } from '@/components/feature-notes'
 
 function dateLabel(value?: string | null) {
   if (!value) return 'Belum ada update'
@@ -49,5 +50,6 @@ export default async function BeraniPage() {
         </Link>
       })}
     </section>
+    <FeatureNotes featureKey="berani" returnPath="/berani" adminMode={Boolean(user)} title="Catatan 9 BERANI" description="Catatan umum lintas program 9 BERANI." />
   </AppShell>
 }
