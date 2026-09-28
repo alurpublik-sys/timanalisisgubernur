@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { SUPABASE_URL } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
+import { getLegacyNotulensiOriginal } from '@/lib/legacy-notulensi-originals'
 import { FeatureNotes } from '@/components/feature-notes'
 import { updateKunjungan, deleteKunjungan } from '@/lib/actions/core'
 
@@ -32,8 +33,10 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
   if (documentError) throw new Error(documentError.message)
 
   const pdf = notulenUrl(visit.notulen_pdf_path)
+  const legacyOriginal = getLegacyNotulensiOriginal(visit.id)
+  const hasPrimaryPdf = Boolean(pdf || legacyOriginal)
   const sourceFiles = [
-    ...(pdf ? [{ label: visit.notulen_pdf_name || 'Notulensi PDF', url: `/kunjungan/${visit.id}/notulensi?v=20260928-full`, type: 'PDF', note: 'Buka file PDF asli yang tersimpan' }] : []),
+    ...(hasPrimaryPdf ? [{ label: visit.notulen_pdf_name || legacyOriginal?.fileName || 'Notulensi PDF', url: `/kunjungan/${visit.id}/notulensi?v=20260928-original`, type: 'PDF', note: 'Buka file PDF asli arsip yang tersimpan utuh' }] : []),
     ...(documents ?? []).map((document) => ({ label: document.title || document.file_name, url: notulenUrl(document.file_path) || '#', type: 'PDF', note: 'Buka dokumen PDF' })),
   ]
 
@@ -67,8 +70,8 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
         <div className="visit-source-list">
           {visit.link_notulen ? <a href={visit.link_notulen} target="_blank" rel="noreferrer" className="visit-source-item"><span className="source-badge source-gdocs">G</span><div><strong>Google Docs</strong><small>Buka dokumen notulensi asli</small></div><i>↗</i></a> : null}
           {sourceFiles.map((file, index) => <a href={file.url} target="_blank" rel="noreferrer" className="visit-source-item" key={index}><span className="source-badge source-pdf">{file.type}</span><div><strong>{file.label}</strong><small>{file.note}</small></div><i>↗</i></a>)}
-          {!pdf && visit.notulen_pdf_name && visit.notulen_text ? <a href={`/kunjungan/${visit.id}/notulensi?v=20260928-full`} target="_blank" rel="noreferrer" className="visit-source-item legacy-source-ready"><span className="source-badge source-pdf">PDF</span><div><strong>{visit.notulen_pdf_name}</strong><small>Salinan terolah lengkap multi-halaman dari isi dokumen arsip; tidak dipotong menjadi ringkasan.</small></div><i>↗</i></a> : null}
-          {!visit.link_notulen && !sourceFiles.length && !visit.notulen_pdf_name ? <p className="muted-line">Belum ada dokumen sumber yang bisa dibuka.</p> : null}
+          
+          {!visit.link_notulen && !sourceFiles.length ? <p className="muted-line">Belum ada dokumen sumber yang bisa dibuka.</p> : null}
         </div>
       </aside>
     </section>

@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { SUPABASE_URL } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
+import { getLegacyNotulensiOriginal } from '@/lib/legacy-notulensi-originals'
 import { FeatureNotes } from '@/components/feature-notes'
 
 type Params = { q?: string; status?: string }
@@ -78,6 +79,8 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
           <tbody>
             {(rows ?? []).map((row) => {
               const pdf = notulenUrl(row.notulen_pdf_path)
+              const legacyOriginal = getLegacyNotulensiOriginal(row.id)
+              const hasPrimaryPdf = Boolean(pdf || legacyOriginal)
               const visitDocs = documentsByVisit.get(row.id) ?? []
               return <tr key={row.id}>
                 <td className="visit-date-cell">
@@ -92,10 +95,10 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
                 <td>
                   <div className="note-chip-row">
                     {row.link_notulen ? <a className="note-chip note-gdocs" href={row.link_notulen} target="_blank" rel="noreferrer"><span>G</span> Google Docs</a> : null}
-                    {pdf ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi?v=20260928-full`} target="_blank" rel="noreferrer"><span>PDF</span> {row.notulen_pdf_name || 'Notulensi'}</a> : null}
+                    {hasPrimaryPdf ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi?v=20260928-original`} target="_blank" rel="noreferrer"><span>PDF</span> {row.notulen_pdf_name || legacyOriginal?.fileName || 'Notulensi'}</a> : null}
                     {visitDocs.map((document) => <a className="note-chip note-pdf" key={document.id} href={notulenUrl(document.file_path) || '#'} target="_blank" rel="noreferrer"><span>PDF</span> {document.title || document.file_name}</a>)}
-                    {!pdf && row.notulen_pdf_name && row.notulen_text ? <a className="note-chip note-pdf legacy-copy-chip" href={`/kunjungan/${row.id}/notulensi?v=20260928-full`} target="_blank" rel="noreferrer"><span>PDF</span> Salinan lengkap</a> : null}
-                    {!row.link_notulen && !pdf && !visitDocs.length && !row.notulen_pdf_name ? <span className="muted-line">Belum ada lampiran</span> : null}
+                    
+                    {!row.link_notulen && !hasPrimaryPdf && !visitDocs.length ? <span className="muted-line">Belum ada lampiran</span> : null}
                   </div>
                 </td>
                 <td><Link className="row-open-button" href={`/kunjungan/${row.id}`} aria-label={`Buka kunjungan ${row.nama_opd}`}>→</Link></td>
@@ -109,6 +112,8 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
       <div className="visit-mobile-list">
         {(rows ?? []).map((row) => {
           const pdf = notulenUrl(row.notulen_pdf_path)
+          const legacyOriginal = getLegacyNotulensiOriginal(row.id)
+          const hasPrimaryPdf = Boolean(pdf || legacyOriginal)
           const visitDocs = documentsByVisit.get(row.id) ?? []
           return <article className="visit-mobile-card" key={row.id}>
             <div className="visit-mobile-head">
@@ -119,9 +124,9 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
             <p className="visit-mobile-topic">{row.topik}</p>
             <div className="note-chip-row">
               {row.link_notulen ? <a className="note-chip note-gdocs" href={row.link_notulen} target="_blank" rel="noreferrer"><span>G</span> Google Docs</a> : null}
-              {pdf ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi?v=20260928-full`} target="_blank" rel="noreferrer"><span>PDF</span> Notulensi</a> : null}
+              {hasPrimaryPdf ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi?v=20260928-original`} target="_blank" rel="noreferrer"><span>PDF</span> Notulensi</a> : null}
               {visitDocs.map((document) => <a className="note-chip note-pdf" key={document.id} href={notulenUrl(document.file_path) || '#'} target="_blank" rel="noreferrer"><span>PDF</span> {document.title || 'Lampiran'}</a>)}
-              {!pdf && row.notulen_pdf_name && row.notulen_text ? <a className="note-chip note-pdf legacy-copy-chip" href={`/kunjungan/${row.id}/notulensi?v=20260928-full`} target="_blank" rel="noreferrer"><span>PDF</span> Salinan lengkap</a> : null}
+              
             </div>
             <Link className="visit-detail-link" href={`/kunjungan/${row.id}`}>Buka detail & ringkasan <span>→</span></Link>
           </article>
