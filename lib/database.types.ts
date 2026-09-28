@@ -393,6 +393,36 @@ export type Database = {
           },
         ]
       }
+      feature_notes: {
+        Row: {
+          content: string
+          created_at: string
+          entity_key: string
+          feature_key: string
+          id: number
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          entity_key?: string
+          feature_key: string
+          id?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          entity_key?: string
+          feature_key?: string
+          id?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       isu_strategis: {
         Row: {
           created_at: string
