@@ -5,6 +5,7 @@ import { createContentReference, updateContentReference } from '@/lib/actions/co
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/database.types'
+import { FeatureNotes } from '@/components/feature-notes'
 
 type Params = { opd?: string; status?: string; q?: string; mode?: string; compose?: string }
 
@@ -188,5 +189,6 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
 
       {(references ?? []).length === 0 ? <section className="panel empty-document-panel reference-empty"><p className="eyebrow">BELUM ADA DATA</p><h2>Referensi tidak ditemukan</h2><p>Ubah filter untuk melihat data lain.</p></section> : null}
     </section>
+    {!shareMode ? <FeatureNotes featureKey="referensi-konten" returnPath="/referensi-konten" adminMode={adminMode} title="Catatan Referensi Konten" description="Catatan kerja untuk penyusunan dan verifikasi bahan konten." /> : null}
   </AppShell>
 }

@@ -38,6 +38,13 @@ jobs:
           if [ "$ready" != "1" ]; then cat /tmp/ah-center-next.log; exit 1; fi
           grep -q 'Dashboard Strategis' /tmp/dashboard.html
           echo 'Public dashboard returned HTTP 200'
+
+          pdf_status=$(curl -sS -o /tmp/notulensi.pdf -w '%{http_code}' http://127.0.0.1:3000/kunjungan/23/notulensi || true)
+          test "$pdf_status" = "200"
+          test "$(head -c 5 /tmp/notulensi.pdf)" = "%PDF-"
+          pdf_size=$(wc -c < /tmp/notulensi.pdf)
+          test "$pdf_size" -gt 1000
+          echo "Original notulensi PDF streamed intact: ${pdf_size} bytes"
           settings_status=$(curl -sS -o /tmp/settings.html -D /tmp/settings.headers -w '%{http_code}' http://127.0.0.1:3000/pengaturan || true)
           test "$settings_status" = "307"
           grep -Eiq '^location: .*/login' /tmp/settings.headers

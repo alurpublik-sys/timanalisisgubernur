@@ -5,6 +5,7 @@ import { addTeamMember, migrateLegacyTeamAssets, updateTeamMember } from '@/lib/
 import { createKunjungan } from '@/lib/actions/core'
 import { requireUser } from '@/lib/auth'
 import { getTeamPhotoUrl } from '@/lib/branding'
+import { FeatureNotes } from '@/components/feature-notes'
 
 export default async function PengaturanPage() {
   const { supabase } = await requireUser('/pengaturan')
@@ -77,5 +78,6 @@ export default async function PengaturanPage() {
         </form> })}
       </div>
     </section>
+    <FeatureNotes featureKey="pengaturan" returnPath="/pengaturan" adminMode title="Catatan Pengaturan" description="Catatan internal administrator untuk konfigurasi dan tindak lanjut teknis." />
   </AppShell>
 }

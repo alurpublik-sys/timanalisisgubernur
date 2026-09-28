@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { APP_NAME, APP_TAGLINE, GOVERNOR_PHOTO, VICE_GOVERNOR_PHOTO } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
+import { FeatureNotes } from '@/components/feature-notes'
 
 const emptyOverview = {
   total_kunjungan: 0,

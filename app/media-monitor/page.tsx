@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app-shell'
 import { createMedia } from '@/lib/actions/core'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthContext } from '@/lib/auth'
+import { FeatureNotes } from '@/components/feature-notes'
 
 const PAGE_SIZE = 20
 type Params = { q?: string; sentimen?: string; page?: string }
@@ -83,5 +84,6 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
         </div>
       </section>
     </section>
+    <FeatureNotes featureKey="media-monitor" returnPath="/media-monitor" adminMode={adminMode} title="Catatan Media Monitor" description="Catatan monitoring, follow-up isu media, atau pengingat tim." />
   </AppShell>
 }

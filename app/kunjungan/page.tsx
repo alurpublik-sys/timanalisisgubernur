@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { SUPABASE_URL } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
+import { FeatureNotes } from '@/components/feature-notes'
 
 type Params = { q?: string; status?: string }
 
@@ -91,9 +92,9 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
                 <td>
                   <div className="note-chip-row">
                     {row.link_notulen ? <a className="note-chip note-gdocs" href={row.link_notulen} target="_blank" rel="noreferrer"><span>G</span> Google Docs</a> : null}
-                    {pdf ? <a className="note-chip note-pdf" href={pdf} target="_blank" rel="noreferrer"><span>PDF</span> {row.notulen_pdf_name || 'Notulensi'}</a> : null}
+                    {pdf ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi`} target="_blank" rel="noreferrer"><span>PDF</span> {row.notulen_pdf_name || 'Notulensi'}</a> : null}
                     {visitDocs.map((document) => <a className="note-chip note-pdf" key={document.id} href={notulenUrl(document.file_path) || '#'} target="_blank" rel="noreferrer"><span>PDF</span> {document.title || document.file_name}</a>)}
-                    {!pdf && row.notulen_pdf_name ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi`} target="_blank" rel="noreferrer"><span>PDF</span> {row.notulen_pdf_name}</a> : null}
+                    {!pdf && row.notulen_pdf_name ? <Link className="note-chip note-summary" href={`/kunjungan/${row.id}`}><span>TXT</span> Ringkasan lama</Link> : null}
                     {!row.link_notulen && !pdf && !visitDocs.length && !row.notulen_pdf_name ? <span className="muted-line">Belum ada lampiran</span> : null}
                   </div>
                 </td>
@@ -118,14 +119,15 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
             <p className="visit-mobile-topic">{row.topik}</p>
             <div className="note-chip-row">
               {row.link_notulen ? <a className="note-chip note-gdocs" href={row.link_notulen} target="_blank" rel="noreferrer"><span>G</span> Google Docs</a> : null}
-              {pdf ? <a className="note-chip note-pdf" href={pdf} target="_blank" rel="noreferrer"><span>PDF</span> Notulensi</a> : null}
+              {pdf ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi`} target="_blank" rel="noreferrer"><span>PDF</span> Notulensi</a> : null}
               {visitDocs.map((document) => <a className="note-chip note-pdf" key={document.id} href={notulenUrl(document.file_path) || '#'} target="_blank" rel="noreferrer"><span>PDF</span> {document.title || 'Lampiran'}</a>)}
-              {!pdf && row.notulen_pdf_name ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi`} target="_blank" rel="noreferrer"><span>PDF</span> Notulensi</a> : null}
+              {!pdf && row.notulen_pdf_name ? <Link className="note-chip note-summary" href={`/kunjungan/${row.id}`}><span>TXT</span> Ringkasan lama</Link> : null}
             </div>
             <Link className="visit-detail-link" href={`/kunjungan/${row.id}`}>Buka detail & ringkasan <span>→</span></Link>
           </article>
         })}
       </div>
     </section>
+    <FeatureNotes featureKey="kunjungan" returnPath="/kunjungan" adminMode={Boolean(user)} title="Catatan Kunjungan OPD" description="Catatan umum, tindak lanjut, dan pengingat untuk modul Kunjungan OPD." />
   </AppShell>
 }

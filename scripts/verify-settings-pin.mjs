@@ -42,7 +42,7 @@ if(!findings.includes("requireUser('/temuan-opd')")) failures.push('Temuan OPD m
 const settings=readFileSync(join(root,'app/pengaturan/page.tsx'),'utf8')
 if(!settings.includes('requireUser')) failures.push('Pengaturan must require a validated PIN session')
 
-for(const actionFile of['lib/actions/core.ts','lib/actions/knowledge.ts','lib/actions/content-references.ts','lib/actions/settings.ts']){
+for(const actionFile of['lib/actions/core.ts','lib/actions/knowledge.ts','lib/actions/content-references.ts','lib/actions/settings.ts','lib/actions/notes.ts']){
   const source=readFileSync(join(root,actionFile),'utf8')
   if(!source.includes('requireActionUser')) failures.push(`${actionFile} must enforce admin PIN for mutations`)
 }
