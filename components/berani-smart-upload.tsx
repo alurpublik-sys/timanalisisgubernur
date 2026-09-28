@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
 
 declare global {
   interface Window {
@@ -132,7 +133,7 @@ export function BeraniSmartUpload({
   const [ocrJson, setOcrJson] = useState('{}')
   const generation = useRef(0)
 
-  async function onFiles(event: React.ChangeEvent<HTMLInputElement>) {
+  async function onFiles(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files || [])
     generation.current += 1
     const ownGeneration = generation.current

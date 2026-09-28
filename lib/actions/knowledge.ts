@@ -391,13 +391,16 @@ export async function createBeraniUpdate(formData: FormData) {
       period_label: periodLabel,
       summary: summary || currentLive?.summary || null,
       updated_at: new Date().toISOString(),
-    }).eq('id', updateId)
+    }).eq('id', activeUpdateId)
     if (error) throw new Error(error.message)
   }
 
+  if (!updateId) throw new Error('Update BERANI aktif tidak ditemukan.')
+  const activeUpdateId = updateId
+
   try {
     if (files.length) {
-      const imported = await uploadBeraniDocuments(supabase, updateId, programSlug, files, ocrTextByFile)
+      const imported = await uploadBeraniDocuments(supabase, activeUpdateId, programSlug, files, ocrTextByFile)
       if (!summary && imported.firstText) summary = imported.firstText.slice(0, 1200)
       const { data: docs, error: docsError } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', updateId)
       if (docsError) throw new Error(docsError.message)
@@ -409,11 +412,11 @@ export async function createBeraniUpdate(formData: FormData) {
         sheet_name: imported.firstSheet,
         extracted_text: imported.firstText,
         updated_at: new Date().toISOString(),
-      }).eq('id', updateId)
+      }).eq('id', activeUpdateId)
       if (patchError) throw new Error(patchError.message)
     }
   } catch (uploadError) {
-    if (!currentLive) await supabase.from('berani_updates').delete().eq('id', updateId)
+    if (!currentLive) await supabase.from('berani_updates').delete().eq('id', activeUpdateId)
     throw uploadError
   }
 
