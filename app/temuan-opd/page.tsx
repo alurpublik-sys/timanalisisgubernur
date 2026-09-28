@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app-shell'
 import { createFinding, deleteFinding, deleteFindingDocument, updateFinding } from '@/lib/actions/knowledge'
 import { SUPABASE_URL } from '@/lib/branding'
 import { requireUser } from '@/lib/auth'
+import { FeatureNotes } from '@/components/feature-notes'
 import type { Database } from '@/lib/database.types'
 
 type Params = { opd?: string }
@@ -152,5 +153,6 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
         {(findings ?? []).length === 0 ? <div className="panel empty-document-panel"><p className="eyebrow">BELUM ADA TEMUAN</p><h2>{selectedOpd || 'OPD belum dipilih'}</h2><p>Tambahkan catatan pertama melalui formulir di samping. Tidak ada batas satu temuan per OPD.</p></div> : null}
       </section>
     </section>
+    <FeatureNotes featureKey="temuan-opd" returnPath="/temuan-opd" adminMode title="Catatan Temuan OPD" description="Catatan umum, tindak lanjut, dan pengingat untuk temuan lintas OPD." />
   </AppShell>
 }
