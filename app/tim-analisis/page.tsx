@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { getTeamPhotoUrl } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
+import { FeatureNotes } from '@/components/feature-notes'
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
@@ -40,5 +41,6 @@ export default async function TimPage() {
         </article>
       })}
     </section>
+    <FeatureNotes featureKey="tim-analisis" returnPath="/tim-analisis" adminMode={Boolean(user)} title="Catatan Tim Analisis" description="Catatan koordinasi terkait profil, peran, dan kebutuhan tim." />
   </AppShell>
 }
