@@ -331,26 +331,30 @@ export async function createBeraniUpdate(formData: FormData) {
 
   const supabase = await adminClient()
   const liveKey = `live:${programSlug}`
-  const { data: currentLive, error: liveError } = await supabase
+  const { data: latest, error: latestError } = await supabase
     .from('berani_updates')
     .select('id,summary')
     .eq('program_id', programId)
-    .eq('source_key', liveKey)
+    .order('updated_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(1)
     .maybeSingle()
-  if (liveError) throw new Error(liveError.message)
+  if (latestError) throw new Error(latestError.message)
 
-  let updateId = currentLive?.id ?? null
+  let activeUpdateId: number
 
-  if (!updateId) {
-    const { data: latest, error: latestError } = await supabase
-      .from('berani_updates')
-      .select('id')
-      .eq('program_id', programId)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (latestError) throw new Error(latestError.message)
-
+  if (latest?.id) {
+    activeUpdateId = latest.id
+    const { error } = await supabase.from('berani_updates').update({
+      title,
+      opd_name: opdName,
+      period_label: periodLabel,
+      summary: summary || latest.summary || null,
+      source_key: liveKey,
+      updated_at: new Date().toISOString(),
+    }).eq('id', activeUpdateId)
+    if (error) throw new Error(error.message)
+  } else {
     const { data: created, error } = await supabase.from('berani_updates').insert({
       program_id: programId,
       title,
@@ -360,64 +364,24 @@ export async function createBeraniUpdate(formData: FormData) {
       source_key: liveKey,
     }).select('id').single()
     if (error || !created) throw new Error(error?.message || 'Update BERANI gagal disimpan.')
-    updateId = created.id
-
-    if (latest?.id) {
-      const { data: previousSections, error: previousError } = await supabase
-        .from('berani_update_sections')
-        .select('section_key,title,section_type,payload,sort_order')
-        .eq('update_id', latest.id)
-        .order('sort_order')
-      if (previousError) throw new Error(previousError.message)
-      if (previousSections?.length) {
-        const { error: copyError } = await supabase.from('berani_update_sections').insert(
-          previousSections.map((section) => ({
-            update_id: updateId,
-            document_id: null,
-            section_key: section.section_key,
-            title: section.title,
-            section_type: section.section_type,
-            payload: section.payload,
-            sort_order: section.sort_order,
-          })),
-        )
-        if (copyError) throw new Error(copyError.message)
-      }
-    }
-  } else {
-    const { error } = await supabase.from('berani_updates').update({
-      title,
-      opd_name: opdName,
-      period_label: periodLabel,
-      summary: summary || currentLive?.summary || null,
-      updated_at: new Date().toISOString(),
-    }).eq('id', updateId)
-    if (error) throw new Error(error.message)
+    activeUpdateId = created.id
   }
 
-  if (!updateId) throw new Error('Update BERANI aktif tidak ditemukan.')
-  const activeUpdateId = updateId
-
-  try {
-    if (files.length) {
-      const imported = await uploadBeraniDocuments(supabase, activeUpdateId, programSlug, files, ocrTextByFile)
-      if (!summary && imported.firstText) summary = imported.firstText.slice(0, 1200)
-      const { data: docs, error: docsError } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', activeUpdateId)
-      if (docsError) throw new Error(docsError.message)
-      const totalRows = (docs ?? []).reduce((sum, doc) => sum + doc.row_count, 0)
-      const { error: patchError } = await supabase.from('berani_updates').update({
-        summary: summary || currentLive?.summary || null,
-        row_count: totalRows,
-        columns: imported.firstColumns,
-        sheet_name: imported.firstSheet,
-        extracted_text: imported.firstText,
-        updated_at: new Date().toISOString(),
-      }).eq('id', activeUpdateId)
-      if (patchError) throw new Error(patchError.message)
-    }
-  } catch (uploadError) {
-    if (!currentLive) await supabase.from('berani_updates').delete().eq('id', activeUpdateId)
-    throw uploadError
+  if (files.length) {
+    const imported = await uploadBeraniDocuments(supabase, activeUpdateId, programSlug, files, ocrTextByFile)
+    if (!summary && imported.firstText) summary = imported.firstText.slice(0, 1200)
+    const { data: docs, error: docsError } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', activeUpdateId)
+    if (docsError) throw new Error(docsError.message)
+    const totalRows = (docs ?? []).reduce((sum, doc) => sum + doc.row_count, 0)
+    const { error: patchError } = await supabase.from('berani_updates').update({
+      summary: summary || latest?.summary || null,
+      row_count: totalRows,
+      columns: imported.firstColumns,
+      sheet_name: imported.firstSheet,
+      extracted_text: imported.firstText,
+      updated_at: new Date().toISOString(),
+    }).eq('id', activeUpdateId)
+    if (patchError) throw new Error(patchError.message)
   }
 
   refreshKnowledge(programSlug)
