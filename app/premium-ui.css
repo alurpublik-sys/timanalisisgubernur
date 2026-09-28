@@ -736,3 +736,7 @@
   .compact-note-form{position:fixed;left:12px;right:12px;top:auto;bottom:12px;width:auto;max-height:75vh;overflow:auto}
   .visit-edit-form{grid-template-columns:1fr}
 }
+
+.legacy-copy-chip{border-style:solid!important;background:linear-gradient(135deg,#fff8ec,#fff)!important}
+.legacy-source-ready{background:linear-gradient(145deg,#fffdf8,#fff)!important;border-color:#eadfc9!important}
+.visit-date-source{max-width:420px;white-space:normal!important;line-height:1.45!important}
