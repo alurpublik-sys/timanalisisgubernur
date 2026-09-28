@@ -4,6 +4,8 @@ import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { SUPABASE_URL } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
+import { FeatureNotes } from '@/components/feature-notes'
+import { updateKunjungan, deleteKunjungan } from '@/lib/actions/core'
 
 function notulenUrl(path?: string | null) {
   if (!path) return null
@@ -31,7 +33,7 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
 
   const pdf = notulenUrl(visit.notulen_pdf_path)
   const sourceFiles = [
-    ...(pdf ? [{ label: visit.notulen_pdf_name || 'Notulensi PDF', url: pdf, type: 'PDF' }] : []),
+    ...(pdf ? [{ label: visit.notulen_pdf_name || 'Notulensi PDF', url: `/kunjungan/${visit.id}/notulensi`, type: 'PDF' }] : []),
     ...(documents ?? []).map((document) => ({ label: document.title || document.file_name, url: notulenUrl(document.file_path) || '#', type: 'PDF' })),
   ]
 
@@ -64,10 +66,35 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
         <div className="visit-source-list">
           {visit.link_notulen ? <a href={visit.link_notulen} target="_blank" rel="noreferrer" className="visit-source-item"><span className="source-badge source-gdocs">G</span><div><strong>Google Docs</strong><small>Buka dokumen notulensi asli</small></div><i>↗</i></a> : null}
           {sourceFiles.map((file, index) => <a href={file.url} target="_blank" rel="noreferrer" className="visit-source-item" key={index}><span className="source-badge source-pdf">{file.type}</span><div><strong>{file.label}</strong><small>Buka dokumen PDF</small></div><i>↗</i></a>)}
-          {!pdf && visit.notulen_pdf_name ? <a href={`/kunjungan/${visit.id}/notulensi`} target="_blank" rel="noreferrer" className="visit-source-item"><span className="source-badge source-pdf">PDF</span><div><strong>{visit.notulen_pdf_name}</strong><small>Buka notulensi dalam tampilan PDF terolah</small></div><i>↗</i></a> : null}
+          {!pdf && visit.notulen_pdf_name ? <div className="visit-source-item archived-source"><span className="source-badge">TXT</span><div><strong>{visit.notulen_pdf_name}</strong><small>File PDF asli tidak tersimpan pada data lama. Ringkasan teks ditampilkan di sebelah kiri.</small></div><i>•</i></div> : null}
           {!visit.link_notulen && !sourceFiles.length && !visit.notulen_pdf_name ? <p className="muted-line">Belum ada dokumen sumber yang bisa dibuka.</p> : null}
         </div>
       </aside>
     </section>
+    {user ? <section className="panel visit-edit-panel">
+      <details>
+        <summary><span>✎</span><div><strong>Edit Kunjungan & Notulensi</strong><small>Ganti data, unggah ulang PDF asli, atau hapus kunjungan.</small></div></summary>
+        <form action={updateKunjungan} className="mini-form visit-edit-form">
+          <input type="hidden" name="id" value={visit.id} />
+          <label>Nama OPD<input name="opd" defaultValue={visit.nama_opd} required /></label>
+          <label>Tanggal<input name="tanggal" type="date" defaultValue={visit.tanggal} required /></label>
+          <label>Pejabat / Narasumber<input name="pejabat" defaultValue={visit.pejabat || ''} /></label>
+          <label>Anggota Tim<input name="anggota" defaultValue={visit.anggota_tim || ''} /></label>
+          <label className="settings-field-wide">Topik<textarea name="topik" defaultValue={visit.topik} required /></label>
+          <label>Status<select name="status" defaultValue={visit.status}><option>Terjadwal</option><option>Selesai</option><option>Ditunda</option></select></label>
+          <label>Google Docs<input name="link_notulen" type="url" defaultValue={visit.link_notulen || ''} /></label>
+          <label className="settings-field-wide">Ringkasan Notulensi<textarea name="notulen_text" defaultValue={visit.notulen_text || ''} placeholder="Opsional. Tidak menggantikan file PDF asli." /></label>
+          <label className="settings-field-wide">Ganti / unggah PDF asli<input name="notulen_pdf" type="file" accept="application/pdf,.pdf" /><small className="muted-line">PDF disimpan dan dibuka dalam byte asli, bukan dibuat ulang dari ringkasan.</small></label>
+          {visit.notulen_pdf_path ? <label className="check-row"><input name="remove_pdf" type="checkbox" value="1" /> Hapus PDF tersimpan saat menyimpan perubahan</label> : null}
+          <button className="secondary-button" type="submit">Simpan Perubahan</button>
+        </form>
+        <form action={deleteKunjungan} className="danger-zone-form">
+          <input type="hidden" name="id" value={visit.id} />
+          <button className="danger-button" type="submit">Hapus Kunjungan</button>
+        </form>
+      </details>
+    </section> : null}
+
+    <FeatureNotes featureKey="kunjungan" entityKey={String(visit.id)} returnPath={`/kunjungan/${visit.id}`} adminMode={Boolean(user)} title="Catatan Kunjungan" description="Catatan khusus untuk kunjungan ini. Bisa ditambah, diedit, dan dihapus oleh admin." />
   </AppShell>
 }
