@@ -391,7 +391,7 @@ export async function createBeraniUpdate(formData: FormData) {
       period_label: periodLabel,
       summary: summary || currentLive?.summary || null,
       updated_at: new Date().toISOString(),
-    }).eq('id', activeUpdateId)
+    }).eq('id', updateId)
     if (error) throw new Error(error.message)
   }
 
@@ -402,7 +402,7 @@ export async function createBeraniUpdate(formData: FormData) {
     if (files.length) {
       const imported = await uploadBeraniDocuments(supabase, activeUpdateId, programSlug, files, ocrTextByFile)
       if (!summary && imported.firstText) summary = imported.firstText.slice(0, 1200)
-      const { data: docs, error: docsError } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', updateId)
+      const { data: docs, error: docsError } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', activeUpdateId)
       if (docsError) throw new Error(docsError.message)
       const totalRows = (docs ?? []).reduce((sum, doc) => sum + doc.row_count, 0)
       const { error: patchError } = await supabase.from('berani_updates').update({
