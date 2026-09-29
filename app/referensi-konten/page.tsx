@@ -138,20 +138,28 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
               <span className={`reference-status status-${statusClass(item.status)}`}>{item.status}</span>
               {!shareMode && adminMode ? <details className="reference-inline-editor">
                 <summary title="Edit referensi" aria-label="Edit referensi">✎</summary>
-                <div className="reference-editor-popover">
+                <div className="reference-editor-popover" role="dialog" aria-label={`Edit referensi: ${item.title}`}>
+                  <div className="reference-editor-heading">
+                    <div>
+                      <span className="eyebrow">EDIT REFERENSI</span>
+                      <strong>{item.opd_name}</strong>
+                      <small>Semua kolom dapat digeser dan di-scroll. Klik di luar atau tekan Esc untuk menutup.</small>
+                    </div>
+                    <span className="reference-editor-close-hint" aria-hidden>ESC</span>
+                  </div>
                   <form action={updateContentReference} className="mini-form reference-edit-form">
                     <input type="hidden" name="id" value={item.id} />
                     <label>OPD<input name="opd_name" defaultValue={item.opd_name} required /></label>
                     <label>Judul<input name="title" defaultValue={item.title} required /></label>
                     <label>Label program<input name="program_label" defaultValue={item.program_label || ''} /></label>
-                    <label>Detail<textarea name="detail" defaultValue={item.detail || ''} /></label>
-                    <label>Fakta utama<textarea name="key_facts" defaultValue={item.key_facts || ''} /></label>
+                    <label className="reference-edit-wide">Detail<textarea name="detail" defaultValue={item.detail || ''} /></label>
+                    <label className="reference-edit-wide">Fakta utama<textarea name="key_facts" defaultValue={item.key_facts || ''} /></label>
                     <label>9 BERANI<select name="berani_program_id" defaultValue={item.berani_program_id || ''}><option value="">Tidak dikaitkan</option>{(programs ?? []).map((program) => <option value={program.id} key={program.id}>{program.name}</option>)}</select></label>
                     <label>Status<select name="status" defaultValue={item.status}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
-                    <label>Referensi URL<textarea name="reference_urls" defaultValue={links.join('\n')} /></label>
+                    <label className="reference-edit-wide">Referensi URL<textarea name="reference_urls" defaultValue={links.join('\n')} /></label>
                     <label>Sumber<input name="source_label" defaultValue={item.source_label || ''} /></label>
                     <label>Urutan<input name="sort_order" type="number" min="0" defaultValue={item.sort_order} /></label>
-                    <button className="secondary-button" type="submit">Simpan Perubahan</button>
+                    <button className="secondary-button reference-editor-save" type="submit">Simpan Perubahan</button>
                   </form>
                 </div>
               </details> : null}
