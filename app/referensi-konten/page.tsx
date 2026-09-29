@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { ContentReferenceLive } from '@/components/content-reference-live'
+import { ReferenceEditorPortal } from '@/components/reference-editor-portal'
 import { createContentReference, updateContentReference } from '@/lib/actions/content-references'
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/database.types'
 import { FeatureNotes } from '@/components/feature-notes'
 
-type Params = { opd?: string; status?: string; q?: string; mode?: string; compose?: string }
+type Params = { opd?: string; status?: string; q?: string; mode?: string; compose?: string; edit?: string }
 
 const statuses = ['Draft', 'Perlu Verifikasi', 'Siap Dibagikan'] as const
 const SOURCE_DOC_URL = 'https://docs.google.com/document/d/1p9rPvo1gNVl1w5WXzFzUpIH3eZmAE9SNy-XCfa0YpVQ/edit?usp=drivesdk'
@@ -41,6 +42,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
   const q = String(params.q || '').trim()
   const shareMode = params.mode === 'share'
   const composeMode = params.compose === '1'
+  const editId = Number.parseInt(String(params.edit || ''), 10)
   const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
   const adminMode = Boolean(user)
 
@@ -68,6 +70,22 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
   const programNames = new Map((programs ?? []).map((program) => [program.id, program.name]))
   const uniqueOpds = new Set((references ?? []).map((item) => item.opd_name)).size
   const readyCount = (references ?? []).filter((item) => item.status === 'Siap Dibagikan').length
+  const editItem = adminMode && Number.isSafeInteger(editId)
+    ? (references ?? []).find((item) => item.id === editId) ?? null
+    : null
+  const editLinks = editItem ? jsonUrls(editItem.reference_urls) : []
+
+  const preservedParams = new URLSearchParams()
+  if (selectedOpd) preservedParams.set('opd', selectedOpd)
+  if (selectedStatus) preservedParams.set('status', selectedStatus)
+  if (q) preservedParams.set('q', q)
+  const closeQuery = preservedParams.toString()
+  const closeHref = closeQuery ? `/referensi-konten?${closeQuery}` : '/referensi-konten'
+  const editHref = (id: number) => {
+    const next = new URLSearchParams(preservedParams)
+    next.set('edit', String(id))
+    return `/referensi-konten?${next.toString()}`
+  }
 
   return <AppShell active="/referensi-konten" title={shareMode ? 'Referensi Konten · Mode Bagikan' : 'Referensi Konten'} adminMode={adminMode}>
     <ContentReferenceLive />
@@ -136,33 +154,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
             </div>
             <div className="reference-card-tools">
               <span className={`reference-status status-${statusClass(item.status)}`}>{item.status}</span>
-              {!shareMode && adminMode ? <details className="reference-inline-editor">
-                <summary title="Edit referensi" aria-label="Edit referensi">✎</summary>
-                <div className="reference-editor-popover" role="dialog" aria-label={`Edit referensi: ${item.title}`}>
-                  <div className="reference-editor-heading">
-                    <div>
-                      <span className="eyebrow">EDIT REFERENSI</span>
-                      <strong>{item.opd_name}</strong>
-                      <small>Semua kolom dapat digeser dan di-scroll. Klik di luar atau tekan Esc untuk menutup.</small>
-                    </div>
-                    <span className="reference-editor-close-hint" aria-hidden>ESC</span>
-                  </div>
-                  <form action={updateContentReference} className="mini-form reference-edit-form">
-                    <input type="hidden" name="id" value={item.id} />
-                    <label>OPD<input name="opd_name" defaultValue={item.opd_name} required /></label>
-                    <label>Judul<input name="title" defaultValue={item.title} required /></label>
-                    <label>Label program<input name="program_label" defaultValue={item.program_label || ''} /></label>
-                    <label className="reference-edit-wide">Detail<textarea name="detail" defaultValue={item.detail || ''} /></label>
-                    <label className="reference-edit-wide">Fakta utama<textarea name="key_facts" defaultValue={item.key_facts || ''} /></label>
-                    <label>9 BERANI<select name="berani_program_id" defaultValue={item.berani_program_id || ''}><option value="">Tidak dikaitkan</option>{(programs ?? []).map((program) => <option value={program.id} key={program.id}>{program.name}</option>)}</select></label>
-                    <label>Status<select name="status" defaultValue={item.status}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
-                    <label className="reference-edit-wide">Referensi URL<textarea name="reference_urls" defaultValue={links.join('\n')} /></label>
-                    <label>Sumber<input name="source_label" defaultValue={item.source_label || ''} /></label>
-                    <label>Urutan<input name="sort_order" type="number" min="0" defaultValue={item.sort_order} /></label>
-                    <button className="secondary-button reference-editor-save" type="submit">Simpan Perubahan</button>
-                  </form>
-                </div>
-              </details> : null}
+              {!shareMode && adminMode ? <Link className="reference-inline-editor-trigger" href={editHref(item.id)} scroll={false} title="Edit referensi" aria-label="Edit referensi">✎</Link> : null}
             </div>
           </div>
 
@@ -197,6 +189,33 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
 
       {(references ?? []).length === 0 ? <section className="panel empty-document-panel reference-empty"><p className="eyebrow">BELUM ADA DATA</p><h2>Referensi tidak ditemukan</h2><p>Ubah filter untuk melihat data lain.</p></section> : null}
     </section>
+
+    {editItem && !shareMode && adminMode ? <ReferenceEditorPortal closeHref={closeHref}>
+      <div className="reference-editor-heading">
+        <div>
+          <span className="eyebrow">EDIT REFERENSI</span>
+          <strong>{editItem.opd_name}</strong>
+          <small>Edit data dengan nyaman. Form dapat di-scroll penuh dan aman di desktop maupun mobile.</small>
+        </div>
+        <Link className="reference-editor-close" href={closeHref} scroll={false} aria-label="Tutup editor">×</Link>
+      </div>
+      <form action={updateContentReference} className="mini-form reference-edit-form">
+        <input type="hidden" name="id" value={editItem.id} />
+        <input type="hidden" name="return_to" value={closeHref} />
+        <label>OPD<input name="opd_name" defaultValue={editItem.opd_name} required /></label>
+        <label>Judul<input name="title" defaultValue={editItem.title} required /></label>
+        <label>Label program<input name="program_label" defaultValue={editItem.program_label || ''} /></label>
+        <label className="reference-edit-wide">Detail<textarea name="detail" defaultValue={editItem.detail || ''} /></label>
+        <label className="reference-edit-wide">Fakta utama<textarea name="key_facts" defaultValue={editItem.key_facts || ''} /></label>
+        <label>9 BERANI<select name="berani_program_id" defaultValue={editItem.berani_program_id || ''}><option value="">Tidak dikaitkan</option>{(programs ?? []).map((program) => <option value={program.id} key={program.id}>{program.name}</option>)}</select></label>
+        <label>Status<select name="status" defaultValue={editItem.status}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
+        <label className="reference-edit-wide">Referensi URL<textarea name="reference_urls" defaultValue={editLinks.join('\n')} /></label>
+        <label>Sumber<input name="source_label" defaultValue={editItem.source_label || ''} /></label>
+        <label>Urutan<input name="sort_order" type="number" min="0" defaultValue={editItem.sort_order} /></label>
+        <button className="secondary-button reference-editor-save" type="submit">Simpan Perubahan</button>
+      </form>
+    </ReferenceEditorPortal> : null}
+
     {!shareMode ? <FeatureNotes featureKey="referensi-konten" returnPath="/referensi-konten" adminMode={adminMode} title="Catatan Referensi Konten" description="Catatan kerja untuk penyusunan dan verifikasi bahan konten." /> : null}
   </AppShell>
 }
