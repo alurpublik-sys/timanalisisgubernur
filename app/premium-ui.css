@@ -1195,3 +1195,183 @@ body.reference-editor-open::before{
   from{opacity:0}
   to{opacity:1}
 }
+
+
+/* Reference editor portal — viewport-safe final implementation */
+.reference-inline-editor-trigger{
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  flex:0 0 28px;
+  border:1px solid #dce5ec;
+  border-radius:9px;
+  background:#fff;
+  color:#55728a;
+  font-size:10px;
+  font-weight:850;
+  box-shadow:0 8px 18px -16px rgba(13,45,69,.4);
+  transition:transform .16s ease,border-color .16s ease,background-color .16s ease,color .16s ease,box-shadow .16s ease;
+}
+.reference-inline-editor-trigger:hover{
+  transform:translateY(-1px);
+  border-color:#bcd0df;
+  background:#f7fafc;
+  color:#244f72;
+  box-shadow:0 12px 24px -18px rgba(13,45,69,.5);
+}
+.reference-editor-layer{
+  position:fixed;
+  inset:0;
+  z-index:1200;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  isolation:isolate;
+}
+.reference-editor-backdrop{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  width:100%;
+  height:100%;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:rgba(5,18,32,.46);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  cursor:default;
+  animation:referencePortalBackdropIn .18s ease both;
+}
+.reference-editor-modal{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  width:min(920px,calc(100vw - 48px));
+  height:min(820px,calc(100dvh - 48px));
+  max-width:920px;
+  max-height:calc(100dvh - 48px);
+  min-height:0;
+  overflow:hidden;
+  border:1px solid rgba(208,221,231,.98);
+  border-radius:24px;
+  background:rgba(255,255,255,.99);
+  box-shadow:0 44px 120px -28px rgba(3,19,34,.62);
+  animation:referencePortalModalIn .2s cubic-bezier(.2,.78,.2,1) both;
+}
+.reference-editor-modal .reference-editor-heading{
+  position:relative;
+  z-index:3;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:20px;
+  padding:19px 20px 17px;
+  border-bottom:1px solid #e6edf2;
+  background:linear-gradient(180deg,#fff 0%,#f8fbfd 100%);
+}
+.reference-editor-modal .reference-editor-heading>div{
+  display:grid;
+  gap:4px;
+  min-width:0;
+}
+.reference-editor-modal .reference-editor-heading strong{
+  color:#173750;
+  font-size:17px;
+  line-height:1.24;
+  letter-spacing:-.025em;
+  overflow-wrap:anywhere;
+}
+.reference-editor-modal .reference-editor-heading small{
+  max-width:680px;
+  color:#7d909f;
+  font-size:8px;
+  line-height:1.5;
+}
+.reference-editor-close{
+  display:grid;
+  place-items:center;
+  width:36px;
+  height:36px;
+  flex:0 0 36px;
+  border:1px solid #dce6ed;
+  border-radius:11px;
+  background:#fff;
+  color:#587087;
+  font-size:22px;
+  line-height:1;
+  box-shadow:0 10px 24px -20px rgba(13,45,69,.5);
+  transition:transform .15s ease,border-color .15s ease,background-color .15s ease,color .15s ease;
+}
+.reference-editor-close:hover{
+  transform:rotate(2deg) scale(1.03);
+  border-color:#c2d4e1;
+  background:#f4f8fb;
+  color:#173f62;
+}
+.reference-editor-modal .reference-edit-form{
+  min-height:0!important;
+  height:100%;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain;
+  padding:18px 20px 24px!important;
+  scroll-padding-bottom:74px;
+  background:linear-gradient(180deg,#fff 0%,#fbfcfd 100%);
+}
+.reference-editor-modal .reference-editor-save{
+  bottom:0;
+  box-shadow:0 -16px 28px -22px rgba(13,45,69,.28),0 10px 25px -20px rgba(13,45,69,.3);
+}
+@media(max-width:760px){
+  .reference-editor-layer{
+    align-items:stretch;
+    padding:10px;
+  }
+  .reference-editor-modal{
+    width:100%;
+    height:calc(100dvh - 20px);
+    max-width:none;
+    max-height:calc(100dvh - 20px);
+    border-radius:20px;
+  }
+  .reference-editor-modal .reference-editor-heading{
+    padding:14px 14px 12px;
+  }
+  .reference-editor-modal .reference-editor-heading strong{
+    font-size:14px;
+  }
+  .reference-editor-modal .reference-editor-heading small{
+    font-size:7.5px;
+  }
+  .reference-editor-close{
+    width:34px;
+    height:34px;
+    flex-basis:34px;
+    border-radius:10px;
+  }
+  .reference-editor-modal .reference-edit-form{
+    padding:13px 13px calc(18px + env(safe-area-inset-bottom))!important;
+  }
+}
+@media(max-width:430px){
+  .reference-editor-layer{padding:6px}
+  .reference-editor-modal{
+    height:calc(100dvh - 12px);
+    max-height:calc(100dvh - 12px);
+    border-radius:17px;
+  }
+  .reference-editor-modal .reference-editor-heading{gap:10px;padding:12px 12px 10px}
+  .reference-editor-modal .reference-editor-heading small{display:none}
+}
+@keyframes referencePortalModalIn{
+  from{opacity:0;transform:translateY(10px) scale(.985)}
+  to{opacity:1;transform:none}
+}
+@keyframes referencePortalBackdropIn{
+  from{opacity:0}
+  to{opacity:1}
+}
