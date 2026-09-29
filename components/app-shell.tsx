@@ -3,7 +3,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { APP_SHORT_NAME } from '@/lib/branding'
 
 const menu = [
   { label: 'Dashboard', href: '/dashboard', glyph: 'DB' },
@@ -23,8 +22,14 @@ function Brand() {
         <Image src="/icon.svg" alt="" width={62} height={62} sizes="62px" className="brand-portrait brand-app-icon" priority />
       </div>
       <div className="brand-copy">
-        <strong>{APP_SHORT_NAME}</strong>
-        <span>Komunikasi Strategis · Independen</span>
+        <strong className="brand-title">
+          <span>Tim Analisis</span>
+          <span>Strategis</span>
+        </strong>
+        <span className="brand-subtitle">
+          <span>Komunikasi Strategis</span>
+          <span>· Independen</span>
+        </span>
       </div>
     </div>
   )
