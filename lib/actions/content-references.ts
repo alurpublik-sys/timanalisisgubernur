@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { requireActionUser } from '@/lib/auth'
 
 const STATUSES = ['Draft', 'Perlu Verifikasi', 'Siap Dibagikan'] as const
@@ -95,6 +96,8 @@ export async function updateContentReference(fd: FormData) {
   }).eq('id', id)
   if (error) throw new Error(error.message)
   refresh()
+  const returnTo = text(fd, 'return_to')
+  if (returnTo === '/referensi-konten' || returnTo.startsWith('/referensi-konten?')) redirect(returnTo)
 }
 
 export async function deleteContentReference(fd: FormData) {
