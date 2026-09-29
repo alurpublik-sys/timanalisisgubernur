@@ -19,7 +19,7 @@ function Brand() {
   return (
     <div className="brand strategic-brand">
       <div className="brand-portrait-wrap brand-icon-wrap">
-        <Image src="/icon.svg" alt="" width={62} height={62} sizes="62px" className="brand-portrait brand-app-icon" priority />
+        <Image src="/tim-analisis-logo.png" alt="" width={62} height={62} sizes="62px" className="brand-portrait brand-app-icon" priority />
       </div>
       <div className="brand-copy">
         <strong className="brand-title">
