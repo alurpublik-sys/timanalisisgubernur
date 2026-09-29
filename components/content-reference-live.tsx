@@ -44,15 +44,16 @@ export function ContentReferenceLive() {
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL
     const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-    if (!url || !key) return
-    const supabase = createClient(url, key)
+    const supabase = url && key ? createClient(url, key) : null
     const channel = supabase
-      .channel('content-references-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'content_references' }, () => router.refresh())
-      .subscribe()
+      ? supabase
+          .channel('content-references-live')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'content_references' }, () => router.refresh())
+          .subscribe()
+      : null
 
     return () => {
-      void supabase.removeChannel(channel)
+      if (supabase && channel) void supabase.removeChannel(channel)
       document.removeEventListener('toggle', handleToggle, true)
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
