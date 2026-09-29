@@ -867,3 +867,331 @@
     content:" ";
   }
 }
+
+
+/* Reference editor responsive modal + global scroll polish */
+html{
+  scroll-behavior:smooth;
+  scrollbar-gutter:stable;
+}
+body.reference-editor-open{
+  overflow:hidden;
+}
+body.reference-editor-open::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:89;
+  background:rgba(5,18,32,.34);
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+  animation:referenceBackdropIn .18s ease both;
+}
+.main-content,.route-stage,.reference-library-grid,.reference-library-card,.reference-library-card-head,.reference-library-body{
+  min-width:0;
+}
+.reference-library-card:has(.reference-inline-editor[open]){
+  z-index:95;
+  transform:none!important;
+}
+.reference-library-card:has(.reference-inline-editor[open]):hover{
+  transform:none!important;
+}
+.reference-inline-editor[open]{
+  z-index:100;
+}
+.reference-editor-popover{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  top:50%!important;
+  z-index:100!important;
+  width:min(760px,calc(100vw - 40px))!important;
+  max-width:calc(100vw - 40px)!important;
+  height:min(760px,calc(100dvh - 54px));
+  max-height:calc(100dvh - 54px)!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border:1px solid rgba(206,219,230,.96)!important;
+  border-radius:22px!important;
+  background:rgba(255,255,255,.985)!important;
+  box-shadow:0 38px 100px -28px rgba(5,25,43,.5)!important;
+  transform:translate(-50%,-50%)!important;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  animation:referenceEditorIn .2s cubic-bezier(.2,.8,.2,1) both;
+}
+.reference-editor-heading{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px 20px 16px;
+  border-bottom:1px solid #e7edf2;
+  background:linear-gradient(180deg,rgba(255,255,255,.99),rgba(248,251,253,.98));
+}
+.reference-editor-heading>div{
+  display:grid;
+  gap:4px;
+  min-width:0;
+}
+.reference-editor-heading .eyebrow{
+  font-size:7px;
+  letter-spacing:.15em;
+}
+.reference-editor-heading strong{
+  color:#183a56;
+  font-size:16px;
+  line-height:1.25;
+  letter-spacing:-.025em;
+  overflow-wrap:anywhere;
+}
+.reference-editor-heading small{
+  color:#8394a2;
+  font-size:8px;
+  line-height:1.45;
+}
+.reference-editor-close-hint{
+  flex:0 0 auto;
+  padding:6px 8px;
+  border:1px solid #dce6ed;
+  border-radius:8px;
+  background:#fff;
+  color:#6b8194;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.08em;
+  box-shadow:0 8px 20px -16px rgba(19,55,82,.45);
+}
+.reference-edit-form{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-content:start;
+  gap:13px!important;
+  min-height:0;
+  max-height:none!important;
+  padding:18px 20px 24px!important;
+  overflow:auto!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-gutter:stable;
+}
+.reference-edit-form label{
+  min-width:0;
+  gap:7px!important;
+  color:#526b7f!important;
+  font-size:9px!important;
+  line-height:1.3;
+}
+.reference-edit-form .reference-edit-wide{
+  grid-column:1/-1!important;
+}
+.reference-edit-form input,
+.reference-edit-form select,
+.reference-edit-form textarea,
+.reference-create-compact input,
+.reference-create-compact select,
+.reference-create-compact textarea{
+  min-width:0;
+  max-width:100%;
+  width:100%;
+  border:1px solid #d5e1ea!important;
+  border-radius:13px!important;
+  background:#fff!important;
+  color:#14283b!important;
+  box-shadow:0 1px 0 rgba(12,41,65,.02);
+  transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease,transform .16s ease;
+}
+.reference-edit-form input,
+.reference-edit-form select{
+  min-height:46px;
+  padding:11px 13px!important;
+}
+.reference-edit-form textarea{
+  min-height:118px;
+  max-height:300px;
+  padding:12px 13px!important;
+  line-height:1.55;
+  resize:vertical;
+  overflow:auto;
+}
+.reference-edit-form textarea[name="detail"],
+.reference-edit-form textarea[name="key_facts"]{
+  min-height:150px;
+}
+.reference-edit-form textarea[name="reference_urls"]{
+  min-height:96px;
+}
+.reference-edit-form input:focus,
+.reference-edit-form select:focus,
+.reference-edit-form textarea:focus,
+.reference-create-compact input:focus,
+.reference-create-compact select:focus,
+.reference-create-compact textarea:focus{
+  outline:none;
+  border-color:#7fa3c1!important;
+  box-shadow:0 0 0 4px rgba(73,126,169,.09)!important;
+}
+.reference-editor-save{
+  grid-column:1/-1;
+  position:sticky;
+  bottom:0;
+  z-index:3;
+  min-height:46px;
+  margin-top:2px;
+  border:1px solid #cbdce8!important;
+  background:linear-gradient(180deg,#eaf3f9,#dfeaf3)!important;
+  color:#214d72!important;
+  box-shadow:0 -10px 24px -20px rgba(13,45,69,.32),0 10px 25px -20px rgba(13,45,69,.3);
+}
+.reference-editor-save:hover{
+  background:linear-gradient(180deg,#e2eef7,#d7e6f1)!important;
+  transform:translateY(-1px);
+}
+.reference-edit-form,
+.reference-edit-form textarea,
+.reference-create-compact,
+.reference-create-compact textarea,
+.premium-table-scroll,
+.table-scroll,
+.processed-text-full,
+.mobile-drawer,
+.sidebar{
+  scrollbar-width:thin;
+  scrollbar-color:#aebfcd transparent;
+}
+.reference-edit-form::-webkit-scrollbar,
+.reference-edit-form textarea::-webkit-scrollbar,
+.reference-create-compact::-webkit-scrollbar,
+.reference-create-compact textarea::-webkit-scrollbar,
+.premium-table-scroll::-webkit-scrollbar,
+.table-scroll::-webkit-scrollbar,
+.processed-text-full::-webkit-scrollbar,
+.mobile-drawer::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar{
+  width:8px;
+  height:8px;
+}
+.reference-edit-form::-webkit-scrollbar-thumb,
+.reference-edit-form textarea::-webkit-scrollbar-thumb,
+.reference-create-compact::-webkit-scrollbar-thumb,
+.reference-create-compact textarea::-webkit-scrollbar-thumb,
+.premium-table-scroll::-webkit-scrollbar-thumb,
+.table-scroll::-webkit-scrollbar-thumb,
+.processed-text-full::-webkit-scrollbar-thumb,
+.mobile-drawer::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb{
+  border:2px solid transparent;
+  border-radius:999px;
+  background:#aebfcd;
+  background-clip:padding-box;
+}
+.reference-edit-form::-webkit-scrollbar-track,
+.reference-edit-form textarea::-webkit-scrollbar-track,
+.reference-create-compact::-webkit-scrollbar-track,
+.reference-create-compact textarea::-webkit-scrollbar-track,
+.premium-table-scroll::-webkit-scrollbar-track,
+.table-scroll::-webkit-scrollbar-track,
+.processed-text-full::-webkit-scrollbar-track,
+.mobile-drawer::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-track{
+  background:transparent;
+}
+.reference-admin-create,
+.reference-library-card,
+.media-mobile-card,
+.finding-card,
+.team-profile-card,
+.document-card,
+.panel,
+.stat-card{
+  transition:transform .2s cubic-bezier(.2,.75,.2,1),box-shadow .2s ease,border-color .2s ease,background-color .2s ease;
+}
+.reference-create-compact textarea{
+  min-height:110px;
+  max-height:300px;
+  overflow:auto;
+  resize:vertical;
+  line-height:1.55;
+}
+.reference-create-compact{
+  min-width:0;
+}
+.reference-create-compact>*{
+  min-width:0;
+}
+@media(hover:hover){
+  .reference-edit-form input:hover,
+  .reference-edit-form select:hover,
+  .reference-edit-form textarea:hover,
+  .reference-create-compact input:hover,
+  .reference-create-compact select:hover,
+  .reference-create-compact textarea:hover{
+    border-color:#bfd0dd!important;
+  }
+}
+@media(max-width:760px){
+  .reference-editor-popover{
+    width:calc(100vw - 20px)!important;
+    max-width:calc(100vw - 20px)!important;
+    height:calc(100dvh - 24px);
+    max-height:calc(100dvh - 24px)!important;
+    border-radius:20px!important;
+  }
+  .reference-editor-heading{
+    padding:15px 15px 13px;
+  }
+  .reference-editor-heading strong{
+    font-size:14px;
+  }
+  .reference-editor-heading small{
+    font-size:7.5px;
+  }
+  .reference-edit-form{
+    grid-template-columns:1fr!important;
+    gap:11px!important;
+    padding:14px 14px calc(18px + env(safe-area-inset-bottom))!important;
+  }
+  .reference-edit-form .reference-edit-wide,
+  .reference-editor-save{
+    grid-column:1!important;
+  }
+  .reference-edit-form input,
+  .reference-edit-form select,
+  .reference-edit-form textarea,
+  .reference-create-compact input,
+  .reference-create-compact select,
+  .reference-create-compact textarea{
+    font-size:16px!important;
+  }
+  .reference-edit-form textarea{
+    min-height:126px;
+  }
+  .reference-library-grid{
+    gap:12px;
+  }
+}
+@media(max-width:430px){
+  .reference-editor-heading{
+    gap:10px;
+    padding:13px 13px 11px;
+  }
+  .reference-editor-close-hint{
+    padding:5px 7px;
+    font-size:6.5px;
+  }
+  .reference-edit-form{
+    padding-left:12px!important;
+    padding-right:12px!important;
+  }
+}
+@keyframes referenceEditorIn{
+  from{opacity:0;transform:translate(-50%,calc(-50% + 10px)) scale(.985)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@keyframes referenceBackdropIn{
+  from{opacity:0}
+  to{opacity:1}
+}
