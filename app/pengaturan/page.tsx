@@ -7,6 +7,7 @@ import { requireUser } from '@/lib/auth'
 import { getTeamPhotoUrl } from '@/lib/branding'
 import { FeatureNotes } from '@/components/feature-notes'
 import { DirectUploadField } from '@/components/direct-upload-field'
+import { PendingSubmitButton } from '@/components/pending-submit-button'
 
 export default async function PengaturanPage() {
   const { supabase } = await requireUser('/pengaturan')
@@ -29,12 +30,12 @@ export default async function PengaturanPage() {
           <h3>Ganti PIN</h3><p className="muted-line">PIN terdiri dari 5 sampai 8 angka. Mengganti PIN akan mencabut seluruh sesi edit aktif.</p>
           <label>PIN Baru<input name="new_pin" type="password" inputMode="numeric" pattern="[0-9]{5,8}" minLength={5} maxLength={8} autoComplete="new-password" required /></label>
           <label>Konfirmasi PIN<input name="confirm_pin" type="password" inputMode="numeric" pattern="[0-9]{5,8}" minLength={5} maxLength={8} autoComplete="new-password" required /></label>
-          <button className="primary-button" type="submit">Ganti PIN & Keluar</button>
+          <PendingSubmitButton className="primary-button" pendingLabel="Mengganti PIN…">Ganti PIN & Keluar</PendingSubmitButton>
         </form>
         <form action={migrateLegacyTeamAssets} className="panel migration-card">
           <p className="eyebrow">MIGRASI ASET</p><h3>Google Drive → Supabase Storage</h3>
           <p>Salin otomatis foto dan CV lama yang masih memakai tautan Google Drive ke storage tim.  File yang gagal diakses tetap mempertahankan tautan lama sebagai fallback.</p>
-          <button className="secondary-button" type="submit">Migrasikan Aset Lama</button>
+          <PendingSubmitButton className="secondary-button" pendingLabel="Memigrasikan…">Migrasikan Aset Lama</PendingSubmitButton>
         </form>
       </div>
     </section>
@@ -52,7 +53,7 @@ export default async function PengaturanPage() {
           <label>Google Docs Notulensi<input name="link_notulen" type="url" placeholder="https://docs.google.com/document/..." /></label>
           <div className="settings-field-wide"><DirectUploadField kind="kunjungan-pdf" name="notulen_uploads" label="PDF Notulensi" accept="application/pdf,.pdf" helpText="Opsional. File diunggah langsung ke Supabase agar PDF besar tidak mentok batas Vercel." /></div>
         </div>
-        <button className="primary-button" type="submit">Simpan Kunjungan</button>
+        <PendingSubmitButton className="primary-button" pendingLabel="Menyimpan kunjungan…">Simpan Kunjungan</PendingSubmitButton>
       </form>
     </section>
 
@@ -65,7 +66,7 @@ export default async function PengaturanPage() {
           <label>Bio singkat<textarea name="bio" placeholder="Keahlian, fokus analisis, atau pengalaman singkat" /></label>
           <DirectUploadField kind="team-photo" name="photo_uploads" label="Foto" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" helpText="Foto diunggah langsung ke Supabase." />
           <DirectUploadField kind="team-cv" name="cv_uploads" label="CV PDF" accept="application/pdf,.pdf" helpText="CV diunggah langsung ke Supabase." />
-          <button className="primary-button">Tambah Anggota</button>
+          <PendingSubmitButton className="primary-button" pendingLabel="Menambah anggota…">Tambah Anggota</PendingSubmitButton>
         </form>
         {(team ?? []).map((row) => { const photo=getTeamPhotoUrl(row); return <form action={updateTeamMember} className="panel form-card compact-form member-settings-card" key={row.id}>
           <input type="hidden" name="id" value={row.id} />
@@ -76,7 +77,7 @@ export default async function PengaturanPage() {
           <DirectUploadField kind="team-photo" name="photo_uploads" label="Ganti Foto" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" scope={String(row.id)} />
           <DirectUploadField kind="team-cv" name="cv_uploads" label="Ganti CV" accept="application/pdf,.pdf" scope={String(row.id)} />
           <div className="asset-row">{photo?<a href={photo} target="_blank" rel="noreferrer">Foto saat ini</a>:<span>Foto belum ada</span>}{(row.cv_url||row.link_cv)?<a href={row.cv_url||row.link_cv||'#'} target="_blank" rel="noreferrer">CV saat ini</a>:<span>CV belum ada</span>}</div>
-          <button className="secondary-button">Simpan Profil</button>
+          <PendingSubmitButton className="secondary-button" pendingLabel="Menyimpan profil…">Simpan Profil</PendingSubmitButton>
         </form> })}
       </div>
     </section>
