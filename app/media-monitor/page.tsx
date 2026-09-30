@@ -1,11 +1,20 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
-import { createMedia } from '@/lib/actions/core'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthContext } from '@/lib/auth'
 import { FeatureNotes } from '@/components/feature-notes'
+import { MediaAddDialog } from '@/components/media-add-dialog'
 
 const PAGE_SIZE = 20
+
+function todayMakassar() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Makassar',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+}
 type Params = { q?: string; sentimen?: string; page?: string }
 
 export default async function MediaPage({ searchParams }: { searchParams: Promise<Params> }) {
@@ -36,20 +45,23 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
   }
 
   return <AppShell active="/media-monitor" title="Media Monitor" adminMode={adminMode}>
-    <section className={`module-grid${adminMode ? "" : " read-only-module-grid"}`}>
-      {adminMode ? <form action={createMedia} className="panel form-card">
-        <div className="section-heading"><p className="eyebrow">MONITORING MEDIA</p><h2>Tambah Berita</h2></div>
-        <label>Judul Berita<input name="judul" required /></label>
-        <label>Nama Media<input name="media" /></label>
-        <label>Tanggal<input name="tanggal" type="date" required /></label>
-        <label>Sentimen<select name="sentimen"><option>Positif</option><option>Netral</option><option>Negatif</option></select></label>
-        <label>Link Berita<input name="link" type="url" /></label>
-        <button className="primary-button" type="submit">Simpan Berita</button>
-      </form> : null}
+    <section className="media-monitor-shell">
+      <section className="panel table-panel premium-table-panel media-monitor-panel">
+        <div className="section-heading table-heading-with-filter media-monitor-heading">
+          <div className="media-monitor-title-row">
+            <div><p className="eyebrow">MONITORING</p><h2>Media Terkini</h2><p className="muted-line">{total} berita ditemukan</p></div>
+            <div className="media-monitor-quick-actions">
+              {adminMode
+                ? <MediaAddDialog today={todayMakassar()} />
+                : <Link
+                    className="media-add-icon is-locked"
+                    href={`/login?next=${encodeURIComponent('/media-monitor')}`}
+                    aria-label="Masuk dengan PIN untuk menambah berita"
+                    title="Tambah berita dikunci PIN administrator"
+                  ><span aria-hidden>⌁</span></Link>}
+            </div>
+          </div>
 
-      <section className="panel table-panel premium-table-panel">
-        <div className="section-heading table-heading-with-filter">
-          <div><p className="eyebrow">MONITORING</p><h2>Media Terkini</h2><p className="muted-line">{total} berita ditemukan</p></div>
           <form method="get" className="filter-form compact-filter">
             <label>Cari<input name="q" defaultValue={q} placeholder="Judul, media, atau ID lama" /></label>
             <label>Sentimen<select name="sentimen" defaultValue={sentimen}><option value="">Semua</option><option>Positif</option><option>Netral</option><option>Negatif</option></select></label>
@@ -57,10 +69,12 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
             {(q || sentimen) ? <Link className="secondary-button" href="/media-monitor">Reset</Link> : null}
           </form>
         </div>
+
         <div className="table-scroll premium-table-scroll media-premium-scroll"><table className="data-table premium-table"><thead><tr><th>Tanggal / ID</th><th>Berita</th><th>Media</th><th>Sentimen</th><th>Link</th></tr></thead><tbody>
           {(rows ?? []).map((row) => <tr key={row.id}><td><b>{row.tanggal}</b><small>{row.legacy_id || row.kode}</small></td><td><b>{row.judul_berita}</b></td><td>{row.nama_media || '-'}</td><td><span className="status-pill">{row.sentimen || '-'}</span></td><td>{row.link_berita ? <a className="table-link" href={row.link_berita} target="_blank" rel="noreferrer">Buka</a> : '-'}</td></tr>)}
           {(rows ?? []).length === 0 ? <tr><td colSpan={5} className="empty-cell">Tidak ada data media yang cocok.</td></tr> : null}
         </tbody></table></div>
+
         <div className="media-mobile-list">
           {(rows ?? []).map((row) => <article className="media-mobile-card" key={row.id}>
             <div className="media-mobile-card-head">
@@ -75,6 +89,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
           </article>)}
           {(rows ?? []).length === 0 ? <div className="empty-document-panel compact-empty"><p>Tidak ada data media yang cocok.</p></div> : null}
         </div>
+
         <div className="pagination-bar">
           <span>Halaman {safePage} dari {totalPages}</span>
           <div className="pagination-actions">

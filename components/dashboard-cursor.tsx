@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react'
 
 export function DashboardCursor() {
   const ringRef = useRef<HTMLDivElement>(null)
+  const frameRef = useRef<number | null>(null)
+  const pointRef = useRef({ x: 0, y: 0, target: null as Element | null })
 
   useEffect(() => {
     const finePointer = window.matchMedia('(pointer: fine) and (hover: hover)')
@@ -13,16 +15,22 @@ export function DashboardCursor() {
     if (!ring) return
 
     const onMove = (event: MouseEvent) => {
-      // Keep the halo locked to the browser cursor hotspot.
-      // Smoothness comes from hover/size transitions, not positional lag.
-      ring.style.left = `${event.clientX}px`
-      ring.style.top = `${event.clientY}px`
-      const target = event.target instanceof Element ? event.target : null
-      if (target?.closest('.dashboard-cursor-zone')) document.documentElement.classList.add('dashboard-pointer-live')
-      else {
-        document.documentElement.classList.remove('dashboard-pointer-live')
-        ring.classList.remove('is-active')
+      pointRef.current = {
+        x: event.clientX,
+        y: event.clientY,
+        target: event.target instanceof Element ? event.target : null,
       }
+      if (frameRef.current !== null) return
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = null
+        const { x, y, target } = pointRef.current
+        ring.style.transform = `translate3d(${x}px,${y}px,0) translate(-50%,-50%)`
+        if (target?.closest('.dashboard-cursor-zone')) document.documentElement.classList.add('dashboard-pointer-live')
+        else {
+          document.documentElement.classList.remove('dashboard-pointer-live')
+          ring.classList.remove('is-active')
+        }
+      })
     }
 
     const onWindowLeave = () => {
@@ -55,6 +63,7 @@ export function DashboardCursor() {
     return () => {
       window.removeEventListener('mousemove', onMove)
       document.documentElement.removeEventListener('mouseleave', onWindowLeave)
+      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current)
       targets.forEach((target) => {
         target.removeEventListener('mouseenter', enter)
         target.removeEventListener('mouseleave', leave)

@@ -6,6 +6,7 @@ import { requireUser } from '@/lib/auth'
 import { FeatureNotes } from '@/components/feature-notes'
 import type { Database } from '@/lib/database.types'
 import { DirectUploadField } from '@/components/direct-upload-field'
+import { PendingSubmitButton } from '@/components/pending-submit-button'
 
 type Params = { opd?: string }
 type FindingDocument = Database['public']['Tables']['opd_finding_documents']['Row']
@@ -107,7 +108,7 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
           maxFiles={10}
           helpText="Bisa pilih hingga 10 file, maksimal 20 MB per file. File diunggah langsung ke Supabase agar tidak mentok batas request Vercel."
         />
-        <button className="primary-button" type="submit">Simpan Temuan</button>
+        <PendingSubmitButton className="primary-button" pendingLabel="Menyimpan temuan…">Simpan Temuan</PendingSubmitButton>
       </form>
 
       <section className="finding-list">
@@ -131,7 +132,7 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
               {findingDocuments.map((document) => <div className="finding-document-chip" key={document.id}>
                 <span className="mini-file-kind">{fileKind(document.file_name)}</span>
                 <a href={findingDocumentUrl(document.file_path)} target="_blank" rel="noreferrer">{document.file_name}</a>
-                <form action={deleteFindingDocument}><input type="hidden" name="id" value={document.id} /><button className="inline-delete" type="submit">×</button></form>
+                <form action={deleteFindingDocument}><input type="hidden" name="id" value={document.id} /><PendingSubmitButton className="inline-delete" pendingLabel="…">×</PendingSubmitButton></form>
               </div>)}
             </div> : null}
 
@@ -158,10 +159,10 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
                     scope={String(finding.id)}
                     helpText="Lampiran baru diunggah langsung ke Supabase."
                   />
-                  <button className="secondary-button" type="submit">Simpan Perubahan</button>
+                  <PendingSubmitButton className="secondary-button" pendingLabel="Menyimpan perubahan…">Simpan Perubahan</PendingSubmitButton>
                 </form>
               </details>
-              <form action={deleteFinding}><input type="hidden" name="id" value={finding.id} /><button className="text-danger-button" type="submit">Hapus Temuan</button></form>
+              <form action={deleteFinding}><input type="hidden" name="id" value={finding.id} /><PendingSubmitButton className="text-danger-button" pendingLabel="Menghapus…">Hapus Temuan</PendingSubmitButton></form>
             </div>
           </article>
         })}

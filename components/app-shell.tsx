@@ -45,7 +45,7 @@ function Navigation({ active, onNavigate }: { active: string; onNavigate: (href:
           <Link
             key={href}
             href={href}
-            prefetch
+            prefetch={false}
             aria-current={isActive ? 'page' : undefined}
             className={isActive ? 'active' : ''}
             onClick={() => onNavigate(href)}
@@ -69,6 +69,12 @@ export function AppShell({ active, title, children, adminMode = false, editRetur
     setNavigating(false)
     setMobileOpen(false)
   }, [active])
+
+  useEffect(() => {
+    if (!navigating) return
+    const timeout = window.setTimeout(() => setNavigating(false), 4500)
+    return () => window.clearTimeout(timeout)
+  }, [navigating])
 
   useEffect(() => {
     if (!mobileOpen) return

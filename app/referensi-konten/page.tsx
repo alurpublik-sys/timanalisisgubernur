@@ -7,6 +7,7 @@ import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/database.types'
 import { FeatureNotes } from '@/components/feature-notes'
+import { PendingSubmitButton } from '@/components/pending-submit-button'
 
 type Params = { opd?: string; status?: string; q?: string; mode?: string; compose?: string; edit?: string }
 
@@ -137,7 +138,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
         <label>Referensi URL<textarea name="reference_urls" placeholder={"Satu link per baris\nhttps://..."} /></label>
         <label>Sumber Internal<input name="source_label" placeholder="Notulensi / dokumen / OPD" /></label>
         <label>Urutan<input name="sort_order" type="number" min="0" defaultValue="0" /></label>
-        <button className="primary-button" type="submit">Simpan Referensi</button>
+        <PendingSubmitButton className="primary-button" pendingLabel="Menyimpan referensi…">Simpan Referensi</PendingSubmitButton>
       </form>
     </details> : null}
 
@@ -212,7 +213,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
         <label className="reference-edit-wide">Referensi URL<textarea name="reference_urls" defaultValue={editLinks.join('\n')} /></label>
         <label>Sumber<input name="source_label" defaultValue={editItem.source_label || ''} /></label>
         <label>Urutan<input name="sort_order" type="number" min="0" defaultValue={editItem.sort_order} /></label>
-        <button className="secondary-button reference-editor-save" type="submit">Simpan Perubahan</button>
+        <PendingSubmitButton className="secondary-button reference-editor-save" pendingLabel="Menyimpan perubahan…">Simpan Perubahan</PendingSubmitButton>
       </form>
     </ReferenceEditorPortal> : null}
 

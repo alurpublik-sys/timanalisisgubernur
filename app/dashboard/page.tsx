@@ -64,8 +64,8 @@ export default async function DashboardPage() {
           <h2>{APP_NAME}</h2>
           <p>{APP_TAGLINE}. Satu ruang kerja untuk kunjungan OPD, media monitoring, data 9 BERANI, temuan lapangan, dan referensi informasi yang siap dipakai.</p>
           <div className="hero-actions">
-            <Link className="primary-button hero-primary" href="/berani" prefetch>Buka 9 BERANI</Link>
-            <Link className="ghost-button" href="/referensi-konten" prefetch>Referensi Konten</Link>
+            <Link className="primary-button hero-primary" href="/berani">Buka 9 BERANI</Link>
+            <Link className="ghost-button" href="/referensi-konten">Referensi Konten</Link>
           </div>
         </div>
         <div className="hero-leaders" aria-label="Pimpinan Provinsi Sulawesi Tengah">
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
 
       <section className="stats-grid strategic-stats strategic-stats-six">
         {cards.map(([label, total, href, note]) => (
-          <Link href={href} prefetch className="stat-card stat-link" key={href}>
+          <Link href={href} prefetch={false} className="stat-card stat-link" key={href}>
             <span>{label}</span><strong>{total}</strong><small>{note}</small><i aria-hidden>↗</i>
           </Link>
         ))}
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
 
       <section className="dashboard-insights">
         <article className="panel insight-card">
-          <div className="panel-head"><div><p className="eyebrow">MEDIA MONITOR</p><h2>Peta Sentimen</h2></div><Link href="/media-monitor" prefetch>Buka media</Link></div>
+          <div className="panel-head"><div><p className="eyebrow">MEDIA MONITOR</p><h2>Peta Sentimen</h2></div><Link href="/media-monitor">Buka media</Link></div>
           <div className="metric-list">
             <div><span>Positif</span><b>{overview.media_positif ?? 0}</b></div>
             <div><span>Netral</span><b>{overview.media_netral ?? 0}</b></div>
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="panel knowledge-dashboard-panel">
-        <div className="panel-head"><div><p className="eyebrow">9 BERANI</p><h2>Update Program Terbaru</h2></div><Link href="/berani" prefetch>Lihat semua</Link></div>
+        <div className="panel-head"><div><p className="eyebrow">9 BERANI</p><h2>Update Program Terbaru</h2></div><Link href="/berani">Lihat semua</Link></div>
         <div className="knowledge-dashboard-grid">
           {(recentBerani ?? []).map((update) => {
             const program = beraniMap.get(update.program_id)
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
 
       <section className="content-grid dashboard-bottom-grid">
         <article className="panel">
-          <div className="panel-head"><div><p className="eyebrow">KUNJUNGAN TERBARU</p><h2>Riwayat OPD</h2></div><Link href="/kunjungan" prefetch>Lihat semua</Link></div>
+          <div className="panel-head"><div><p className="eyebrow">KUNJUNGAN TERBARU</p><h2>Riwayat OPD</h2></div><Link href="/kunjungan">Lihat semua</Link></div>
           <div className="agenda-list">
             {(recentVisits ?? []).map((row) => (
               <div className="agenda-row" key={row.id}>
@@ -140,7 +140,7 @@ export default async function DashboardPage() {
           </div>
         </article>
         <article className="panel">
-          <div className="panel-head"><div><p className="eyebrow">REFERENSI KONTEN</p><h2>Pembaruan Informasi</h2></div><Link href="/referensi-konten" prefetch>Buka referensi</Link></div>
+          <div className="panel-head"><div><p className="eyebrow">REFERENSI KONTEN</p><h2>Pembaruan Informasi</h2></div><Link href="/referensi-konten">Buka referensi</Link></div>
           <div className="agenda-list">
             {(recentReferences ?? []).map((row) => (
               <div className="agenda-row" key={row.id}>
