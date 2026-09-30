@@ -2,9 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireActionUser } from '@/lib/auth'
+import { directUploadsFromForm } from '@/lib/direct-uploads'
 
 const KUNJUNGAN_NOTULENSI_BUCKET = 'kunjungan-notulensi'
-const MAX_PDF_BYTES = 10 * 1024 * 1024
+const MAX_PDF_BYTES = 20 * 1024 * 1024
 
 function value(formData: FormData, key: string) { return String(formData.get(key) ?? '').trim() }
 function required(formData: FormData, key: string, label: string, max = 5000) { const result=value(formData,key); if(!result) throw new Error(`${label} wajib diisi.`); if(result.length>max) throw new Error(`${label} terlalu panjang.`); return result }
@@ -29,11 +30,15 @@ async function operationalClient(){return (await requireActionUser(['admin'])).s
 export async function createKunjungan(formData:FormData){
   const supabase=await operationalClient()
   const tanggal=dateValue(formData,'tanggal','Tanggal')
+  const directPdf=directUploadsFromForm(formData,'notulen_uploads','kunjungan-pdf')[0] ?? null
   const pdf=await optionalPdf(formData,'notulen_pdf')
-  let pdfPath:string|null=null
+  let pdfPath:string|null=directPdf?.path ?? null
+  let pdfName:string|null=directPdf?.fileName ?? null
 
+  if(pdf && directPdf) throw new Error('PDF terunggah ganda. Pilih ulang file lalu simpan kembali.')
   if(pdf){
     pdfPath=`${tanggal}/${crypto.randomUUID()}.pdf`
+    pdfName=pdf.name
     const { error: uploadError }=await supabase.storage.from(KUNJUNGAN_NOTULENSI_BUCKET).upload(pdfPath,pdf,{contentType:'application/pdf',cacheControl:'3600',upsert:false})
     if(uploadError)throw new Error(`Upload PDF gagal: ${uploadError.message}`)
   }
@@ -47,7 +52,7 @@ export async function createKunjungan(formData:FormData){
     status:enumValue(formData,'status','Status',['Terjadwal','Selesai','Ditunda'],'Terjadwal'),
     link_notulen:optionalUrl(formData,'link_notulen','Link notulensi'),
     notulen_pdf_path:pdfPath,
-    notulen_pdf_name:pdf?.name ?? null,
+    notulen_pdf_name:pdfName,
   }
   const{error}=await supabase.from('kunjungan').insert(payload)
   if(error){
@@ -72,13 +77,19 @@ export async function updateKunjungan(formData: FormData) {
   if (currentError || !current) throw new Error(currentError?.message || 'Kunjungan tidak ditemukan.')
 
   const tanggal = dateValue(formData,'tanggal','Tanggal')
+  const directPdf = directUploadsFromForm(formData,'notulen_uploads','kunjungan-pdf')[0] ?? null
   const pdf = await optionalPdf(formData,'notulen_pdf')
   const removePdf = value(formData,'remove_pdf') === '1'
   let nextPath = current.notulen_pdf_path
   let nextName = current.notulen_pdf_name
   let uploadedPath: string | null = null
 
-  if (pdf) {
+  if (pdf && directPdf) throw new Error('PDF terunggah ganda. Pilih ulang file lalu simpan kembali.')
+  if (directPdf) {
+    uploadedPath = directPdf.path
+    nextPath = directPdf.path
+    nextName = directPdf.fileName
+  } else if (pdf) {
     uploadedPath = `${tanggal}/${crypto.randomUUID()}.pdf`
     const { error: uploadError } = await supabase.storage
       .from(KUNJUNGAN_NOTULENSI_BUCKET)

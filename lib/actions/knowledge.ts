@@ -6,12 +6,13 @@ import { requireActionUser } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { deriveBeraniSections, mergeSectionPayload } from '@/lib/berani-auto-process'
 import type { Json } from '@/lib/database.types'
+import { cleanupDirectUploads, directUploadsFromForm, downloadDirectUploads } from '@/lib/direct-uploads'
 
 const BERANI_BUCKET = 'berani-documents'
 const FINDING_BUCKET = 'finding-documents'
 const NOTULENSI_BUCKET = 'kunjungan-notulensi'
 const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
-const MAX_PDF_BYTES = 10 * 1024 * 1024
+const MAX_PDF_BYTES = 20 * 1024 * 1024
 const MAX_FILES_PER_SUBMISSION = 10
 const FINDING_CATEGORIES = ['Temuan', 'Positif', 'Perlu Perhatian', 'Potensi', 'Tindak Lanjut'] as const
 const ALLOWED_EXTENSIONS = new Set(['pdf', 'xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt', 'csv', 'png', 'jpg', 'jpeg', 'webp'])
@@ -142,7 +143,7 @@ async function upsertAutoSections(
 function pdfFile(formData: FormData) {
   const entry = formData.get('notulensi_pdf')
   if (!(entry instanceof File) || entry.size === 0) throw new Error('Pilih file PDF notulensi terlebih dahulu.')
-  if (entry.size > MAX_PDF_BYTES) throw new Error('File notulensi PDF maksimal 10 MB.')
+  if (entry.size > MAX_PDF_BYTES) throw new Error('File notulensi PDF maksimal 20 MB.')
   if (extension(entry.name) !== 'pdf') throw new Error('File notulensi harus berformat PDF.')
   return entry
 }
@@ -314,12 +315,21 @@ function refreshKnowledge(programSlug?: string) {
 export async function addKunjunganDocument(formData: FormData) {
   const kunjunganId = positiveId(formData, 'kunjungan_id', 'ID kunjungan')
   const title = optional(formData, 'title', 'Judul dokumen', 200) || 'Notulensi'
-  const file = pdfFile(formData)
+  const direct = directUploadsFromForm(formData, 'kunjungan_document_uploads', 'kunjungan-pdf')[0] ?? null
+  const fallbackEntry = formData.get('notulensi_pdf')
+  const file = fallbackEntry instanceof File && fallbackEntry.size > 0 ? pdfFile(formData) : null
+  if (direct && file) throw new Error('Dokumen terunggah ganda. Pilih ulang file.')
+  if (!direct && !file) throw new Error('Pilih file PDF notulensi terlebih dahulu.')
   const supabase = await adminClient()
-  const path = `${kunjunganId}/${Date.now()}-${crypto.randomUUID()}.pdf`
-  const { error: uploadError } = await supabase.storage.from(NOTULENSI_BUCKET).upload(path, file, { contentType: 'application/pdf', cacheControl: '3600', upsert: false })
-  if (uploadError) throw new Error(`Upload PDF gagal: ${uploadError.message}`)
-  const { error } = await supabase.from('kunjungan_documents').insert({ kunjungan_id: kunjunganId, title, file_path: path, file_name: file.name, mime_type: 'application/pdf' })
+  let path = direct?.path ?? ''
+  let fileName = direct?.fileName ?? ''
+  if (file) {
+    path = `${kunjunganId}/${Date.now()}-${crypto.randomUUID()}.pdf`
+    fileName = file.name
+    const { error: uploadError } = await supabase.storage.from(NOTULENSI_BUCKET).upload(path, file, { contentType: 'application/pdf', cacheControl: '3600', upsert: false })
+    if (uploadError) throw new Error(`Upload PDF gagal: ${uploadError.message}`)
+  }
+  const { error } = await supabase.from('kunjungan_documents').insert({ kunjungan_id: kunjunganId, title, file_path: path, file_name: fileName, mime_type: 'application/pdf' })
   if (error) {
     await supabase.storage.from(NOTULENSI_BUCKET).remove([path])
     throw new Error(error.message)
@@ -345,11 +355,14 @@ export async function createBeraniUpdate(formData: FormData) {
   const opdName = optional(formData, 'opd_name', 'Nama OPD', 300) || null
   const periodLabel = optional(formData, 'period_label', 'Periode', 100) || null
   let summary = optional(formData, 'summary', 'Ringkasan', 10000) || null
-  const files = documentFiles(formData, 'document_files')
+  let files = documentFiles(formData, 'document_files')
+  const directUploads = directUploadsFromForm(formData, 'document_uploads', 'berani-document')
   const ocrTextByFile = documentOcrMap(formData)
-  if (!files.length && !summary) throw new Error('Isi ringkasan atau unggah minimal satu dokumen sumber.')
+  if (files.length && directUploads.length) throw new Error('Dokumen terunggah ganda. Pilih ulang dokumen.')
+  if (!files.length && !directUploads.length && !summary) throw new Error('Isi ringkasan atau unggah minimal satu dokumen sumber.')
 
   const supabase = await adminClient()
+  if (directUploads.length) files = await downloadDirectUploads(supabase, directUploads)
   const liveKey = `live:${programSlug}`
   const { data: latest, error: latestError } = await supabase
     .from('berani_updates')
@@ -404,17 +417,22 @@ export async function createBeraniUpdate(formData: FormData) {
     if (patchError) throw new Error(patchError.message)
   }
 
+  if (directUploads.length) await cleanupDirectUploads(supabase, directUploads)
   refreshKnowledge(programSlug)
 }
 
 export async function addBeraniDocuments(formData: FormData) {
   const updateId = positiveId(formData, 'update_id', 'ID update')
   const programSlug = required(formData, 'program_slug', 'Slug program', 120)
-  const files = documentFiles(formData, 'document_files')
+  let files = documentFiles(formData, 'document_files')
+  const directUploads = directUploadsFromForm(formData, 'document_uploads', 'berani-document')
   const ocrTextByFile = documentOcrMap(formData)
-  if (!files.length) throw new Error('Pilih minimal satu dokumen.')
+  if (files.length && directUploads.length) throw new Error('Dokumen terunggah ganda. Pilih ulang dokumen.')
+  if (!files.length && !directUploads.length) throw new Error('Pilih minimal satu dokumen.')
   const supabase = await adminClient()
+  if (directUploads.length) files = await downloadDirectUploads(supabase, directUploads)
   await uploadBeraniDocuments(supabase, updateId, programSlug, files, ocrTextByFile)
+  if (directUploads.length) await cleanupDirectUploads(supabase, directUploads)
   const { data: docs, error } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', updateId)
   if (error) throw new Error(error.message)
   const totalRows = (docs ?? []).reduce((sum, doc) => sum + doc.row_count, 0)
@@ -474,12 +492,16 @@ function findingPayload(formData: FormData) {
 }
 
 export async function createFinding(formData: FormData) {
-  const files = documentFiles(formData, 'finding_files')
+  let files = documentFiles(formData, 'finding_files')
+  const directUploads = directUploadsFromForm(formData, 'finding_uploads', 'finding-document')
+  if (files.length && directUploads.length) throw new Error('Lampiran terunggah ganda. Pilih ulang lampiran.')
   const supabase = await adminClient()
+  if (directUploads.length) files = await downloadDirectUploads(supabase, directUploads)
   const { data, error } = await supabase.from('opd_findings').insert(findingPayload(formData)).select('id').single()
   if (error || !data) throw new Error(error?.message || 'Temuan gagal disimpan.')
   try {
     if (files.length) await appendFindingDocuments(supabase, data.id, files)
+    if (directUploads.length) await cleanupDirectUploads(supabase, directUploads)
   } catch (uploadError) {
     await supabase.from('opd_findings').delete().eq('id', data.id)
     throw uploadError
@@ -489,11 +511,15 @@ export async function createFinding(formData: FormData) {
 
 export async function updateFinding(formData: FormData) {
   const id = positiveId(formData, 'id', 'ID temuan')
-  const files = documentFiles(formData, 'finding_files')
+  let files = documentFiles(formData, 'finding_files')
+  const directUploads = directUploadsFromForm(formData, 'finding_uploads', 'finding-document')
+  if (files.length && directUploads.length) throw new Error('Lampiran terunggah ganda. Pilih ulang lampiran.')
   const supabase = await adminClient()
+  if (directUploads.length) files = await downloadDirectUploads(supabase, directUploads)
   const { error } = await supabase.from('opd_findings').update(findingPayload(formData)).eq('id', id)
   if (error) throw new Error(error.message)
   if (files.length) await appendFindingDocuments(supabase, id, files)
+  if (directUploads.length) await cleanupDirectUploads(supabase, directUploads)
   refreshKnowledge()
 }
 

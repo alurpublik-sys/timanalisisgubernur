@@ -170,7 +170,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
         <label>OPD Sumber<input name="opd_name" placeholder="Satu OPD boleh memiliki banyak update" /></label>
         <label>Periode<input name="period_label" placeholder="Contoh: September 2026 / Triwulan III" /></label>
         <label>Ringkasan<textarea name="summary" placeholder="Opsional. Data utama akan dibaca dari dokumen sumber dan digabung dengan data yang sudah ada." /></label>
-        <BeraniSmartUpload buttonLabel="Simpan & Olah Update" helpText="Maksimum 10 file dan 20 MB per file. PDF visual/scan akan dibaca dengan OCR; data terbaru digabung ke dashboard aktif tanpa menghapus indikator lama yang tidak berubah." />
+        <BeraniSmartUpload scope={program.slug} buttonLabel="Simpan & Olah Update" helpText="Maksimum 10 file dan 20 MB per file. File diunggah langsung ke Supabase; PDF visual/scan tetap dibaca dengan OCR." />
       </form> : null}
 
       <section className="panel update-history-panel">
@@ -276,7 +276,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
           <form action={addBeraniDocuments} className="notulensi-add-form">
             <input type="hidden" name="update_id" value={selected.id} />
             <input type="hidden" name="program_slug" value={program.slug} />
-            <BeraniSmartUpload required buttonLabel="Tambahkan & Olah" buttonClassName="secondary-button" helpText="Sumber lama tetap tersimpan. Sistem membaca dokumen baru lalu memperbarui indikator yang ditemukan; data lain tetap dipertahankan." />
+            <BeraniSmartUpload required scope={`${program.slug}-${selected.id}`} buttonLabel="Tambahkan & Olah" buttonClassName="secondary-button" helpText="Sumber lama tetap tersimpan. Dokumen baru diunggah langsung ke Supabase lalu diolah dan digabung ke data aktif." />
           </form>
         </details> : <div className="readonly-edit-note"><span>Data hanya dapat diubah dalam mode edit.</span><Link href={`/login?next=${encodeURIComponent(`/berani/${program.slug}`)}`}>✎</Link></div>}
       </section>

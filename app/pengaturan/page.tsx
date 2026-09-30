@@ -6,6 +6,7 @@ import { createKunjungan } from '@/lib/actions/core'
 import { requireUser } from '@/lib/auth'
 import { getTeamPhotoUrl } from '@/lib/branding'
 import { FeatureNotes } from '@/components/feature-notes'
+import { DirectUploadField } from '@/components/direct-upload-field'
 
 export default async function PengaturanPage() {
   const { supabase } = await requireUser('/pengaturan')
@@ -49,7 +50,7 @@ export default async function PengaturanPage() {
           <label className="settings-field-wide">Topik Pembahasan<textarea name="topik" required placeholder="Topik utama kunjungan" /></label>
           <label>Status<select name="status" defaultValue="Selesai"><option>Terjadwal</option><option>Selesai</option><option>Ditunda</option></select></label>
           <label>Google Docs Notulensi<input name="link_notulen" type="url" placeholder="https://docs.google.com/document/..." /></label>
-          <label className="settings-field-wide">PDF Notulensi<input name="notulen_pdf" type="file" accept="application/pdf,.pdf" /><small className="muted-line">Opsional. PDF yang diunggah akan dapat dibuka langsung dari halaman Kunjungan OPD.</small></label>
+          <div className="settings-field-wide"><DirectUploadField kind="kunjungan-pdf" name="notulen_uploads" label="PDF Notulensi" accept="application/pdf,.pdf" helpText="Opsional. File diunggah langsung ke Supabase agar PDF besar tidak mentok batas Vercel." /></div>
         </div>
         <button className="primary-button" type="submit">Simpan Kunjungan</button>
       </form>
@@ -62,8 +63,8 @@ export default async function PengaturanPage() {
           <p className="eyebrow">ANGGOTA BARU</p><h3>Tambah Tim Analisis</h3>
           <label>Nama<input name="nama" required /></label><label>Peran<input name="peran" /></label>
           <label>Bio singkat<textarea name="bio" placeholder="Keahlian, fokus analisis, atau pengalaman singkat" /></label>
-          <label>Foto<input name="photo_file" type="file" accept="image/jpeg,image/png,image/webp" /></label>
-          <label>CV PDF<input name="cv_file" type="file" accept="application/pdf" /></label>
+          <DirectUploadField kind="team-photo" name="photo_uploads" label="Foto" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" helpText="Foto diunggah langsung ke Supabase." />
+          <DirectUploadField kind="team-cv" name="cv_uploads" label="CV PDF" accept="application/pdf,.pdf" helpText="CV diunggah langsung ke Supabase." />
           <button className="primary-button">Tambah Anggota</button>
         </form>
         {(team ?? []).map((row) => { const photo=getTeamPhotoUrl(row); return <form action={updateTeamMember} className="panel form-card compact-form member-settings-card" key={row.id}>
@@ -72,7 +73,8 @@ export default async function PengaturanPage() {
           <label>Nama<input name="nama" defaultValue={row.nama} required /></label><label>Peran<input name="peran" defaultValue={row.peran || ''} /></label>
           <label>Bio singkat<textarea name="bio" defaultValue={row.bio || ''} /></label>
           <div className="settings-inline-fields"><label>Urutan<input name="sort_order" type="number" min="0" defaultValue={row.sort_order || row.id} /></label><label>Status<select name="active" defaultValue={row.active?'true':'false'}><option value="true">Aktif</option><option value="false">Nonaktif</option></select></label></div>
-          <label>Ganti Foto<input name="photo_file" type="file" accept="image/jpeg,image/png,image/webp" /></label><label>Ganti CV<input name="cv_file" type="file" accept="application/pdf" /></label>
+          <DirectUploadField kind="team-photo" name="photo_uploads" label="Ganti Foto" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" scope={String(row.id)} />
+          <DirectUploadField kind="team-cv" name="cv_uploads" label="Ganti CV" accept="application/pdf,.pdf" scope={String(row.id)} />
           <div className="asset-row">{photo?<a href={photo} target="_blank" rel="noreferrer">Foto saat ini</a>:<span>Foto belum ada</span>}{(row.cv_url||row.link_cv)?<a href={row.cv_url||row.link_cv||'#'} target="_blank" rel="noreferrer">CV saat ini</a>:<span>CV belum ada</span>}</div>
           <button className="secondary-button">Simpan Profil</button>
         </form> })}
