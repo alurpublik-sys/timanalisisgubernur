@@ -32,13 +32,18 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
   let query = supabase.from('kunjungan').select('*').order('tanggal', { ascending: false }).order('id', { ascending: false })
   if (q) query = query.or(`nama_opd.ilike.%${q}%,pejabat.ilike.%${q}%,topik.ilike.%${q}%,legacy_id.ilike.%${q}%`)
   if (status) query = query.eq('status', status)
-  const { data: rows, error } = await query
-  if (error) throw new Error(error.message)
 
-  const { data: documents, error: documentError } = await supabase
-    .from('kunjungan_documents')
-    .select('id,kunjungan_id,title,file_path,file_name,created_at')
-    .order('created_at', { ascending: false })
+  const [
+    { data: rows, error },
+    { data: documents, error: documentError },
+  ] = await Promise.all([
+    query,
+    supabase
+      .from('kunjungan_documents')
+      .select('id,kunjungan_id,title,file_path,file_name,created_at')
+      .order('created_at', { ascending: false }),
+  ])
+  if (error) throw new Error(error.message)
   if (documentError) throw new Error(documentError.message)
 
   const documentsByVisit = new Map<number, NonNullable<typeof documents>>()

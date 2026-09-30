@@ -47,20 +47,23 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
   const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
   const adminMode = Boolean(user)
 
-  const [{ data: programs, error: programError }, { data: visits, error: visitError }] = await Promise.all([
+  let referenceQuery = supabase.from('content_references').select('*').order('sort_order').order('opd_name').order('id')
+  if (shareMode) referenceQuery = referenceQuery.eq('status', 'Siap Dibagikan')
+  else if (selectedStatus) referenceQuery = referenceQuery.eq('status', selectedStatus)
+  if (selectedOpd) referenceQuery = referenceQuery.eq('opd_name', selectedOpd)
+  if (q) referenceQuery = referenceQuery.or(`title.ilike.%${q}%,program_label.ilike.%${q}%,detail.ilike.%${q}%,key_facts.ilike.%${q}%,opd_name.ilike.%${q}%`)
+
+  const [
+    { data: programs, error: programError },
+    { data: visits, error: visitError },
+    { data: references, error },
+  ] = await Promise.all([
     supabase.from('berani_programs').select('id,name').eq('active', true).order('sort_order'),
     supabase.from('kunjungan').select('nama_opd').order('nama_opd'),
+    referenceQuery,
   ])
   if (programError) throw new Error(programError.message)
   if (visitError) throw new Error(visitError.message)
-
-  let query = supabase.from('content_references').select('*').order('sort_order').order('opd_name').order('id')
-  if (shareMode) query = query.eq('status', 'Siap Dibagikan')
-  else if (selectedStatus) query = query.eq('status', selectedStatus)
-  if (selectedOpd) query = query.eq('opd_name', selectedOpd)
-  if (q) query = query.or(`title.ilike.%${q}%,program_label.ilike.%${q}%,detail.ilike.%${q}%,key_facts.ilike.%${q}%,opd_name.ilike.%${q}%`)
-
-  const { data: references, error } = await query
   if (error) throw new Error(error.message)
 
   const opdNames = [...new Set([
