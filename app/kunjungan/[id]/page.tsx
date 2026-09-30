@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getLegacyNotulensiOriginal } from '@/lib/legacy-notulensi-originals'
 import { FeatureNotes } from '@/components/feature-notes'
 import { updateKunjungan, deleteKunjungan } from '@/lib/actions/core'
+import { DirectUploadField } from '@/components/direct-upload-field'
 
 function notulenUrl(path?: string | null) {
   if (!path) return null
@@ -88,7 +89,7 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
           <label>Status<select name="status" defaultValue={visit.status}><option>Terjadwal</option><option>Selesai</option><option>Ditunda</option></select></label>
           <label>Google Docs<input name="link_notulen" type="url" defaultValue={visit.link_notulen || ''} /></label>
           <label className="settings-field-wide">Ringkasan Notulensi<textarea name="notulen_text" defaultValue={visit.notulen_text || ''} placeholder="Opsional. Tidak menggantikan file PDF asli." /></label>
-          <label className="settings-field-wide">Ganti / unggah PDF asli<input name="notulen_pdf" type="file" accept="application/pdf,.pdf" /><small className="muted-line">PDF disimpan dan dibuka dalam byte asli, bukan dibuat ulang dari ringkasan.</small></label>
+          <div className="settings-field-wide"><DirectUploadField kind="kunjungan-pdf" name="notulen_uploads" label="Ganti / unggah PDF asli" accept="application/pdf,.pdf" scope={String(visit.id)} helpText="PDF dikirim langsung ke Supabase dan tetap disimpan dalam byte asli." /></div>
           {visit.notulen_pdf_path ? <label className="check-row"><input name="remove_pdf" type="checkbox" value="1" /> Hapus PDF tersimpan saat menyimpan perubahan</label> : null}
           <button className="secondary-button" type="submit">Simpan Perubahan</button>
         </form>
