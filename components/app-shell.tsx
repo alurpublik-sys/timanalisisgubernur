@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 const menu = [
   { label: 'Dashboard', href: '/dashboard', glyph: 'DB' },
   { label: 'Kunjungan OPD', href: '/kunjungan', glyph: 'OP' },
+  { label: 'Renstra OPD', href: '/renstra-opd', glyph: 'RS' },
   { label: 'Media Monitor', href: '/media-monitor', glyph: 'MM' },
   { label: '9 BERANI', href: '/berani', glyph: '9B' },
   { label: 'Temuan OPD', href: '/temuan-opd', glyph: 'TO' },
