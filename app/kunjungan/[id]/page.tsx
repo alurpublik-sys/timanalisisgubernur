@@ -8,6 +8,7 @@ import { getLegacyNotulensiOriginal } from '@/lib/legacy-notulensi-originals'
 import { FeatureNotes } from '@/components/feature-notes'
 import { updateKunjungan, deleteKunjungan } from '@/lib/actions/core'
 import { DirectUploadField } from '@/components/direct-upload-field'
+import { PendingSubmitButton } from '@/components/pending-submit-button'
 
 function notulenUrl(path?: string | null) {
   if (!path) return null
@@ -91,11 +92,11 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
           <label className="settings-field-wide">Ringkasan Notulensi<textarea name="notulen_text" defaultValue={visit.notulen_text || ''} placeholder="Opsional. Tidak menggantikan file PDF asli." /></label>
           <div className="settings-field-wide"><DirectUploadField kind="kunjungan-pdf" name="notulen_uploads" label="Ganti / unggah PDF asli" accept="application/pdf,.pdf" scope={String(visit.id)} helpText="PDF dikirim langsung ke Supabase dan tetap disimpan dalam byte asli." /></div>
           {visit.notulen_pdf_path ? <label className="check-row"><input name="remove_pdf" type="checkbox" value="1" /> Hapus PDF tersimpan saat menyimpan perubahan</label> : null}
-          <button className="secondary-button" type="submit">Simpan Perubahan</button>
+          <PendingSubmitButton className="secondary-button" pendingLabel="Menyimpan perubahan…">Simpan Perubahan</PendingSubmitButton>
         </form>
         <form action={deleteKunjungan} className="danger-zone-form">
           <input type="hidden" name="id" value={visit.id} />
-          <button className="danger-button" type="submit">Hapus Kunjungan</button>
+          <PendingSubmitButton className="danger-button" pendingLabel="Menghapus…">Hapus Kunjungan</PendingSubmitButton>
         </form>
       </details>
     </section> : null}
