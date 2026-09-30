@@ -1427,3 +1427,70 @@ body.reference-editor-open::before{
   .media-mobile-list{display:grid;gap:10px;padding:12px}
   .media-premium-scroll{display:none}
 }
+
+
+/* Strategic brand — exact naming + cleaner spacing */
+.strategic-brand{
+  grid-template-columns:58px minmax(0,1fr)!important;
+  column-gap:14px!important;
+  padding:7px 9px 24px!important;
+}
+.strategic-brand .brand-icon-wrap,
+.strategic-brand .brand-app-icon{
+  width:58px!important;
+  height:58px!important;
+}
+.strategic-brand .brand-copy{gap:6px!important;padding-top:1px}
+.strategic-brand .brand-title{
+  gap:2px!important;
+  font-size:12.5px!important;
+  line-height:1.18!important;
+  letter-spacing:-.012em!important;
+  font-weight:800!important;
+}
+.strategic-brand .brand-title>span{white-space:normal!important}
+.strategic-brand .brand-subtitle{
+  display:block!important;
+  margin-top:0!important;
+  font-size:8px!important;
+  line-height:1.2!important;
+  letter-spacing:.14em!important;
+  color:#7ea5c8!important;
+  white-space:nowrap!important;
+}
+.mobile-drawer-head strong span{font-size:.72em;font-weight:700;color:#72899b}
+
+@media(min-width:1081px){
+  .desktop-sidebar .strategic-brand{margin-bottom:2px}
+}
+
+@media(max-width:760px){
+  .mobile-shell-header .strategic-brand{
+    grid-template-columns:40px minmax(0,1fr)!important;
+    column-gap:9px!important;
+  }
+  .mobile-shell-header .strategic-brand .brand-icon-wrap,
+  .mobile-shell-header .strategic-brand .brand-app-icon{
+    width:40px!important;
+    height:40px!important;
+  }
+  .mobile-shell-header .strategic-brand .brand-copy{gap:2px!important}
+  .mobile-shell-header .strategic-brand .brand-title{
+    display:grid!important;
+    gap:0!important;
+    font-size:10px!important;
+    line-height:1.08!important;
+  }
+  .mobile-shell-header .strategic-brand .brand-title>span{
+    display:block!important;
+    white-space:nowrap!important;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .mobile-shell-header .strategic-brand .brand-title>span+span:before{content:none!important}
+  .mobile-shell-header .strategic-brand .brand-subtitle{
+    display:block!important;
+    font-size:6.8px!important;
+    letter-spacing:.1em!important;
+  }
+}
