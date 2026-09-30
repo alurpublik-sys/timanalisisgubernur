@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createFeatureNote, updateFeatureNote, deleteFeatureNote } from '@/lib/actions/notes'
 import { PendingSubmitButton } from '@/components/pending-submit-button'
+import { Suspense } from 'react'
 
 function dateLabel(value: string) {
   return new Intl.DateTimeFormat('id-ID', {
@@ -10,7 +11,7 @@ function dateLabel(value: string) {
   }).format(new Date(value))
 }
 
-export async function FeatureNotes({
+async function FeatureNotesContent({
   featureKey,
   entityKey = '__module__',
   returnPath,
@@ -86,4 +87,27 @@ export async function FeatureNotes({
       {(notes ?? []).length === 0 ? <div className="feature-note-empty">Belum ada catatan untuk bagian ini.</div> : null}
     </div>
   </section>
+}
+
+
+export function FeatureNotes(props: {
+  featureKey: string
+  entityKey?: string
+  returnPath: string
+  adminMode: boolean
+  title?: string
+  description?: string
+}) {
+  return (
+    <Suspense fallback={
+      <section className="panel feature-notes-panel feature-notes-deferred" aria-label="Memuat catatan">
+        <div className="feature-notes-head">
+          <div><p className="eyebrow">CATATAN</p><h2>{props.title || 'Catatan'}</h2></div>
+          <span>…</span>
+        </div>
+      </section>
+    }>
+      <FeatureNotesContent {...props} />
+    </Suspense>
+  )
 }
