@@ -8,7 +8,7 @@ button,a{touch-action:manipulation}
 .route-progress span{display:block;width:38%;height:100%;border-radius:999px;background:linear-gradient(90deg,#7ea5c8,#fff,#477aa8);box-shadow:0 0 14px rgba(126,165,200,.7);transform:translateX(-120%)}
 .app-shell.is-navigating .route-progress{opacity:1}
 .app-shell.is-navigating .route-progress span{animation:ahRouteProgress .95s cubic-bezier(.2,.72,.2,1) infinite}
-.route-stage{min-width:0;animation:ahRouteEnter .2s cubic-bezier(.2,.75,.25,1) both;transform-origin:50% 0}
+.route-stage{min-width:0;animation:none;transform:none}
 
 .nav-main{display:flex;align-items:center;min-width:0;gap:10px}
 .nav-glyph{display:grid;place-items:center;width:27px;height:27px;flex:0 0 27px;border-radius:9px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);font-size:8px;letter-spacing:.04em;font-weight:900;color:#7895ae;transition:background .16s ease,color .16s ease,border-color .16s ease,transform .16s ease}
@@ -181,7 +181,6 @@ button[disabled]{cursor:wait}
 
 @media(max-width:760px){
   .mobile-shell-header,.mobile-drawer-backdrop{backdrop-filter:none}
-  .route-stage{animation-duration:.14s}
   .panel,.stat-card,.team-profile-card{box-shadow:0 14px 34px -30px rgba(7,24,43,.35)}
 }
 
