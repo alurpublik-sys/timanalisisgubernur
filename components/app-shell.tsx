@@ -71,6 +71,12 @@ export function AppShell({ active, title, children, adminMode = false, editRetur
   }, [active])
 
   useEffect(() => {
+    if (!navigating) return
+    const timeout = window.setTimeout(() => setNavigating(false), 4500)
+    return () => window.clearTimeout(timeout)
+  }, [navigating])
+
+  useEffect(() => {
     if (!mobileOpen) return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
