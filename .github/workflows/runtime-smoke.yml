@@ -47,7 +47,7 @@ jobs:
           echo "Original notulensi PDF streamed intact: ${pdf_size} bytes"
 
           for legacy_id in 12 13 14 15 16 17 18 19 20 21; do
-            legacy_status=$(curl -sS -o "/tmp/legacy-${legacy_id}.pdf" -w '%{http_code}' "http://127.0.0.1:3000/kunjungan/${legacy_id}/notulensi?v=20260928-full" || true)
+            legacy_status=$(curl -sSL -o "/tmp/legacy-${legacy_id}.pdf" -w '%{http_code}' "http://127.0.0.1:3000/kunjungan/${legacy_id}/notulensi?v=20260928-full" || true)
             test "$legacy_status" = "200"
             test "$(head -c 5 "/tmp/legacy-${legacy_id}.pdf")" = "%PDF-"
             legacy_size=$(wc -c < "/tmp/legacy-${legacy_id}.pdf")
