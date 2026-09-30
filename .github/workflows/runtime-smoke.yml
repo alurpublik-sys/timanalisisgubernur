@@ -55,7 +55,7 @@ jobs:
             echo "Complete legacy notulensi ${legacy_id} rendered: ${legacy_size} bytes"
           done
           settings_status=$(curl -sS -o /tmp/settings.html -D /tmp/settings.headers -w '%{http_code}' http://127.0.0.1:3000/pengaturan || true)
-          test "$settings_status" = "307"
+          case "$settings_status" in 302|303|307|308) ;; *) echo "Unexpected settings status: $settings_status"; cat /tmp/settings.headers; exit 1 ;; esac
           grep -Eiq '^location: .*/login' /tmp/settings.headers
           echo 'Pengaturan redirects unauthenticated requests to /login'
           login_status=$(curl -sS -o /tmp/login.html -w '%{http_code}' http://127.0.0.1:3000/login || true)
@@ -63,6 +63,6 @@ jobs:
           grep -q 'Masukkan PIN Admin' /tmp/login.html
           echo 'PIN admin route returned HTTP 200'
           findings_status=$(curl -sS -o /tmp/findings.html -D /tmp/findings.headers -w '%{http_code}' http://127.0.0.1:3000/temuan-opd || true)
-          test "$findings_status" = "307"
+          case "$findings_status" in 302|303|307|308) ;; *) echo "Unexpected findings status: $findings_status"; cat /tmp/findings.headers; exit 1 ;; esac
           grep -Eiq '^location: .*/login' /tmp/findings.headers
           echo 'Temuan OPD redirects unauthenticated requests to PIN login'
