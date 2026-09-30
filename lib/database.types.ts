@@ -735,6 +735,113 @@ export type Database = {
         }
         Relationships: []
       }
+      renstra_documents: {
+        Row: {
+          created_at: string
+          drive_file_id: string | null
+          file_size: number | null
+          id: number
+          is_primary: boolean
+          mime_type: string
+          renstra_opd_id: number
+          sort_order: number
+          source_url: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          drive_file_id?: string | null
+          file_size?: number | null
+          id?: never
+          is_primary?: boolean
+          mime_type: string
+          renstra_opd_id: number
+          sort_order?: number
+          source_url: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          drive_file_id?: string | null
+          file_size?: number | null
+          id?: never
+          is_primary?: boolean
+          mime_type?: string
+          renstra_opd_id?: number
+          sort_order?: number
+          source_url?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renstra_documents_renstra_opd_id_fkey"
+            columns: ["renstra_opd_id"]
+            isOneToOne: false
+            referencedRelation: "renstra_opd"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renstra_opd: {
+        Row: {
+          active: boolean
+          aliases: string[]
+          created_at: string
+          document_count: number
+          id: number
+          opd_name: string
+          period_end: number | null
+          period_label: string | null
+          period_start: number | null
+          short_name: string
+          slug: string
+          sort_order: number
+          source_drive_id: string | null
+          source_kind: string
+          source_title: string
+          source_url: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          aliases?: string[]
+          created_at?: string
+          document_count?: number
+          id?: never
+          opd_name: string
+          period_end?: number | null
+          period_label?: string | null
+          period_start?: number | null
+          short_name: string
+          slug: string
+          sort_order?: number
+          source_drive_id?: string | null
+          source_kind: string
+          source_title: string
+          source_url: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          aliases?: string[]
+          created_at?: string
+          document_count?: number
+          id?: never
+          opd_name?: string
+          period_end?: number | null
+          period_label?: string | null
+          period_start?: number | null
+          short_name?: string
+          slug?: string
+          sort_order?: number
+          source_drive_id?: string | null
+          source_kind?: string
+          source_title?: string
+          source_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tim_analisis: {
         Row: {
           active: boolean

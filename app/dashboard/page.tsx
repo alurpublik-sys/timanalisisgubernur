@@ -29,6 +29,7 @@ export default async function DashboardPage() {
     { data: beraniPrograms },
     { count: findingCount },
     { count: referenceCount },
+    { count: renstraCount },
     { data: recentVisits },
     { data: recentReferences },
   ] = await Promise.all([
@@ -37,6 +38,7 @@ export default async function DashboardPage() {
     supabase.from('berani_programs').select('id,name,slug').eq('active', true),
     supabase.from('opd_findings').select('*', { count: 'exact', head: true }),
     supabase.from('content_references').select('*', { count: 'exact', head: true }),
+    supabase.from('renstra_opd').select('*', { count: 'exact', head: true }).eq('active', true),
     supabase.from('kunjungan').select('id,nama_opd,tanggal,topik,tanggal_estimasi').order('tanggal', { ascending: false }).order('id', { ascending: false }).limit(5),
     supabase.from('content_references').select('id,opd_name,title,status,updated_at').order('updated_at', { ascending: false }).limit(4),
   ])
@@ -45,6 +47,7 @@ export default async function DashboardPage() {
   const beraniMap = new Map((beraniPrograms ?? []).map((program) => [program.id, program]))
   const cards = [
     ['Kunjungan OPD', overview.total_kunjungan ?? 0, '/kunjungan', 'Audiensi, notulensi & dokumen'],
+    ['Renstra OPD', renstraCount ?? 0, '/renstra-opd', 'Dokumen perencanaan perangkat daerah'],
     ['Media Monitor', overview.total_media ?? 0, '/media-monitor', 'Berita & sentimen publik'],
     ['9 BERANI', beraniPrograms?.length ?? 0, '/berani', 'Pusat data program unggulan'],
     ['Temuan OPD', user ? (findingCount ?? 0) : 'PIN', '/temuan-opd', user ? 'Temuan menarik lintas OPD' : 'Akses dilindungi PIN'],
@@ -100,6 +103,7 @@ export default async function DashboardPage() {
           <div className="panel-head"><div><p className="eyebrow">KNOWLEDGE FLOW</p><h2>Dari data menjadi informasi</h2></div></div>
           <div className="quick-link-grid">
             <Link href="/kunjungan"><strong>Kunjungan OPD</strong><span>Sumber lapangan & notulensi</span></Link>
+            <Link href="/renstra-opd"><strong>Renstra OPD</strong><span>Dokumen perencanaan & target OPD</span></Link>
             <Link href="/temuan-opd"><strong>Temuan OPD</strong><span>Hal penting untuk dicatat</span></Link>
             <Link href="/referensi-konten"><strong>Referensi Konten</strong><span>Informasi yang siap dipakai</span></Link>
             <Link href="/berani"><strong>9 BERANI</strong><span>Data program per update</span></Link>
