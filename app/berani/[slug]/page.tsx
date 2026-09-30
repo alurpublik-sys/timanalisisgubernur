@@ -207,6 +207,20 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
         {selected.summary ? <p className="update-summary-copy">{selected.summary}</p> : null}
       </section>
 
+      {!documents?.length && !sections?.length && !legacyRecords.length && !selected.file_path ? (
+        <section className="panel berani-processing-empty">
+          <div className="berani-processing-empty-icon" aria-hidden>!</div>
+          <div>
+            <p className="eyebrow">SUMBER BELUM TEROLAH</p>
+            <h2>Update ini belum memiliki dokumen yang berhasil diproses.</h2>
+            <p>Judul update sudah tersimpan, tetapi belum ada file permanen, data terstruktur, atau hasil ekstraksi yang bisa divisualisasikan.</p>
+            {adminMode
+              ? <a className="secondary-button" href="#berani-add-source">Unggah ulang sumber</a>
+              : <Link className="secondary-button" href={`/login?next=${encodeURIComponent(`/berani/${program.slug}?update=${selected.id}`)}`}>Masuk untuk memperbaiki</Link>}
+          </div>
+        </section>
+      ) : null}
+
       {(sections ?? []).map((section) => <ProcessedBeraniSection key={section.id} title={section.title} type={section.section_type} payload={section.payload} />)}
 
       {(documents ?? []).map((doc) => {
@@ -271,7 +285,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
           {!documents?.length && !selected.file_path ? <div className="empty">Belum ada dokumen sumber untuk update ini.</div> : null}
         </div>
 
-        {adminMode ? <details className="append-documents">
+        {adminMode ? <details className="append-documents" id="berani-add-source">
           <summary>+ Tambah sumber ke update ini</summary>
           <form action={addBeraniDocuments} className="notulensi-add-form">
             <input type="hidden" name="update_id" value={selected.id} />
