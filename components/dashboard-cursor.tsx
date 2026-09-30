@@ -24,7 +24,7 @@ export function DashboardCursor() {
       frameRef.current = window.requestAnimationFrame(() => {
         frameRef.current = null
         const { x, y, target } = pointRef.current
-        ring.style.transform = `translate3d(${x}px,${y}px,0)`
+        ring.style.transform = `translate3d(${x}px,${y}px,0) translate(-50%,-50%)`
         if (target?.closest('.dashboard-cursor-zone')) document.documentElement.classList.add('dashboard-pointer-live')
         else {
           document.documentElement.classList.remove('dashboard-pointer-live')
