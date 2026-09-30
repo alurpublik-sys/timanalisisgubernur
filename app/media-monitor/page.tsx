@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
-import { createMedia } from '@/lib/actions/core'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthContext } from '@/lib/auth'
 import { FeatureNotes } from '@/components/feature-notes'
