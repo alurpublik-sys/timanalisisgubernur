@@ -24,13 +24,10 @@ function Brand() {
       </div>
       <div className="brand-copy">
         <strong className="brand-title">
-          <span>Tim Analisis</span>
-          <span>Strategis</span>
-        </strong>
-        <span className="brand-subtitle">
+          <span>Tim Analisis dan</span>
           <span>Komunikasi Strategis</span>
-          <span>· Independen</span>
-        </span>
+        </strong>
+        <span className="brand-subtitle">(Independen)</span>
       </div>
     </div>
   )
@@ -128,8 +125,8 @@ export function AppShell({ active, title, children, adminMode = false, editRetur
           <aside className="mobile-drawer" aria-label="Navigasi mobile">
             <div className="mobile-drawer-head">
               <div>
-                <p className="eyebrow">TIM ANALISIS</p>
-                <strong>Komunikasi Strategis</strong>
+                <p className="eyebrow">TIM ANALISIS DAN</p>
+                <strong>Komunikasi Strategis <span>(Independen)</span></strong>
               </div>
               <button className="mobile-drawer-close" type="button" aria-label="Tutup navigasi" onClick={() => setMobileOpen(false)}>×</button>
             </div>
