@@ -202,42 +202,127 @@ function cerdasSections(fileName: string, text: string): AutoBeraniSection[] {
   return sections
 }
 
+function textSegments(text: string) {
+  return text
+    .replace(/\r/g, '\n')
+    .replace(/\[HALAMAN\s+\d+\]/gi, '\n')
+    .split(/\n+|(?<=[.!?])\s+(?=[A-Z0-9])/)
+    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .filter((line) => line.length >= 12)
+}
+
+function metricNumber(raw: string) {
+  let value = raw.replace(/[^0-9,.-]/g, '')
+  if (!value) return 0
+  const dots = (value.match(/\./g) || []).length
+  const commas = (value.match(/,/g) || []).length
+
+  if (dots && commas) {
+    if (value.lastIndexOf(',') > value.lastIndexOf('.')) value = value.replace(/\./g, '').replace(',', '.')
+    else value = value.replace(/,/g, '')
+  } else if (dots > 1 || (dots === 1 && /\.\d{3}(?:\D|$)/.test(value))) {
+    value = value.replace(/\./g, '')
+  } else if (commas > 1 || (commas === 1 && /,\d{3}(?:\D|$)/.test(value))) {
+    value = value.replace(/,/g, '')
+  } else {
+    value = value.replace(',', '.')
+  }
+
+  return Number(value) || 0
+}
+
+function metricUnit(raw: string) {
+  const source = raw.toLowerCase()
+  if (/rp\.?/.test(source)) return 'rupiah'
+  const match = source.match(/%|orang|jiwa|siswa|sekolah|paket|km|unit|perahu|kapal|mesin|kelompok|nelayan|hektare|ha|ton|kg|umkm|penerima/)
+  return match?.[0] || 'angka'
+}
+
+function metricMagnitude(raw: string) {
+  let value = metricNumber(raw)
+  const source = raw.toLowerCase()
+  if (/miliar/.test(source)) value *= 1_000_000_000
+  else if (/juta/.test(source)) value *= 1_000_000
+  return value
+}
+
 function genericMetricSections(input: Input): AutoBeraniSection[] {
   const text = input.imported.extractedText || ''
   if (!text) return []
 
-  const lines = text.split(/\n+/).map((line) => line.replace(/\s+/g, ' ').trim()).filter(Boolean)
+  const segments = textSegments(text)
   const metricItems: Array<Record<string, Json>> = []
+  const chartCandidates: Array<{ label: string; value: number; unit: string }> = []
   const seen = new Set<string>()
+  const tokenPattern = /(Rp\.?\s*[\d.,]+(?:\s*(?:miliar|juta|M))?|[\d.,]+\s*(?:%|orang|jiwa|siswa|sekolah|paket|km|unit|perahu|kapal|mesin|kelompok|nelayan|hektare|ha|ton|kg|UMKM|penerima))\b/i
 
-  for (const line of lines) {
-    if (metricItems.length >= 6) break
-    const match = line.match(/^(.*?)(Rp\.?\s*[\d.,]+(?:\s*(?:miliar|juta|M))?|[\d.,]+\s*(?:%|orang|jiwa|siswa|sekolah|paket|km|unit))\b/i)
-    if (!match) continue
-    let label = match[1].replace(/[·:|\-–—]+$/g, '').trim()
-    if (label.length < 4) label = line.replace(match[2], '').trim()
-    label = label.slice(0, 72)
-    if (!label || seen.has(label.toLowerCase())) continue
-    seen.add(label.toLowerCase())
-    metricItems.push({ label, value: decimalToken(match[2]), note: 'Terbaca otomatis', source: input.fileName })
+  for (const segment of segments) {
+    if (metricItems.length >= 8) break
+    const match = segment.match(tokenPattern)
+    if (!match || match.index === undefined) continue
+
+    const before = segment.slice(0, match.index).replace(/[·:|\-–—]+$/g, '').trim()
+    const after = segment.slice(match.index + match[0].length).replace(/^[·:|\-–—]+/g, '').trim()
+    let label = before.slice(-96).trim() || after.slice(0, 96).trim()
+    label = label.replace(/^(dan|dengan|sebesar|sebanyak|mencapai|total)\s+/i, '').trim()
+    if (label.length < 4) label = `Data dari ${input.fileName.replace(/\.[^.]+$/, '')}`
+    label = label.slice(0, 90)
+
+    const key = `${label.toLowerCase()}|${match[0].toLowerCase()}`
+    if (seen.has(key)) continue
+    seen.add(key)
+
+    metricItems.push({
+      label,
+      value: decimalToken(match[0]),
+      note: 'Terbaca otomatis dari dokumen sumber',
+      source: input.fileName,
+    })
+
+    const numeric = metricMagnitude(match[0])
+    if (numeric > 0) chartCandidates.push({ label, value: numeric, unit: metricUnit(match[0]) })
   }
 
   const result: AutoBeraniSection[] = []
-  if (metricItems.length >= 2) {
+  if (metricItems.length) {
     result.push({
       section_key: `auto:${input.programSlug}:metrics`,
       title: 'Sorotan Data Terbaru',
       section_type: 'kpis',
-      payload: { subtitle: 'Dibaca otomatis dari dokumen terbaru', items: metricItems, source: input.fileName },
+      payload: { subtitle: 'Angka utama yang berhasil dibaca otomatis', items: metricItems, source: input.fileName },
       sort_order: 100,
     })
   }
 
-  const facts = lines
-    .filter((line) => line.length >= 55 && line.length <= 260 && !/^\[HALAMAN/i.test(line))
-    .slice(0, 5)
-    .map((line, index) => ({ title: `Temuan ${index + 1}`, detail: line, source: input.fileName }))
-  if (facts.length >= 2) {
+  const groups = new Map<string, Array<{ label: string; value: number }>>()
+  for (const item of chartCandidates) {
+    if (item.unit === 'rupiah' || item.unit === 'angka') continue
+    const list = groups.get(item.unit) ?? []
+    list.push({ label: item.label, value: item.value })
+    groups.set(item.unit, list)
+  }
+  const bestGroup = [...groups.entries()]
+    .filter(([, items]) => items.length >= 2)
+    .sort((a, b) => b[1].length - a[1].length)[0]
+
+  if (bestGroup) {
+    const [unit, items] = bestGroup
+    result.push({
+      section_key: `auto:${input.programSlug}:generic-chart:${unit}`,
+      title: 'Perbandingan Angka dalam Dokumen',
+      section_type: 'bar_chart',
+      payload: { unit: unit === '%' ? '%' : ` ${unit}`, items: items.slice(0, 8), source: input.fileName },
+      sort_order: 180,
+    })
+  }
+
+  const facts = segments
+    .filter((line) => line.length >= 35 && line.length <= 320)
+    .filter((line) => !/^\s*(daftar|lampiran|halaman)\b/i.test(line))
+    .slice(0, 6)
+    .map((line, index) => ({ title: `Poin ${index + 1}`, detail: line, source: input.fileName }))
+
+  if (facts.length) {
     result.push({
       section_key: `auto:${input.programSlug}:facts`,
       title: 'Poin Penting Dokumen',
@@ -246,6 +331,7 @@ function genericMetricSections(input: Input): AutoBeraniSection[] {
       sort_order: 700,
     })
   }
+
   return result
 }
 
