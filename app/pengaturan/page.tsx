@@ -6,6 +6,7 @@ import { createKunjungan } from '@/lib/actions/core'
 import { requireUser } from '@/lib/auth'
 import { getTeamPhotoUrl } from '@/lib/branding'
 import { FeatureNotes } from '@/components/feature-notes'
+import { DirectUploadField } from '@/components/direct-upload-field'
 
 export default async function PengaturanPage() {
   const { supabase } = await requireUser('/pengaturan')
@@ -49,7 +50,7 @@ export default async function PengaturanPage() {
           <label className="settings-field-wide">Topik Pembahasan<textarea name="topik" required placeholder="Topik utama kunjungan" /></label>
           <label>Status<select name="status" defaultValue="Selesai"><option>Terjadwal</option><option>Selesai</option><option>Ditunda</option></select></label>
           <label>Google Docs Notulensi<input name="link_notulen" type="url" placeholder="https://docs.google.com/document/..." /></label>
-          <label className="settings-field-wide">PDF Notulensi<input name="notulen_pdf" type="file" accept="application/pdf,.pdf" /><small className="muted-line">Opsional. PDF yang diunggah akan dapat dibuka langsung dari halaman Kunjungan OPD.</small></label>
+          <div className="settings-field-wide"><DirectUploadField kind="kunjungan-pdf" name="notulen_uploads" label="PDF Notulensi" accept="application/pdf,.pdf" helpText="Opsional. File diunggah langsung ke Supabase agar PDF besar tidak mentok batas Vercel." /></div>
         </div>
         <button className="primary-button" type="submit">Simpan Kunjungan</button>
       </form>
