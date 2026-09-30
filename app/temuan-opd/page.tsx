@@ -5,6 +5,7 @@ import { SUPABASE_URL } from '@/lib/branding'
 import { requireUser } from '@/lib/auth'
 import { FeatureNotes } from '@/components/feature-notes'
 import type { Database } from '@/lib/database.types'
+import { DirectUploadField } from '@/components/direct-upload-field'
 
 type Params = { opd?: string }
 type FindingDocument = Database['public']['Tables']['opd_finding_documents']['Row']
@@ -97,10 +98,15 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
         <label>Terkait 9 BERANI<select name="berani_program_id" defaultValue=""><option value="">Tidak terkait khusus</option>{(programs ?? []).map((program) => <option value={program.id} key={program.id}>{program.name}</option>)}</select></label>
         <label>Nama Sumber<input name="source_label" placeholder="Contoh: Kunjungan OPD / Paparan Kadis" /></label>
         <label>Link Sumber<input name="source_url" type="url" placeholder="https://..." /></label>
-        <label>Lampiran
-          <input name="finding_files" type="file" multiple accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.png,.jpg,.jpeg,.webp" />
-          <small className="muted-line">Bisa pilih hingga 10 PDF, Excel, Word, PowerPoint, CSV, atau foto sekaligus. Dokumen baru dapat ditambahkan lagi saat mengedit temuan.</small>
-        </label>
+        <DirectUploadField
+          kind="finding-document"
+          name="finding_uploads"
+          label="Lampiran"
+          accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.png,.jpg,.jpeg,.webp"
+          multiple
+          maxFiles={10}
+          helpText="Bisa pilih hingga 10 file, maksimal 20 MB per file. File diunggah langsung ke Supabase agar tidak mentok batas request Vercel."
+        />
         <button className="primary-button" type="submit">Simpan Temuan</button>
       </form>
 
@@ -142,7 +148,16 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
                   <label>9 BERANI<select name="berani_program_id" defaultValue={finding.berani_program_id || ''}><option value="">Tidak terkait khusus</option>{(programs ?? []).map((program) => <option value={program.id} key={program.id}>{program.name}</option>)}</select></label>
                   <label>Sumber<input name="source_label" defaultValue={finding.source_label || ''} /></label>
                   <label>Link<input name="source_url" type="url" defaultValue={finding.source_url || ''} /></label>
-                  <label>Tambah lampiran<input name="finding_files" type="file" multiple accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.png,.jpg,.jpeg,.webp" /></label>
+                  <DirectUploadField
+                    kind="finding-document"
+                    name="finding_uploads"
+                    label="Tambah lampiran"
+                    accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.png,.jpg,.jpeg,.webp"
+                    multiple
+                    maxFiles={10}
+                    scope={String(finding.id)}
+                    helpText="Lampiran baru diunggah langsung ke Supabase."
+                  />
                   <button className="secondary-button" type="submit">Simpan Perubahan</button>
                 </form>
               </details>
