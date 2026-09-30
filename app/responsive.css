@@ -25,7 +25,7 @@ button,a{touch-action:manipulation}
 .table-scroll::-webkit-scrollbar-track{background:transparent}
 
 .primary-button,.secondary-button,.ghost-button,.sidebar nav a,.mobile-menu-trigger,.mobile-drawer-close{min-height:42px}
-.panel,.stat-card,.team-profile-card{transform:translateZ(0)}
+
 
 @keyframes ahRouteProgress{0%{transform:translateX(-120%)}55%{transform:translateX(140%)}100%{transform:translateX(300%)}}
 @keyframes ahRouteEnter{from{opacity:.35;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -169,4 +169,24 @@ button,a{touch-action:manipulation}
 
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+
+
+/* Interaction stability + cross-device performance */
+form,label,fieldset,.panel,.stat-card,.main-content,.route-stage{min-width:0}
+img,svg,video,canvas{max-width:100%}
+button,input,select,textarea{max-width:100%}
+button[disabled]{cursor:wait}
+.primary-button.is-pending,.secondary-button.is-pending,.danger-button.is-pending,.text-danger-button.is-pending{opacity:.78;pointer-events:none}
+.button-spinner{display:inline-block;width:11px;height:11px;flex:0 0 11px;margin-right:7px;border:1.5px solid currentColor;border-right-color:transparent;border-radius:50%;animation:ahButtonSpin .72s linear infinite}
+@keyframes ahButtonSpin{to{transform:rotate(360deg)}}
+
+@media(max-width:760px){
+  .mobile-shell-header,.mobile-drawer-backdrop{backdrop-filter:none}
+  .route-stage{animation-duration:.14s}
+  .panel,.stat-card,.team-profile-card{box-shadow:0 14px 34px -30px rgba(7,24,43,.35)}
+}
+
+@media(hover:none),(pointer:coarse){
+  .stat-link:hover,.berani-card:hover,.source-documents-panel .document-card.processed-source:hover{transform:none!important}
 }
