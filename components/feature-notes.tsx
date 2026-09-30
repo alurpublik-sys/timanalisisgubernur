@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createFeatureNote, updateFeatureNote, deleteFeatureNote } from '@/lib/actions/notes'
+import { PendingSubmitButton } from '@/components/pending-submit-button'
 
 function dateLabel(value: string) {
   return new Intl.DateTimeFormat('id-ID', {
@@ -51,7 +52,7 @@ export async function FeatureNotes({
         <input type="hidden" name="return_path" value={returnPath} />
         <label>Judul <input name="title" placeholder="Opsional" /></label>
         <label>Catatan <textarea name="content" required placeholder="Tulis catatan, tindak lanjut, atau pengingat..." /></label>
-        <button className="primary-button" type="submit">Simpan Catatan</button>
+        <PendingSubmitButton className="primary-button" pendingLabel="Menyimpan catatan…">Simpan Catatan</PendingSubmitButton>
       </form>
     </details> : null}
 
@@ -70,13 +71,13 @@ export async function FeatureNotes({
                 <input type="hidden" name="return_path" value={returnPath} />
                 <label>Judul <input name="title" defaultValue={note.title || ''} /></label>
                 <label>Catatan <textarea name="content" required defaultValue={note.content} /></label>
-                <button className="secondary-button" type="submit">Simpan</button>
+                <PendingSubmitButton className="secondary-button" pendingLabel="Menyimpan…">Simpan</PendingSubmitButton>
               </form>
             </details>
             <form action={deleteFeatureNote}>
               <input type="hidden" name="id" value={note.id} />
               <input type="hidden" name="return_path" value={returnPath} />
-              <button className="icon-delete-button compact" type="submit" title="Hapus catatan" aria-label="Hapus catatan">×</button>
+              <PendingSubmitButton className="icon-delete-button compact" pendingLabel="…" title="Hapus catatan" aria-label="Hapus catatan">×</PendingSubmitButton>
             </form>
           </div> : null}
         </div>
