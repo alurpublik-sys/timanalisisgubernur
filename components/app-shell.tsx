@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 const menu = [
   { label: 'Dashboard', href: '/dashboard', glyph: 'DB' },
@@ -33,7 +34,7 @@ function Brand() {
   )
 }
 
-function Navigation({ active, onNavigate }: { active: string; onNavigate: (href: string) => void }) {
+function Navigation({ active, onNavigate, onIntent }: { active: string; onNavigate: (href: string) => void; onIntent: (href: string) => void }) {
   return (
     <nav aria-label="Navigasi utama">
       {menu.map(({ label, href, glyph }) => {
@@ -45,6 +46,9 @@ function Navigation({ active, onNavigate }: { active: string; onNavigate: (href:
             prefetch={false}
             aria-current={isActive ? 'page' : undefined}
             className={isActive ? 'active' : ''}
+            onMouseEnter={() => onIntent(href)}
+            onFocus={() => onIntent(href)}
+            onTouchStart={() => onIntent(href)}
             onClick={() => onNavigate(href)}
           >
             <span className="nav-main">
@@ -59,6 +63,7 @@ function Navigation({ active, onNavigate }: { active: string; onNavigate: (href:
 }
 
 export function AppShell({ active, title, children, adminMode = false, editReturnTo }: { active: string; title: string; children: React.ReactNode; adminMode?: boolean; editReturnTo?: string }) {
+  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [navigating, setNavigating] = useState(false)
 
@@ -74,6 +79,23 @@ export function AppShell({ active, title, children, adminMode = false, editRetur
   }, [navigating])
 
   useEffect(() => {
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+    if (connection?.saveData || connection?.effectiveType === '2g' || connection?.effectiveType === 'slow-2g') return
+
+    const currentIndex = menu.findIndex((item) => item.href === active)
+    const targets = new Set<string>(['/dashboard'])
+    if (currentIndex > 0) targets.add(menu[currentIndex - 1].href)
+    if (currentIndex >= 0 && currentIndex < menu.length - 1) targets.add(menu[currentIndex + 1].href)
+    targets.delete(active)
+
+    const timer = window.setTimeout(() => {
+      for (const href of targets) router.prefetch(href)
+    }, 650)
+
+    return () => window.clearTimeout(timer)
+  }, [active, router])
+
+  useEffect(() => {
     if (!mobileOpen) return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -87,6 +109,10 @@ export function AppShell({ active, title, children, adminMode = false, editRetur
     }
   }, [mobileOpen])
 
+  const prefetchRoute = (href: string) => {
+    if (href !== active) router.prefetch(href)
+  }
+
   const beginNavigation = (href: string) => {
     setMobileOpen(false)
     if (href !== active) setNavigating(true)
@@ -99,7 +125,7 @@ export function AppShell({ active, title, children, adminMode = false, editRetur
       <aside className="sidebar desktop-sidebar">
         <Brand />
         <div className="sidebar-kicker">Strategic Workspace</div>
-        <Navigation active={active} onNavigate={beginNavigation} />
+        <Navigation active={active} onNavigate={beginNavigation} onIntent={prefetchRoute} />
         <div className="sidebar-foot">
           <span>Independen</span>
           <small>Data · Analisis · Informasi</small>
@@ -131,7 +157,7 @@ export function AppShell({ active, title, children, adminMode = false, editRetur
               <button className="mobile-drawer-close" type="button" aria-label="Tutup navigasi" onClick={() => setMobileOpen(false)}>×</button>
             </div>
             <div className="mobile-drawer-nav">
-              <Navigation active={active} onNavigate={beginNavigation} />
+              <Navigation active={active} onNavigate={beginNavigation} onIntent={prefetchRoute} />
             </div>
             <div className="mobile-menu-note">Workspace independen. Mode edit dan Temuan OPD dilindungi PIN administrator.</div>
           </aside>
