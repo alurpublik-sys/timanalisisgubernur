@@ -160,6 +160,7 @@ async function uploadBeraniDocuments(
   ocrTextByFile: Record<string, string> = {},
 ) {
   const uploadedPaths: string[] = []
+  const createdDocumentIds: number[] = []
   let totalRows = 0
   let firstColumns: string[] = []
   let firstSheet: string | null = null
@@ -215,6 +216,7 @@ async function uploadBeraniDocuments(
         },
       }).select('id').single()
       if (documentError || !document) throw new Error(documentError?.message || 'Metadata dokumen gagal disimpan.')
+      createdDocumentIds.push(document.id)
 
       if (imported.rows.length) {
         for (let offset = 0; offset < imported.rows.length; offset += 300) {
@@ -262,7 +264,17 @@ async function uploadBeraniDocuments(
       if (!firstText && imported.extractedText) firstText = imported.extractedText
     }
   } catch (error) {
-    if (uploadedPaths.length) await supabase.storage.from(BERANI_BUCKET).remove(uploadedPaths)
+    if (createdDocumentIds.length) {
+      const { error: cleanupDbError } = await supabase
+        .from('berani_update_documents')
+        .delete()
+        .in('id', createdDocumentIds)
+      if (cleanupDbError) console.warn('[berani-processing] database rollback failed', cleanupDbError.message)
+    }
+    if (uploadedPaths.length) {
+      const { error: cleanupStorageError } = await supabase.storage.from(BERANI_BUCKET).remove(uploadedPaths)
+      if (cleanupStorageError) console.warn('[berani-processing] storage rollback failed', cleanupStorageError.message)
+    }
     throw error
   }
 
@@ -358,67 +370,63 @@ export async function createBeraniUpdate(formData: FormData) {
   let files = documentFiles(formData, 'document_files')
   const directUploads = directUploadsFromForm(formData, 'document_uploads', 'berani-document')
   const ocrTextByFile = documentOcrMap(formData)
+
   if (files.length && directUploads.length) throw new Error('Dokumen terunggah ganda. Pilih ulang dokumen.')
   if (!files.length && !directUploads.length && !summary) throw new Error('Isi ringkasan atau unggah minimal satu dokumen sumber.')
 
   const supabase = await adminClient()
-  if (directUploads.length) files = await downloadDirectUploads(supabase, directUploads)
-  const liveKey = `live:${programSlug}`
-  const { data: latest, error: latestError } = await supabase
-    .from('berani_updates')
-    .select('id,summary')
-    .eq('program_id', programId)
-    .order('updated_at', { ascending: false })
-    .order('id', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  if (latestError) throw new Error(latestError.message)
+  let activeUpdateId: number | null = null
 
-  let activeUpdateId: number
+  try {
+    if (directUploads.length) files = await downloadDirectUploads(supabase, directUploads)
 
-  if (latest?.id) {
-    activeUpdateId = latest.id
-    const { error } = await supabase.from('berani_updates').update({
-      title,
-      opd_name: opdName,
-      period_label: periodLabel,
-      summary: summary || latest.summary || null,
-      source_key: liveKey,
-      updated_at: new Date().toISOString(),
-    }).eq('id', activeUpdateId)
-    if (error) throw new Error(error.message)
-  } else {
-    const { data: created, error } = await supabase.from('berani_updates').insert({
+    const sourceKey = `update:${programSlug}:${Date.now()}:${crypto.randomUUID()}`
+    const { data: created, error: createError } = await supabase.from('berani_updates').insert({
       program_id: programId,
       title,
       opd_name: opdName,
       period_label: periodLabel,
       summary,
-      source_key: liveKey,
+      source_key: sourceKey,
     }).select('id').single()
-    if (error || !created) throw new Error(error?.message || 'Update BERANI gagal disimpan.')
+
+    if (createError || !created) throw new Error(createError?.message || 'Update BERANI gagal disimpan.')
     activeUpdateId = created.id
-  }
 
-  if (files.length) {
-    const imported = await uploadBeraniDocuments(supabase, activeUpdateId, programSlug, files, ocrTextByFile)
-    if (!summary && imported.firstText) summary = imported.firstText.slice(0, 1200)
-    const { data: docs, error: docsError } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', activeUpdateId)
-    if (docsError) throw new Error(docsError.message)
-    const totalRows = (docs ?? []).reduce((sum, doc) => sum + doc.row_count, 0)
-    const { error: patchError } = await supabase.from('berani_updates').update({
-      summary: summary || latest?.summary || null,
-      row_count: totalRows,
-      columns: imported.firstColumns,
-      sheet_name: imported.firstSheet,
-      extracted_text: imported.firstText,
-      updated_at: new Date().toISOString(),
-    }).eq('id', activeUpdateId)
-    if (patchError) throw new Error(patchError.message)
-  }
+    if (files.length) {
+      const imported = await uploadBeraniDocuments(supabase, activeUpdateId, programSlug, files, ocrTextByFile)
+      if (!summary && imported.firstText) summary = imported.firstText.slice(0, 1200)
 
-  if (directUploads.length) await cleanupDirectUploads(supabase, directUploads)
-  refreshKnowledge(programSlug)
+      const { data: docs, error: docsError } = await supabase
+        .from('berani_update_documents')
+        .select('row_count,extracted_text')
+        .eq('update_id', activeUpdateId)
+      if (docsError) throw new Error(docsError.message)
+
+      if (!(docs ?? []).length) throw new Error('Dokumen tidak berhasil menjadi sumber permanen. Update dibatalkan agar tidak menyisakan data kosong.')
+
+      const totalRows = (docs ?? []).reduce((sum, doc) => sum + doc.row_count, 0)
+      const { error: patchError } = await supabase.from('berani_updates').update({
+        summary,
+        row_count: totalRows,
+        columns: imported.firstColumns,
+        sheet_name: imported.firstSheet,
+        extracted_text: imported.firstText,
+        updated_at: new Date().toISOString(),
+      }).eq('id', activeUpdateId)
+      if (patchError) throw new Error(patchError.message)
+    }
+
+    refreshKnowledge(programSlug)
+  } catch (error) {
+    if (activeUpdateId) {
+      const { error: rollbackError } = await supabase.from('berani_updates').delete().eq('id', activeUpdateId)
+      if (rollbackError) console.warn('[berani-processing] update rollback failed', rollbackError.message)
+    }
+    throw error
+  } finally {
+    if (directUploads.length) await cleanupDirectUploads(supabase, directUploads)
+  }
 }
 
 export async function addBeraniDocuments(formData: FormData) {
@@ -427,18 +435,39 @@ export async function addBeraniDocuments(formData: FormData) {
   let files = documentFiles(formData, 'document_files')
   const directUploads = directUploadsFromForm(formData, 'document_uploads', 'berani-document')
   const ocrTextByFile = documentOcrMap(formData)
+
   if (files.length && directUploads.length) throw new Error('Dokumen terunggah ganda. Pilih ulang dokumen.')
   if (!files.length && !directUploads.length) throw new Error('Pilih minimal satu dokumen.')
+
   const supabase = await adminClient()
-  if (directUploads.length) files = await downloadDirectUploads(supabase, directUploads)
-  await uploadBeraniDocuments(supabase, updateId, programSlug, files, ocrTextByFile)
-  if (directUploads.length) await cleanupDirectUploads(supabase, directUploads)
-  const { data: docs, error } = await supabase.from('berani_update_documents').select('row_count').eq('update_id', updateId)
-  if (error) throw new Error(error.message)
-  const totalRows = (docs ?? []).reduce((sum, doc) => sum + doc.row_count, 0)
-  const { error: patchError } = await supabase.from('berani_updates').update({ row_count: totalRows }).eq('id', updateId)
-  if (patchError) throw new Error(patchError.message)
-  refreshKnowledge(programSlug)
+  try {
+    if (directUploads.length) files = await downloadDirectUploads(supabase, directUploads)
+    await uploadBeraniDocuments(supabase, updateId, programSlug, files, ocrTextByFile)
+
+    const { data: docs, error } = await supabase
+      .from('berani_update_documents')
+      .select('row_count,columns,sheet_name,extracted_text')
+      .eq('update_id', updateId)
+      .order('created_at')
+    if (error) throw new Error(error.message)
+
+    const totalRows = (docs ?? []).reduce((sum, doc) => sum + doc.row_count, 0)
+    const firstStructured = (docs ?? []).find((doc) => Array.isArray(doc.columns) && doc.columns.length)
+    const firstTextDoc = (docs ?? []).find((doc) => Boolean(doc.extracted_text))
+
+    const { error: patchError } = await supabase.from('berani_updates').update({
+      row_count: totalRows,
+      columns: firstStructured?.columns ?? [],
+      sheet_name: firstStructured?.sheet_name ?? null,
+      extracted_text: firstTextDoc?.extracted_text ?? null,
+      updated_at: new Date().toISOString(),
+    }).eq('id', updateId)
+    if (patchError) throw new Error(patchError.message)
+
+    refreshKnowledge(programSlug)
+  } finally {
+    if (directUploads.length) await cleanupDirectUploads(supabase, directUploads)
+  }
 }
 
 export async function deleteBeraniDocument(formData: FormData) {
