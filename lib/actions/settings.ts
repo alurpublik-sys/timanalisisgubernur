@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { requireActionUser } from '@/lib/auth'
 import { driveFileId, TEAM_ASSET_BUCKET } from '@/lib/branding'
 import type { Database } from '@/lib/database.types'
+import { directUploadsFromForm } from '@/lib/direct-uploads'
 
 type TeamUpdate = Database['public']['Tables']['tim_analisis']['Update']
 
@@ -20,9 +21,94 @@ function refresh(){revalidatePath('/pengaturan');revalidatePath('/tim-analisis')
 async function adminClient(){return(await requireActionUser(['admin'])).supabase}
 async function uploadFile(supabase:Awaited<ReturnType<typeof adminClient>>,memberId:number,kind:'photo'|'cv',file:File){const allowed=kind==='photo'?IMAGE_TYPES:CV_TYPES;if(!allowed.has(file.type))throw new Error(kind==='photo'?'Foto harus JPG, PNG, atau WEBP.':'CV harus berupa PDF.');if(file.size>MAX_FILE_SIZE)throw new Error('Ukuran file maksimal 10 MB.');const ext=extensionFor(file.type);const path=`${kind==='photo'?'photos':'cv'}/${memberId}-${Date.now()}.${ext}`;const body=Buffer.from(await file.arrayBuffer());const{error}=await supabase.storage.from(TEAM_ASSET_BUCKET).upload(path,body,{contentType:file.type,cacheControl:'3600',upsert:false});if(error)throw new Error(`Upload ${kind==='photo'?'foto':'CV'} gagal: ${error.message}`);const{data}=supabase.storage.from(TEAM_ASSET_BUCKET).getPublicUrl(path);return{path,url:data.publicUrl}}
 
-export async function addTeamMember(formData:FormData){const supabase=await adminClient();const{data:last}=await supabase.from('tim_analisis').select('sort_order').order('sort_order',{ascending:false}).limit(1).maybeSingle();const{data:member,error}=await supabase.from('tim_analisis').insert({nama:required(formData,'nama','Nama',300),peran:optional(formData,'peran','Peran',500),bio:optional(formData,'bio','Bio',2000),active:true,sort_order:Number(last?.sort_order||0)+1}).select('id').single();if(error||!member)throw new Error(error?.message||'Gagal menambah anggota.');const updates:TeamUpdate={};const photo=fileFrom(formData,'photo_file');const cv=fileFrom(formData,'cv_file');if(photo){const uploaded=await uploadFile(supabase,member.id,'photo',photo);updates.photo_path=uploaded.path;updates.photo_url=uploaded.url}if(cv){const uploaded=await uploadFile(supabase,member.id,'cv',cv);updates.cv_path=uploaded.path;updates.cv_url=uploaded.url}if(Object.keys(updates).length){const{error:updateError}=await supabase.from('tim_analisis').update(updates).eq('id',member.id);if(updateError)throw new Error(updateError.message)}refresh()}
+export async function addTeamMember(formData:FormData){
+  const supabase=await adminClient()
+  const{data:last}=await supabase.from('tim_analisis').select('sort_order').order('sort_order',{ascending:false}).limit(1).maybeSingle()
+  const{data:member,error}=await supabase.from('tim_analisis').insert({
+    nama:required(formData,'nama','Nama',300),
+    peran:optional(formData,'peran','Peran',500),
+    bio:optional(formData,'bio','Bio',2000),
+    active:true,
+    sort_order:Number(last?.sort_order||0)+1,
+  }).select('id').single()
+  if(error||!member)throw new Error(error?.message||'Gagal menambah anggota.')
 
-export async function updateTeamMember(formData:FormData){const supabase=await adminClient();const id=idValue(formData,'id','ID anggota');const updates:TeamUpdate={nama:required(formData,'nama','Nama',300),peran:optional(formData,'peran','Peran',500)||null,bio:optional(formData,'bio','Bio',2000)||null,active:text(formData,'active')==='true',sort_order:Math.max(0,Number(text(formData,'sort_order'))||0)};const photo=fileFrom(formData,'photo_file');const cv=fileFrom(formData,'cv_file');if(photo){const uploaded=await uploadFile(supabase,id,'photo',photo);updates.photo_path=uploaded.path;updates.photo_url=uploaded.url}if(cv){const uploaded=await uploadFile(supabase,id,'cv',cv);updates.cv_path=uploaded.path;updates.cv_url=uploaded.url}const{error}=await supabase.from('tim_analisis').update(updates).eq('id',id);if(error)throw new Error(error.message);refresh()}
+  const updates:TeamUpdate={}
+  const directPhoto=directUploadsFromForm(formData,'photo_uploads','team-photo')[0] ?? null
+  const directCv=directUploadsFromForm(formData,'cv_uploads','team-cv')[0] ?? null
+  const photo=fileFrom(formData,'photo_file')
+  const cv=fileFrom(formData,'cv_file')
+  if(directPhoto&&photo)throw new Error('Foto terunggah ganda. Pilih ulang foto.')
+  if(directCv&&cv)throw new Error('CV terunggah ganda. Pilih ulang CV.')
+
+  if(directPhoto){
+    const{data}=supabase.storage.from(TEAM_ASSET_BUCKET).getPublicUrl(directPhoto.path)
+    updates.photo_path=directPhoto.path
+    updates.photo_url=data.publicUrl
+  }else if(photo){
+    const uploaded=await uploadFile(supabase,member.id,'photo',photo)
+    updates.photo_path=uploaded.path
+    updates.photo_url=uploaded.url
+  }
+
+  if(directCv){
+    const{data}=supabase.storage.from(TEAM_ASSET_BUCKET).getPublicUrl(directCv.path)
+    updates.cv_path=directCv.path
+    updates.cv_url=data.publicUrl
+  }else if(cv){
+    const uploaded=await uploadFile(supabase,member.id,'cv',cv)
+    updates.cv_path=uploaded.path
+    updates.cv_url=uploaded.url
+  }
+
+  if(Object.keys(updates).length){
+    const{error:updateError}=await supabase.from('tim_analisis').update(updates).eq('id',member.id)
+    if(updateError)throw new Error(updateError.message)
+  }
+  refresh()
+}
+
+export async function updateTeamMember(formData:FormData){
+  const supabase=await adminClient()
+  const id=idValue(formData,'id','ID anggota')
+  const updates:TeamUpdate={
+    nama:required(formData,'nama','Nama',300),
+    peran:optional(formData,'peran','Peran',500)||null,
+    bio:optional(formData,'bio','Bio',2000)||null,
+    active:text(formData,'active')==='true',
+    sort_order:Math.max(0,Number(text(formData,'sort_order'))||0),
+  }
+  const directPhoto=directUploadsFromForm(formData,'photo_uploads','team-photo')[0] ?? null
+  const directCv=directUploadsFromForm(formData,'cv_uploads','team-cv')[0] ?? null
+  const photo=fileFrom(formData,'photo_file')
+  const cv=fileFrom(formData,'cv_file')
+  if(directPhoto&&photo)throw new Error('Foto terunggah ganda. Pilih ulang foto.')
+  if(directCv&&cv)throw new Error('CV terunggah ganda. Pilih ulang CV.')
+
+  if(directPhoto){
+    const{data}=supabase.storage.from(TEAM_ASSET_BUCKET).getPublicUrl(directPhoto.path)
+    updates.photo_path=directPhoto.path
+    updates.photo_url=data.publicUrl
+  }else if(photo){
+    const uploaded=await uploadFile(supabase,id,'photo',photo)
+    updates.photo_path=uploaded.path
+    updates.photo_url=uploaded.url
+  }
+
+  if(directCv){
+    const{data}=supabase.storage.from(TEAM_ASSET_BUCKET).getPublicUrl(directCv.path)
+    updates.cv_path=directCv.path
+    updates.cv_url=data.publicUrl
+  }else if(cv){
+    const uploaded=await uploadFile(supabase,id,'cv',cv)
+    updates.cv_path=uploaded.path
+    updates.cv_url=uploaded.url
+  }
+
+  const{error}=await supabase.from('tim_analisis').update(updates).eq('id',id)
+  if(error)throw new Error(error.message)
+  refresh()
+}
 
 async function fetchDriveAsset(url:string,kind:'photo'|'cv'){const id=driveFileId(url);if(!id)throw new Error('ID Google Drive tidak dikenali.');const response=await fetch(`https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t`,{redirect:'follow',cache:'no-store'});if(!response.ok)throw new Error(`Google Drive merespons ${response.status}.`);if(Number(response.headers.get('content-length')||0)>MAX_FILE_SIZE)throw new Error('File lebih besar dari 10 MB.');const declared=(response.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();const mime=kind==='photo'?(IMAGE_TYPES.has(declared)?declared:'image/jpeg'):'application/pdf';const body=Buffer.from(await response.arrayBuffer());if(!body.length||body.length>MAX_FILE_SIZE)throw new Error('File Google Drive kosong atau terlalu besar.');return{body,mime}}
 
