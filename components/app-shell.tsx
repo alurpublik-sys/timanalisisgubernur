@@ -45,7 +45,7 @@ function Navigation({ active, onNavigate }: { active: string; onNavigate: (href:
           <Link
             key={href}
             href={href}
-            prefetch
+            prefetch={false}
             aria-current={isActive ? 'page' : undefined}
             className={isActive ? 'active' : ''}
             onClick={() => onNavigate(href)}
