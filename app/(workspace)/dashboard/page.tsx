@@ -65,7 +65,7 @@ export default async function DashboardPage(){
         </div>
       </section>
 
-      <section className="stats-grid strategic-stats strategic-stats-six">{cards.map(([label,total,href,note])=><Link href={href} prefetch={false} className="stat-card stat-link" key={href}><span>{label}</span><strong>{total}</strong><small>{note}</small><i aria-hidden>↗</i></Link>)}</section>
+      <section className="stats-grid strategic-stats strategic-stats-six">{cards.map(([label,total,href,note])=><Link href={href}  className="stat-card stat-link" key={href}><span>{label}</span><strong>{total}</strong><small>{note}</small><i aria-hidden>↗</i></Link>)}</section>
 
       <section className="command-center-shell">
         <div className="command-center-heading"><div><p className="eyebrow">COMMAND CENTER</p><h2>Prioritas yang perlu dilihat sekarang</h2></div><span>Ringkasan otomatis dari data aktif</span></div>
