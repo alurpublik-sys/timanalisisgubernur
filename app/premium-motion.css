@@ -517,3 +517,58 @@ select{cursor:default!important}
 @keyframes workspaceFade{from{opacity:.45}to{opacity:1}}
 @media(max-width:760px){.loading-hero{min-height:150px;padding:18px}.loading-grid{grid-template-columns:1fr 1fr}.loading-grid span{height:105px}}
 @media(max-width:430px){.loading-grid{grid-template-columns:1fr}}
+
+
+/* Cursor-reactive soft lighting, inspired by premium public-service landing interactions */
+@media(pointer:fine) and (hover:hover){
+  .stat-card,.finding-card,.knowledge-dashboard-item,.premium-reference-card,.reference-library-card,.command-priority-card,.quick-link-grid a,.visit-source-item,.media-mobile-card,.team-profile-card{
+    position:relative;
+    isolation:isolate;
+    overflow:hidden;
+  }
+  .stat-card::after,.finding-card::after,.knowledge-dashboard-item::after,.premium-reference-card::after,.reference-library-card::after,.command-priority-card::after,.quick-link-grid a::after,.visit-source-item::after,.media-mobile-card::after,.team-profile-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    opacity:0;
+    background:radial-gradient(180px circle at var(--pointer-x,50%) var(--pointer-y,50%),rgba(105,165,208,.13),rgba(105,165,208,.035) 42%,transparent 72%);
+    transition:opacity .2s ease;
+  }
+  .motion-hover::after{opacity:1!important}
+  .stat-card.motion-hover i,.knowledge-dashboard-item.motion-hover>span:first-child,.quick-link-grid a.motion-hover strong{
+    transform:translate3d(2px,-1px,0);
+  }
+  .stat-card i,.knowledge-dashboard-item>span:first-child,.quick-link-grid a strong{
+    transition:transform .2s cubic-bezier(.2,.8,.2,1),color .2s ease;
+  }
+}
+
+/* Preserve compact navigation rail on tablet landscape despite the executive desktop width. */
+@media(min-width:761px) and (max-width:1080px){
+  .desktop-sidebar{width:92px!important;flex-basis:92px!important;padding:18px 10px!important}
+  .desktop-sidebar .strategic-brand{justify-content:center!important;margin:0!important;padding:3px 0 18px!important;border-bottom:0!important}
+  .desktop-sidebar .strategic-brand .brand-icon-wrap{width:52px!important;height:52px!important;flex-basis:52px!important}
+  .desktop-sidebar .strategic-brand .brand-copy,
+  .desktop-sidebar .sidebar-kicker,
+  .desktop-sidebar .nav-label,
+  .desktop-sidebar .sidebar-foot small{display:none!important}
+  .desktop-sidebar nav{gap:7px!important}
+  .desktop-sidebar nav a{min-height:48px!important;padding:7px!important;justify-content:center!important}
+  .desktop-sidebar nav a::after{display:none}
+  .desktop-sidebar nav a::before{left:0;top:9px;bottom:9px}
+  .desktop-sidebar .nav-main{justify-content:center!important}
+  .desktop-sidebar .sidebar-foot{padding:14px 0 4px!important;text-align:center!important}
+}
+
+/* Tablet portrait uses the mobile app shell rather than a cramped icon rail. */
+@media (orientation:portrait) and (min-width:761px) and (max-width:900px){
+  .app-shell{display:block!important}
+  .desktop-sidebar{display:none!important}
+  .mobile-shell-header{display:flex!important;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:30}
+  .mobile-menu-trigger{display:flex!important}
+  .main-content{padding:18px 16px 34px!important}
+  .mobile-drawer-layer{display:block}
+  .mobile-drawer{width:min(380px,72vw)!important}
+}
