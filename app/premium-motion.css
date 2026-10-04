@@ -924,12 +924,9 @@ select{cursor:default!important}
   transition:opacity .15s ease,transform .22s cubic-bezier(.2,.8,.2,1),max-width .22s ease!important;
 }
 
-.desktop-sidebar{
-  overflow-x:visible!important;
-}
-.sidebar-collapse-toggle{
+ .sidebar-collapse-toggle{
   position:absolute;
-  right:-14px;
+  right:7px;
   top:92px;
   z-index:45;
   display:grid;
