@@ -32,7 +32,7 @@ function titleForPath(pathname: string) {
 function Brand() {
   return (
     <div className="brand strategic-brand">
-      <div className="brand-portrait-wrap brand-icon-wrap">
+      <div className="brand-portrait-wrap brand-icon-wrap" title="Tim Analisis dan Komunikasi Strategis · Independen">
         <Image src="/tim-analisis-logo.png" alt="" width={62} height={62} sizes="62px" className="brand-portrait brand-app-icon" priority />
       </div>
       <div className="brand-copy">
@@ -57,7 +57,9 @@ function Navigation({ active, onNavigate, onIntent }: { active: string; onNaviga
             href={href}
             prefetch
             aria-current={isActive ? 'page' : undefined}
-            className={isActive ? 'active' : ''}
+            className={`${isActive ? 'active' : ''}${href === '/referensi-konten' || href === '/tim-analisis' ? ' nav-section-start' : ''}`}
+            data-nav-label={label}
+            title={label}
             onMouseEnter={() => onIntent(href)}
             onFocus={() => onIntent(href)}
             onTouchStart={() => onIntent(href)}
@@ -67,6 +69,7 @@ function Navigation({ active, onNavigate, onIntent }: { active: string; onNaviga
               <span className="nav-glyph" aria-hidden>{glyph}</span>
               <span className="nav-label">{label}</span>
             </span>
+            <span className="nav-tooltip" aria-hidden>{label}</span>
           </Link>
         )
       })}
@@ -81,6 +84,44 @@ export function AppShell({ children, adminMode = false }: { children: React.Reac
   const title = titleForPath(pathname)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [navigating, setNavigating] = useState(false)
+  const [sidebarMode, setSidebarMode] = useState<'expanded' | 'compact'>('expanded')
+  const [sidebarReady, setSidebarReady] = useState(false)
+  const [focusMode, setFocusMode] = useState(false)
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('tim-analysis-sidebar-mode')
+      if (saved === 'compact' || saved === 'expanded') setSidebarMode(saved)
+    } catch {
+      // Local storage can be unavailable in strict browser privacy modes.
+    }
+    setSidebarReady(true)
+  }, [])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const typing = target?.matches('input,textarea,select,[contenteditable="true"]')
+
+      if (!typing && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
+        event.preventDefault()
+        if (focusMode) {
+          setFocusMode(false)
+          return
+        }
+        setSidebarMode((current) => {
+          const next = current === 'expanded' ? 'compact' : 'expanded'
+          try { window.localStorage.setItem('tim-analysis-sidebar-mode', next) } catch {}
+          return next
+        })
+      }
+
+      if (event.key === 'Escape' && focusMode) setFocusMode(false)
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [focusMode])
 
   useEffect(() => {
     setNavigating(false)
@@ -143,16 +184,41 @@ export function AppShell({ children, adminMode = false }: { children: React.Reac
     if (href !== active) setNavigating(true)
   }
 
+  const toggleSidebar = () => {
+    setFocusMode(false)
+    setSidebarMode((current) => {
+      const next = current === 'expanded' ? 'compact' : 'expanded'
+      try { window.localStorage.setItem('tim-analysis-sidebar-mode', next) } catch {}
+      return next
+    })
+  }
+
+  const toggleFocusMode = () => {
+    setMobileOpen(false)
+    setFocusMode((current) => !current)
+  }
+
   return (
-    <div className={`app-shell${navigating ? ' is-navigating' : ''}`}>
+    <div className={`app-shell sidebar-${sidebarMode}${sidebarReady ? ' sidebar-ready' : ''}${focusMode ? ' focus-mode' : ''}${navigating ? ' is-navigating' : ''}`}>
       <CursorFollower />
       <div className="route-progress" aria-hidden><span /></div>
 
-      <aside className="sidebar desktop-sidebar">
+      <aside className="sidebar desktop-sidebar" data-mode={sidebarMode}>
         <Brand />
+        <button
+          className="sidebar-collapse-toggle"
+          type="button"
+          aria-label={sidebarMode === 'expanded' ? 'Perkecil sidebar' : 'Perbesar sidebar'}
+          aria-pressed={sidebarMode === 'compact'}
+          title={sidebarMode === 'expanded' ? 'Perkecil sidebar (Ctrl/⌘ + B)' : 'Perbesar sidebar (Ctrl/⌘ + B)'}
+          onClick={toggleSidebar}
+        >
+          <span aria-hidden>{sidebarMode === 'expanded' ? '‹' : '›'}</span>
+        </button>
         <div className="sidebar-kicker">Strategic Workspace</div>
         <Navigation active={active} onNavigate={beginNavigation} onIntent={prefetchRoute} />
-        <div className="sidebar-foot">
+        <div className="sidebar-foot" title="Independent Intelligence · Data · Analisis · Informasi">
+          <i className="sidebar-status-dot" aria-hidden />
           <span>Independent Intelligence</span>
           <small>Data · Analisis · Informasi</small>
         </div>
@@ -197,6 +263,17 @@ export function AppShell({ children, adminMode = false }: { children: React.Reac
             <h1>{title}</h1>
           </div>
           <div className="topbar-actions">
+            <button
+              className={`admin-mode-chip focus-mode-chip${focusMode ? ' is-active' : ''}`}
+              type="button"
+              onClick={toggleFocusMode}
+              title={focusMode ? 'Keluar dari mode fokus' : 'Mode Fokus / Presentasi'}
+              aria-label={focusMode ? 'Keluar dari mode fokus' : 'Aktifkan mode fokus'}
+              aria-pressed={focusMode}
+            >
+              <span aria-hidden>{focusMode ? '↙' : '⛶'}</span>
+              <small>{focusMode ? 'Keluar fokus' : 'Fokus'}</small>
+            </button>
             <Link
               className={`admin-mode-chip${adminMode ? ' is-active' : ''}`}
               href={adminMode ? '/pengaturan' : `/login?next=${encodeURIComponent(pathname || active)}`}
