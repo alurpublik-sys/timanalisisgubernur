@@ -1,78 +1,15 @@
 'use client'
-
-import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { createMedia } from '@/lib/actions/core'
-import { PendingSubmitButton } from '@/components/pending-submit-button'
-
-export function MediaAddDialog({ today }: { today: string }) {
-  const [mounted, setMounted] = useState(false)
-  const [open, setOpen] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => setMounted(true), [])
-
-  useEffect(() => {
-    if (!open) return
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
-    }
-    window.addEventListener('keydown', closeOnEscape)
-    return () => {
-      document.body.style.overflow = previous
-      window.removeEventListener('keydown', closeOnEscape)
-    }
-  }, [open])
-
-  async function submit(formData: FormData) {
-    setError('')
-    try {
-      await createMedia(formData)
-      setOpen(false)
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Berita gagal disimpan.')
-    }
-  }
-
-  return (
-    <>
-      <button
-        className="media-add-icon"
-        type="button"
-        aria-label="Tambah berita"
-        title="Tambah berita"
-        onClick={() => { setError(''); setOpen(true) }}
-      >
-        <span aria-hidden>＋</span>
-      </button>
-
-      {mounted && open ? createPortal(
-        <div className="media-editor-layer" role="presentation">
-          <button className="media-editor-backdrop" type="button" aria-label="Tutup form tambah berita" onClick={() => setOpen(false)} />
-          <section className="media-editor-modal" role="dialog" aria-modal="true" aria-labelledby="media-add-title">
-            <div className="media-editor-head">
-              <div><p className="eyebrow">MEDIA MONITOR</p><h2 id="media-add-title">Tambah Berita</h2><span>Hanya tersedia saat mode edit dengan PIN administrator aktif.</span></div>
-              <button className="media-editor-close" type="button" aria-label="Tutup" onClick={() => setOpen(false)}>×</button>
-            </div>
-
-            <form action={submit} className="media-editor-form">
-              <label className="media-editor-wide">Judul Berita<input name="judul" required autoFocus /></label>
-              <label>Nama Media<input name="media" /></label>
-              <label>Tanggal<input name="tanggal" type="date" defaultValue={today} required /></label>
-              <label>Sentimen<select name="sentimen" defaultValue="Netral"><option>Positif</option><option>Netral</option><option>Negatif</option></select></label>
-              <label>Link Berita<input name="link" type="url" placeholder="https://..." /></label>
-              {error ? <div className="media-editor-error" role="alert">{error}</div> : null}
-              <div className="media-editor-actions">
-                <button className="ghost-button dark" type="button" onClick={() => setOpen(false)}>Batal</button>
-                <PendingSubmitButton className="primary-button" pendingLabel="Menyimpan berita…">Simpan Berita</PendingSubmitButton>
-              </div>
-            </form>
-          </section>
-        </div>,
-        document.body,
-      ) : null}
-    </>
-  )
+import {useEffect,useState} from 'react'
+import {createPortal} from 'react-dom'
+import {createMedia} from '@/lib/actions/core'
+import {PendingSubmitButton} from '@/components/pending-submit-button'
+type ProgramOption={id:number;name:string}
+const categories=['Pemerintahan','Ekonomi','Infrastruktur','Sosial','Pendidikan','Kesehatan','Pangan','Lingkungan','Politik','Lainnya']
+export function MediaAddDialog({today,programs,opdNames}:{today:string;programs:ProgramOption[];opdNames:string[]}){
+ const[mounted,setMounted]=useState(false),[open,setOpen]=useState(false),[error,setError]=useState('')
+ useEffect(()=>setMounted(true),[])
+ useEffect(()=>{if(!open)return;const previous=document.body.style.overflow;document.body.style.overflow='hidden';const close=(e:KeyboardEvent)=>{if(e.key==='Escape')setOpen(false)};window.addEventListener('keydown',close);return()=>{document.body.style.overflow=previous;window.removeEventListener('keydown',close)}},[open])
+ async function submit(fd:FormData){setError('');try{await createMedia(fd);setOpen(false)}catch(e){setError(e instanceof Error?e.message:'Berita gagal disimpan.')}}
+ return <><button className="media-add-icon" type="button" aria-label="Tambah berita" title="Tambah berita" onClick={()=>{setError('');setOpen(true)}}><span aria-hidden>＋</span></button>
+ {mounted&&open?createPortal(<div className="media-editor-layer" role="presentation"><button className="media-editor-backdrop" type="button" aria-label="Tutup" onClick={()=>setOpen(false)}/><section className="media-editor-modal" role="dialog" aria-modal="true"><div className="media-editor-head"><div><p className="eyebrow">MEDIA INTELLIGENCE</p><h2>Tambah Berita</h2><span>Sentimen dan kategori isu wajib agar data langsung berguna untuk monitoring.</span></div><button className="media-editor-close" type="button" onClick={()=>setOpen(false)}>×</button></div><form action={submit} className="media-editor-form"><label className="media-editor-wide">Judul Berita<input name="judul" required autoFocus/></label><label>Nama Media<input name="media"/></label><label>Tanggal<input name="tanggal" type="date" defaultValue={today} required/></label><label>Sentimen<select name="sentimen" defaultValue="Netral" required><option>Positif</option><option>Netral</option><option>Negatif</option></select></label><label>Kategori Isu<select name="issue_category" defaultValue="Lainnya" required>{categories.map((x)=><option key={x}>{x}</option>)}</select></label><label>OPD terkait<input name="opd_name" list="media-opd-options"/></label><datalist id="media-opd-options">{opdNames.map((x)=><option value={x} key={x}/>)}</datalist><label>Terkait 9 BERANI<select name="berani_program_id" defaultValue=""><option value="">Tidak terkait khusus</option>{programs.map((x)=><option value={x.id} key={x.id}>{x.name}</option>)}</select></label><label>Link Berita<input name="link" type="url" placeholder="https://..."/></label>{error?<div className="media-editor-error" role="alert">{error}</div>:null}<div className="media-editor-actions"><button className="ghost-button dark" type="button" onClick={()=>setOpen(false)}>Batal</button><PendingSubmitButton className="primary-button" pendingLabel="Menyimpan berita…">Simpan Berita</PendingSubmitButton></div></form></section></div>,document.body):null}</>
 }

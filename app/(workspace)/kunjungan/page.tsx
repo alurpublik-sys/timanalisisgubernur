@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { SUPABASE_URL } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
@@ -15,6 +14,14 @@ function notulenUrl(path?: string | null) {
   return `${SUPABASE_URL}/storage/v1/object/public/kunjungan-notulensi/${encodeURI(path)}`
 }
 
+function documentHref(document:{file_path:string|null;source_url:string|null}) {
+  if(document.source_url)return document.source_url
+  return notulenUrl(document.file_path)
+}
+function documentBadge(document:{source_type:string;mime_type:string}) {
+  if(document.source_type==='external')return 'LINK'
+  return document.mime_type.includes('pdf')?'PDF':'FILE'
+}
 function displayDate(value: string) {
   return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeZone: 'Asia/Makassar' }).format(new Date(`${value}T00:00:00+08:00`))
 }
@@ -40,7 +47,7 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
     query,
     supabase
       .from('kunjungan_documents')
-      .select('id,kunjungan_id,title,file_path,file_name,created_at')
+      .select('id,kunjungan_id,title,file_path,file_name,mime_type,source_type,source_url,file_size,created_at')
       .order('created_at', { ascending: false }),
   ])
   if (error) throw new Error(error.message)
@@ -53,7 +60,7 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
     documentsByVisit.set(document.kunjungan_id, items)
   }
 
-  return <AppShell active="/kunjungan" title="Kunjungan OPD" adminMode={Boolean(user)}>
+  return <>
     <section className="premium-page-intro">
       <div>
         <p className="eyebrow">RIWAYAT LAPANGAN</p>
@@ -87,6 +94,7 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
               const legacyOriginal = getLegacyNotulensiOriginal(row.id)
               const hasPrimaryPdf = Boolean(pdf || legacyOriginal)
               const visitDocs = documentsByVisit.get(row.id) ?? []
+              const hasStructuredDocs = visitDocs.length > 0
               return <tr key={row.id}>
                 <td className="visit-date-cell">
                   <b>{displayDate(row.tanggal)}</b>
@@ -99,9 +107,9 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
                 <td><span className="status-pill">{row.status}</span></td>
                 <td>
                   <div className="note-chip-row">
-                    {row.link_notulen ? <a className="note-chip note-gdocs" href={row.link_notulen} target="_blank" rel="noreferrer"><span>G</span> Google Docs</a> : null}
-                    {hasPrimaryPdf ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi?v=20260928-original`} target="_blank" rel="noreferrer"><span>PDF</span> {row.notulen_pdf_name || legacyOriginal?.fileName || 'Notulensi'}</a> : null}
-                    {visitDocs.map((document) => <a className="note-chip note-pdf" key={document.id} href={notulenUrl(document.file_path) || '#'} target="_blank" rel="noreferrer"><span>PDF</span> {document.title || document.file_name}</a>)}
+                    {!hasStructuredDocs && row.link_notulen ? <a className="note-chip note-gdocs" href={row.link_notulen} target="_blank" rel="noreferrer"><span>G</span> Google Docs</a> : null}
+                    {!hasStructuredDocs && hasPrimaryPdf ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi?v=20260928-original`} target="_blank" rel="noreferrer"><span>PDF</span> {row.notulen_pdf_name || legacyOriginal?.fileName || 'Notulensi'}</a> : null}
+                    {visitDocs.map((document) => <a className="note-chip note-pdf" key={document.id} href={documentHref(document) || '#'} target="_blank" rel="noreferrer"><span>{documentBadge(document)}</span> {document.title || document.file_name}</a>)}
                     
                     {!row.link_notulen && !hasPrimaryPdf && !visitDocs.length ? <span className="muted-line">Belum ada lampiran</span> : null}
                   </div>
@@ -120,6 +128,7 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
           const legacyOriginal = getLegacyNotulensiOriginal(row.id)
           const hasPrimaryPdf = Boolean(pdf || legacyOriginal)
           const visitDocs = documentsByVisit.get(row.id) ?? []
+              const hasStructuredDocs = visitDocs.length > 0
           return <article className="visit-mobile-card" key={row.id}>
             <div className="visit-mobile-head">
               <div><span>{visitCode(row)}</span><h3>{row.nama_opd}</h3></div>
@@ -128,9 +137,9 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
             <p className="visit-mobile-date">{displayDate(row.tanggal)}{row.tanggal_estimasi ? ' · estimasi' : ''}</p>
             <p className="visit-mobile-topic">{row.topik}</p>
             <div className="note-chip-row">
-              {row.link_notulen ? <a className="note-chip note-gdocs" href={row.link_notulen} target="_blank" rel="noreferrer"><span>G</span> Google Docs</a> : null}
-              {hasPrimaryPdf ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi?v=20260928-original`} target="_blank" rel="noreferrer"><span>PDF</span> Notulensi</a> : null}
-              {visitDocs.map((document) => <a className="note-chip note-pdf" key={document.id} href={notulenUrl(document.file_path) || '#'} target="_blank" rel="noreferrer"><span>PDF</span> {document.title || 'Lampiran'}</a>)}
+              {!hasStructuredDocs && row.link_notulen ? <a className="note-chip note-gdocs" href={row.link_notulen} target="_blank" rel="noreferrer"><span>G</span> Google Docs</a> : null}
+              {!hasStructuredDocs && hasPrimaryPdf ? <a className="note-chip note-pdf" href={`/kunjungan/${row.id}/notulensi?v=20260928-original`} target="_blank" rel="noreferrer"><span>PDF</span> Notulensi</a> : null}
+              {visitDocs.map((document) => <a className="note-chip note-pdf" key={document.id} href={documentHref(document) || '#'} target="_blank" rel="noreferrer"><span>{documentBadge(document)}</span> {document.title || 'Lampiran'}</a>)}
               
             </div>
             <Link className="visit-detail-link" href={`/kunjungan/${row.id}`}>Buka detail & ringkasan <span>→</span></Link>
@@ -139,5 +148,5 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
       </div>
     </section>
     <FeatureNotes featureKey="kunjungan" returnPath="/kunjungan" adminMode={Boolean(user)} title="Catatan Kunjungan OPD" description="Catatan umum, tindak lanjut, dan pengingat untuk modul Kunjungan OPD." />
-  </AppShell>
+  </>
 }

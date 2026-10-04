@@ -529,28 +529,37 @@ export type Database = {
         Row: {
           created_at: string
           file_name: string
-          file_path: string
+          file_path: string | null
+          file_size: number | null
           id: number
           kunjungan_id: number
           mime_type: string
+          source_type: string
+          source_url: string | null
           title: string
         }
         Insert: {
           created_at?: string
           file_name: string
-          file_path: string
+          file_path?: string | null
+          file_size?: number | null
           id?: number
           kunjungan_id: number
           mime_type?: string
+          source_type?: string
+          source_url?: string | null
           title?: string
         }
         Update: {
           created_at?: string
           file_name?: string
-          file_path?: string
+          file_path?: string | null
+          file_size?: number | null
           id?: number
           kunjungan_id?: number
           mime_type?: string
+          source_type?: string
+          source_url?: string | null
           title?: string
         }
         Relationships: [
@@ -565,42 +574,59 @@ export type Database = {
       }
       media_monitoring: {
         Row: {
+          berani_program_id: number | null
           created_at: string
           id: number
+          issue_category: string
           judul_berita: string
           kode: string | null
           legacy_id: string | null
           link_berita: string | null
           nama_media: string | null
-          sentimen: string | null
+          opd_name: string | null
+          sentimen: string
           tanggal: string
           updated_at: string
         }
         Insert: {
+          berani_program_id?: number | null
           created_at?: string
           id?: number
+          issue_category?: string
           judul_berita: string
           kode?: string | null
           legacy_id?: string | null
           link_berita?: string | null
           nama_media?: string | null
-          sentimen?: string | null
+          opd_name?: string | null
+          sentimen?: string
           tanggal: string
           updated_at?: string
         }
         Update: {
+          berani_program_id?: number | null
           created_at?: string
           id?: number
+          issue_category?: string
           judul_berita?: string
           kode?: string | null
           legacy_id?: string | null
           link_berita?: string | null
           nama_media?: string | null
-          sentimen?: string | null
+          opd_name?: string | null
+          sentimen?: string
           tanggal?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "media_monitoring_berani_program_id_fkey"
+            columns: ["berani_program_id"]
+            isOneToOne: false
+            referencedRelation: "berani_programs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       opd_finding_documents: {
         Row: {

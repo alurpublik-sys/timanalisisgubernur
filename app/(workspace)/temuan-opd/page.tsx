@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { AppShell } from '@/components/app-shell'
 import { deleteFinding, deleteFindingDocument, updateFinding } from '@/lib/actions/knowledge'
 import { SUPABASE_URL } from '@/lib/branding'
 import { requireUser } from '@/lib/auth'
@@ -69,7 +68,7 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
   ].map((name) => name.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'))
   const programNames = new Map((programs ?? []).map((program) => [program.id, program.name]))
 
-  return <AppShell active="/temuan-opd" title="Temuan OPD" adminMode>
+  return <>
     <section className="knowledge-hero panel compact-knowledge-hero">
       <div>
         <p className="eyebrow">RUANG KERJA TERLINDUNGI</p>
@@ -155,5 +154,5 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
         {(findings ?? []).length === 0 ? <div className="panel empty-document-panel"><p className="eyebrow">BELUM ADA TEMUAN</p><h2>{selectedOpd || 'Belum ada temuan'}</h2><p>Gunakan tombol + di area filter untuk menambahkan catatan pertama. Tidak ada batas satu temuan per OPD.</p></div> : null}
       </section>
     <FeatureNotes featureKey="temuan-opd" returnPath="/temuan-opd" adminMode title="Catatan Temuan OPD" description="Catatan umum, tindak lanjut, dan pengingat untuk temuan lintas OPD." />
-  </AppShell>
+  </>
 }

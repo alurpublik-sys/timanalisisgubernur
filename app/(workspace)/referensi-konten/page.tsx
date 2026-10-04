@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { AppShell } from '@/components/app-shell'
 import { ContentReferenceLive } from '@/components/content-reference-live'
 import { ReferenceEditorPortal } from '@/components/reference-editor-portal'
 import { createContentReference, updateContentReference } from '@/lib/actions/content-references'
@@ -91,7 +90,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
     return `/referensi-konten?${next.toString()}`
   }
 
-  return <AppShell active="/referensi-konten" title={shareMode ? 'Referensi Konten · Mode Bagikan' : 'Referensi Konten'} adminMode={adminMode}>
+  return <>
     <ContentReferenceLive />
 
     <section className="reference-library-hero panel">
@@ -221,5 +220,5 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
     </ReferenceEditorPortal> : null}
 
     {!shareMode ? <FeatureNotes featureKey="referensi-konten" returnPath="/referensi-konten" adminMode={adminMode} title="Catatan Referensi Konten" description="Catatan kerja untuk penyusunan dan verifikasi bahan konten." /> : null}
-  </AppShell>
+  </>
 }

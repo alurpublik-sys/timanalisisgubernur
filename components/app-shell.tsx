@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 const menu = [
   { label: 'Dashboard', href: '/dashboard', glyph: 'DB' },
@@ -16,6 +16,17 @@ const menu = [
   { label: 'Tim Analisis', href: '/tim-analisis', glyph: 'TA' },
   { label: 'Pengaturan', href: '/pengaturan', glyph: 'PG' },
 ] as const
+function activeRoute(pathname: string) {
+  const match=[...menu].sort((a,b)=>b.href.length-a.href.length).find((item)=>pathname===item.href||pathname.startsWith(`${item.href}/`))
+  return match?.href||'/dashboard'
+}
+function titleForPath(pathname: string) {
+  if(pathname === '/dashboard') return 'Dashboard Strategis'
+  if(pathname.startsWith('/kunjungan/')) return 'Detail Kunjungan'
+  if(pathname.startsWith('/renstra-opd/')) return 'Renstra OPD'
+  if(pathname.startsWith('/berani/')) return '9 BERANI'
+  return menu.find((item)=>item.href===activeRoute(pathname))?.label||'Dashboard Strategis'
+}
 
 function Brand() {
   return (
@@ -62,15 +73,18 @@ function Navigation({ active, onNavigate, onIntent }: { active: string; onNaviga
   )
 }
 
-export function AppShell({ active, title, children, adminMode = false, editReturnTo }: { active: string; title: string; children: React.ReactNode; adminMode?: boolean; editReturnTo?: string }) {
+export function AppShell({ children, adminMode = false }: { children: React.ReactNode; adminMode?: boolean }) {
   const router = useRouter()
+  const pathname = usePathname()
+  const active = activeRoute(pathname)
+  const title = titleForPath(pathname)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [navigating, setNavigating] = useState(false)
 
   useEffect(() => {
     setNavigating(false)
     setMobileOpen(false)
-  }, [active])
+  }, [pathname])
 
   useEffect(() => {
     if (!navigating) return
@@ -173,7 +187,7 @@ export function AppShell({ active, title, children, adminMode = false, editRetur
           <div className="topbar-actions">
             <Link
               className={`admin-mode-chip${adminMode ? ' is-active' : ''}`}
-              href={adminMode ? '/pengaturan' : `/login?next=${encodeURIComponent(editReturnTo || active)}`}
+              href={adminMode ? '/pengaturan' : `/login?next=${encodeURIComponent(pathname || active)}`}
               title={adminMode ? 'Mode edit aktif' : 'Masuk untuk mengedit'}
               aria-label={adminMode ? 'Mode edit aktif' : 'Masuk untuk mengedit'}
             >
@@ -183,7 +197,7 @@ export function AppShell({ active, title, children, adminMode = false, editRetur
             <div className="topbar-badge"><span className="online-dot" /> Sistem Aktif</div>
           </div>
         </header>
-        <div className="route-stage" key={active} aria-busy={navigating}>{children}</div>
+        <div className="route-stage" aria-busy={navigating}>{children}</div>
       </main>
     </div>
   )

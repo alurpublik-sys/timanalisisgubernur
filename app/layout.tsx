@@ -10,11 +10,12 @@ import './knowledge-v2.css'
 import './berani-modern.css'
 import './premium-ui.css'
 import './renstra.css'
+import './command-center.css'
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://timanalisisgubernur-rho.vercel.app'),
+  metadataBase: new URL('https://timanalisis.biz.id'),
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
   description: 'Dashboard independen untuk data, analisis, monitoring, 9 BERANI, temuan OPD, dan referensi komunikasi strategis Sulawesi Tengah.',
   applicationName: APP_NAME,

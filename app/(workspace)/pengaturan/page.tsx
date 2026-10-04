@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import { AppShell } from '@/components/app-shell'
 import { changeAdminPin } from '@/lib/actions/pin-auth'
 import { addTeamMember, migrateLegacyTeamAssets, updateTeamMember } from '@/lib/actions/settings'
 import { createKunjungan } from '@/lib/actions/core'
@@ -14,7 +13,7 @@ export default async function PengaturanPage() {
   const { data: team, error } = await supabase.from('tim_analisis').select('*').order('sort_order').order('id')
   if (error) throw new Error(error.message)
 
-  return <AppShell active="/pengaturan" title="Pengaturan" adminMode>
+  return <>
     <div className="notice notice-success">Mode edit administrator sedang aktif. PIN yang sama melindungi Pengaturan, Temuan OPD, penambahan/edit Referensi Konten, pengelolaan 9 BERANI, dan penambahan Kunjungan OPD.</div>
 
     <section className="settings-overview-grid">
@@ -82,5 +81,5 @@ export default async function PengaturanPage() {
       </div>
     </section>
     <FeatureNotes featureKey="pengaturan" returnPath="/pengaturan" adminMode title="Catatan Pengaturan" description="Catatan internal administrator untuk konfigurasi dan tindak lanjut teknis." />
-  </AppShell>
+  </>
 }
