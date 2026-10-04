@@ -1040,6 +1040,7 @@ export type Database = {
       ah_admin_logout: { Args: never; Returns: boolean }
       ah_admin_session_check: { Args: never; Returns: boolean }
       canonical_opd_name: { Args: { input_name: string }; Returns: string }
+      dashboard_public_payload: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never
