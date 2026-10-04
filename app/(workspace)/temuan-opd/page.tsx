@@ -8,7 +8,7 @@ import { DirectUploadField } from '@/components/direct-upload-field'
 import { PendingSubmitButton } from '@/components/pending-submit-button'
 import { FindingAddDialog } from '@/components/finding-add-dialog'
 
-type Params = { opd?: string }
+type Params = { opd?: string; q?: string; category?: string; sort?: string }
 type FindingDocument = Database['public']['Tables']['opd_finding_documents']['Row']
 
 function todayMakassar() {
@@ -32,19 +32,25 @@ const categories = ['Temuan', 'Positif', 'Perlu Perhatian', 'Potensi', 'Tindak L
 export default async function TemuanOpdPage({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams
   const selectedOpd = String(params.opd || '').trim()
+  const keyword = String(params.q || '').trim()
+  const selectedCategory = String(params.category || '').trim()
+  const sort = String(params.sort || 'latest').trim()
   const { supabase } = await requireUser('/temuan-opd')
 
-  const [{ data: programs, error: programError }, { data: visits, error: visitError }, { data: updates, error: updateError }] = await Promise.all([
+  const [{ data: programs, error: programError }, { data: opdMaster, error: opdError }] = await Promise.all([
     supabase.from('berani_programs').select('id,name').eq('active', true).order('sort_order'),
-    supabase.from('kunjungan').select('nama_opd').order('nama_opd'),
-    supabase.from('berani_updates').select('opd_name').not('opd_name', 'is', null).order('opd_name'),
+    supabase.from('opd_master').select('display_name,acronym,entity_type').eq('active', true).order('sort_order'),
   ])
   if (programError) throw new Error(programError.message)
-  if (visitError) throw new Error(visitError.message)
-  if (updateError) throw new Error(updateError.message)
+  if (opdError) throw new Error(opdError.message)
 
-  let findingQuery = supabase.from('opd_findings').select('*').order('finding_date', { ascending: false }).order('id', { ascending: false })
+  let findingQuery = supabase.from('opd_findings').select('*')
   if (selectedOpd) findingQuery = findingQuery.eq('opd_name', selectedOpd)
+  if (selectedCategory) findingQuery = findingQuery.eq('category', selectedCategory)
+  if (keyword) findingQuery = findingQuery.or(`title.ilike.%${keyword}%,detail.ilike.%${keyword}%,opd_name.ilike.%${keyword}%,source_label.ilike.%${keyword}%`)
+  findingQuery = sort === 'oldest'
+    ? findingQuery.order('finding_date', { ascending: true }).order('id', { ascending: true })
+    : findingQuery.order('finding_date', { ascending: false }).order('id', { ascending: false })
   const { data: findings, error: findingError } = await findingQuery
   if (findingError) throw new Error(findingError.message)
 
@@ -61,34 +67,34 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
     documentsByFinding.set(document.finding_id, list)
   }
 
-  const opdNames = [...new Set([
-    ...(visits ?? []).map((row) => row.nama_opd),
-    ...(updates ?? []).map((row) => row.opd_name).filter((name): name is string => Boolean(name)),
-    ...(findings ?? []).map((row) => row.opd_name),
-  ].map((name) => name.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'))
+  const opdNames = (opdMaster ?? []).map((row) => row.display_name)
   const programNames = new Map((programs ?? []).map((program) => [program.id, program.name]))
 
   return <>
-    <section className="knowledge-hero panel compact-knowledge-hero">
+    <section className="knowledge-hero panel compact-knowledge-hero finding-briefing-hero">
       <div>
         <p className="eyebrow">RUANG KERJA TERLINDUNGI</p>
-        <h2>Satu OPD bisa punya banyak temuan, tanpa dibatasi satu catatan.</h2>
-        <p>Halaman ini hanya dapat dibuka setelah PIN administrator benar. Setiap OPD dapat memiliki banyak temuan, lampiran, dan keterkaitan dengan 9 BERANI.</p>
+        <h2>Temuan strategis yang cepat dipindai saat briefing dan paparan.</h2>
+        <p>Fokus pada inti isu, konteks OPD, keterkaitan program, dan tindak lanjut. Data tetap terlindungi PIN administrator.</p>
       </div>
       <div className="knowledge-hero-stat"><strong>{findings?.length ?? 0}</strong><span>temuan tampil</span></div>
     </section>
 
-    <section className="opd-selector panel">
-      <form method="get" className="opd-selector-form">
-        <label>Pilih OPD<select name="opd" defaultValue={selectedOpd}><option value="">Semua OPD</option>{opdNames.map((name) => <option key={name}>{name}</option>)}</select></label>
-        <button className="secondary-button" type="submit">Tampilkan</button>
-        {selectedOpd ? <Link className="secondary-button" href="/temuan-opd">Reset</Link> : null}
+    <section className="opd-selector panel finding-toolbar">
+      <form method="get" className="opd-selector-form finding-toolbar-form">
+        <label className="finding-search-field">Cari<input name="q" defaultValue={keyword} placeholder="Cari judul, isi, OPD, atau sumber..." /></label>
+        <label>OPD<select name="opd" defaultValue={selectedOpd}><option value="">Semua OPD</option>{opdNames.map((name) => <option key={name}>{name}</option>)}</select></label>
+        <label>Kategori<select name="category" defaultValue={selectedCategory}><option value="">Semua kategori</option>{categories.map((category) => <option key={category}>{category}</option>)}</select></label>
+        <label>Urutkan<select name="sort" defaultValue={sort}><option value="latest">Terbaru</option><option value="oldest">Terlama</option></select></label>
+        <button className="secondary-button" type="submit">Terapkan</button>
+        {(selectedOpd || keyword || selectedCategory || sort === 'oldest') ? <Link className="ghost-button dark" href="/temuan-opd">Reset</Link> : null}
       </form>
       <div className="opd-selector-tools">
         <FindingAddDialog
           today={todayMakassar()}
           selectedOpd={selectedOpd}
           programs={(programs ?? []).map((program) => ({ id: program.id, name: program.name }))}
+          opdNames={opdNames}
         />
         <div className="opd-selector-stat"><strong>{selectedOpd ? findings?.length ?? 0 : opdNames.length}</strong><span>{selectedOpd ? 'temuan OPD ini' : 'OPD terdata'}</span></div>
       </div>
@@ -99,13 +105,15 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
     <section className="finding-list finding-presentation-list">
         {(findings ?? []).map((finding) => {
           const findingDocuments = documentsByFinding.get(finding.id) ?? []
-          return <article className="finding-card panel" key={finding.id}>
+          return <article className={`finding-card panel finding-brief-card finding-priority-${finding.category.toLowerCase().replaceAll(' ', '-')}`} key={finding.id}>
             <div className="finding-card-head">
               <div><span className={`finding-category finding-${finding.category.toLowerCase().replaceAll(' ', '-')}`}>{finding.category}</span><h2>{finding.title}</h2></div>
               <time>{dateLabel(finding.finding_date)}</time>
             </div>
-            <p className="finding-opd">{finding.opd_name}</p>
-            {finding.detail ? <p className="finding-detail">{finding.detail}</p> : null}
+            <p className="finding-opd"><span>OPD</span>{finding.opd_name}</p>
+            {finding.detail ? (finding.detail.length > 300
+              ? <details className="finding-detail-expand"><summary>Lihat ringkasan lengkap</summary><p className="finding-detail">{finding.detail}</p></details>
+              : <p className="finding-detail">{finding.detail}</p>) : null}
             <div className="finding-meta">
               {finding.berani_program_id ? <span>{programNames.get(finding.berani_program_id) || '9 BERANI'}</span> : null}
               {finding.source_label ? <span>{finding.source_label}</span> : null}
@@ -123,7 +131,7 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
 
             <div className="finding-actions">
               <details>
-                <summary>Edit / tambah lampiran</summary>
+                <summary><span>✎</span> Edit & lampiran</summary>
                 <form action={updateFinding} className="mini-form finding-edit-form">
                   <input type="hidden" name="id" value={finding.id} />
                   <label>Nama OPD<input name="opd_name" list="opd-options" defaultValue={finding.opd_name} required /></label>
