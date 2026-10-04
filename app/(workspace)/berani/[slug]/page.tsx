@@ -11,7 +11,7 @@ import { FeatureNotes } from '@/components/feature-notes'
 
 type PageProps = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ update?: string }>
+  searchParams: Promise<{ update?: string; doc?: string; dataPage?: string }>
 }
 
 function documentUrl(path?: string | null) {
@@ -107,46 +107,52 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
   const { data: program, error: programError } = await supabase.from('berani_programs').select('*').eq('slug', slug).single()
   if (programError || !program) notFound()
 
-  const { data: updates, error: updateError } = await supabase
+  const {data:updates,error:updateError}=await supabase
     .from('berani_updates')
-    .select('*')
-    .eq('program_id', program.id)
-    .order('created_at', { ascending: false })
-  if (updateError) throw new Error(updateError.message)
+    .select('id,title,opd_name,period_label,row_count,created_at,updated_at')
+    .eq('program_id',program.id)
+    .order('created_at',{ascending:false})
+    .limit(200)
+  if(updateError)throw new Error(updateError.message)
 
-  const requestedId = Number(query.update || 0)
-  const selected = (updates ?? []).find((item) => item.id === requestedId) ?? updates?.[0] ?? null
+  const requestedId=Number(query.update||0)
+  const selectedId=(updates??[]).some((item)=>item.id===requestedId)?requestedId:(updates?.[0]?.id??null)
+  const {data:selected,error:selectedError}=selectedId
+    ? await supabase.from('berani_updates').select('*').eq('id',selectedId).eq('program_id',program.id).single()
+    : {data:null,error:null}
+  if(selectedError)throw new Error(selectedError.message)
 
-  const [{ data: documents, error: documentError }, { data: sections, error: sectionError }] = selected
+  const [{data:documents,error:documentError},{data:sections,error:sectionError}]=selected
     ? await Promise.all([
-        supabase.from('berani_update_documents').select('*').eq('update_id', selected.id).order('created_at'),
-        supabase.from('berani_update_sections').select('*').eq('update_id', selected.id).order('sort_order').order('id'),
-      ])
-    : [{ data: [], error: null }, { data: [], error: null }]
+      supabase.from('berani_update_documents').select('*').eq('update_id',selected.id).order('created_at'),
+      supabase.from('berani_update_sections').select('*').eq('update_id',selected.id).order('sort_order').order('id'),
+    ])
+    : [{data:[],error:null},{data:[],error:null}]
+  if(documentError)throw new Error(documentError.message)
+  if(sectionError)throw new Error(sectionError.message)
 
-  if (documentError) throw new Error(documentError.message)
-  if (sectionError) throw new Error(sectionError.message)
+  const requestedDocId=Number(query.doc||0)
+  const activeDocument=(documents??[]).find((item)=>item.id===requestedDocId)??(documents??[]).find((item)=>item.row_count>0)??documents?.[0]??null
+  const dataPage=Math.max(1,Number(query.dataPage)||1)
+  const DATA_PAGE_SIZE=200
+  const dataFrom=(dataPage-1)*DATA_PAGE_SIZE
+  const dataTo=dataFrom+DATA_PAGE_SIZE-1
 
-  const documentIds = (documents ?? []).map((item) => item.id)
-  const { data: documentRows, error: documentRowsError } = documentIds.length
-    ? await supabase.from('berani_document_rows').select('document_id,row_index,data').in('document_id', documentIds).order('row_index')
-    : { data: [], error: null }
-  if (documentRowsError) throw new Error(documentRowsError.message)
+  const [{data:documentRows,count:documentRowsCount,error:documentRowsError},{data:legacyRows,count:legacyRowsCount,error:legacyError}]=await Promise.all([
+    selected&&activeDocument
+      ? supabase.from('berani_document_rows').select('row_index,data',{count:'exact'}).eq('document_id',activeDocument.id).order('row_index').range(dataFrom,dataTo)
+      : Promise.resolve({data:[],count:0,error:null}),
+    selected&&!(documents??[]).length
+      ? supabase.from('berani_update_rows').select('row_index,data',{count:'exact'}).eq('update_id',selected.id).order('row_index').range(dataFrom,dataTo)
+      : Promise.resolve({data:[],count:0,error:null}),
+  ])
+  if(documentRowsError)throw new Error(documentRowsError.message)
+  if(legacyError)throw new Error(legacyError.message)
 
-  const { data: legacyRows, error: legacyError } = selected && !documentIds.length
-    ? await supabase.from('berani_update_rows').select('row_index,data').eq('update_id', selected.id).order('row_index').limit(5000)
-    : { data: [], error: null }
-  if (legacyError) throw new Error(legacyError.message)
-
-  const rowsByDocument = new Map<number, Record<string, Json>[]>()
-  for (const row of documentRows ?? []) {
-    const values = rowsByDocument.get(row.document_id) ?? []
-    values.push(asRecord(row.data))
-    rowsByDocument.set(row.document_id, values)
-  }
-
-  const legacyColumns = selected ? stringColumns(selected.columns) : []
-  const legacyRecords = (legacyRows ?? []).map((row) => asRecord(row.data))
+  const rawColumns=activeDocument?stringColumns(activeDocument.columns):selected?stringColumns(selected.columns):[]
+  const rawRecords=((activeDocument?documentRows:legacyRows)??[]).map((row)=>asRecord(row.data))
+  const rawTotal=activeDocument?(documentRowsCount??0):(legacyRowsCount??0)
+  const rawPages=Math.max(1,Math.ceil(rawTotal/DATA_PAGE_SIZE))
 
   return <>
     <div className="breadcrumb-line"><Link href="/berani">9 BERANI</Link><span>/</span><strong>{program.name}</strong></div>
@@ -206,7 +212,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
         {selected.summary ? <p className="update-summary-copy">{selected.summary}</p> : null}
       </section>
 
-      {!documents?.length && !sections?.length && !legacyRecords.length && !selected.file_path ? (
+      {!documents?.length && !sections?.length && rawTotal===0 && !selected.file_path ? (
         <section className="panel berani-processing-empty">
           <div className="berani-processing-empty-icon" aria-hidden>!</div>
           <div>
@@ -222,17 +228,14 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
 
       {(sections ?? []).map((section) => <ProcessedBeraniSection key={section.id} title={section.title} type={section.section_type} payload={section.payload} />)}
 
-      {(documents ?? []).map((doc) => {
-        const columns = stringColumns(doc.columns)
-        const records = rowsByDocument.get(doc.id) ?? []
-        return columns.length && records.length
-          ? <DataTable key={`table-${doc.id}`} columns={columns} records={records} title={doc.display_title || doc.file_name} subtitle={doc.sheet_name || undefined} />
-          : null
-      })}
-
-      {!documentIds.length && legacyColumns.length && legacyRecords.length
-        ? <DataTable columns={legacyColumns} records={legacyRecords} title={selected.sheet_name || selected.file_name || 'Data Dokumen'} />
-        : null}
+      {rawColumns.length&&rawRecords.length?<>
+        <section className="panel berani-raw-toolbar">
+          <div><p className="eyebrow">DATA MENTAH TERSTRUKTUR</p><h2>{activeDocument?.display_title||activeDocument?.file_name||selected.sheet_name||selected.file_name||'Data Dokumen'}</h2><span>{rawTotal} baris · maksimum {DATA_PAGE_SIZE} baris per halaman</span></div>
+          {(documents??[]).filter((doc)=>doc.row_count>0).length>1?<div className="berani-document-tabs">{(documents??[]).filter((doc)=>doc.row_count>0).map((doc)=><Link className={activeDocument?.id===doc.id?'active':''} href={`/berani/${program.slug}?update=${selected.id}&doc=${doc.id}`} key={doc.id}>{doc.display_title||doc.file_name}</Link>)}</div>:null}
+        </section>
+        <DataTable columns={rawColumns} records={rawRecords} title={activeDocument?.display_title||activeDocument?.file_name||selected.sheet_name||selected.file_name||'Data Dokumen'} subtitle={activeDocument?.sheet_name||selected.sheet_name||undefined}/>
+        {rawPages>1?<div className="data-pagination panel"><span>Halaman {Math.min(dataPage,rawPages)} dari {rawPages}</span><div>{dataPage>1?<Link className="secondary-button" href={`/berani/${program.slug}?update=${selected.id}${activeDocument?`&doc=${activeDocument.id}`:''}&dataPage=${dataPage-1}`}>Sebelumnya</Link>:null}{dataPage<rawPages?<Link className="secondary-button" href={`/berani/${program.slug}?update=${selected.id}${activeDocument?`&doc=${activeDocument.id}`:''}&dataPage=${dataPage+1}`}>Berikutnya</Link>:null}</div></div>:null}
+      </>:null}
 
       <section className="panel source-documents-panel">
         <div className="panel-head">
@@ -260,7 +263,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
               </div>
               {isImage && url ? <img src={url} alt="" className="image-document-preview" /> : null}
               <div className="document-card-actions">
-                {url ? <a className="document-open-action" href={url} target="_blank" rel="noreferrer"><span>Buka sumber</span><b>↗</b></a> : <span className="document-source-state">Sumber unggahan awal</span>}
+                {url?<a className="document-open-action" href={url} target="_blank" rel="noreferrer"><span>Buka sumber</span><b>↗</b></a>:<span className="document-source-state">Sumber unggahan awal</span>}{doc.row_count>0?<Link className="document-data-action" href={`/berani/${program.slug}?update=${selected.id}&doc=${doc.id}`}>Lihat data</Link>:null}
                 {adminMode ? <form action={deleteBeraniDocument}>
                   <input type="hidden" name="id" value={doc.id} />
                   <input type="hidden" name="update_id" value={selected.id} />

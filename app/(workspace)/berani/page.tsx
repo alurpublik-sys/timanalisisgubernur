@@ -24,6 +24,8 @@ export default async function BeraniPage() {
     if (!latest.has(update.program_id)) latest.set(update.program_id, update)
   }
 
+  const coveredPrograms=(programs??[]).filter((program)=>latest.has(program.id)).length
+
   return <>
     <section className="knowledge-hero panel">
       <div>
@@ -31,7 +33,7 @@ export default async function BeraniPage() {
         <h2>Pusat data 9 BERANI yang selalu mengikuti sumber terbaru.</h2>
         <p>Dokumen sumber tetap tersimpan sebagai arsip. PDF visual, spreadsheet, dokumen, presentasi, CSV, dan foto diproses menjadi indikator, tabel, dan grafik yang lebih mudah dibaca; pembaruan berikutnya digabung ke data aktif tanpa menghapus informasi lama yang masih relevan.</p>
       </div>
-      <div className="knowledge-hero-stat"><strong>{(programs ?? []).length}</strong><span>program aktif</span></div>
+      <div className="knowledge-hero-stat"><strong>{coveredPrograms}/{(programs??[]).length}</strong><span>program dengan update</span></div>
     </section>
 
     <section className="berani-grid">
@@ -42,9 +44,10 @@ export default async function BeraniPage() {
           <h2>{program.name}</h2>
           <p>{program.summary || 'Pusat pembaruan data program.'}</p>
           <div className="berani-latest">
-            <span>{update ? 'Update terbaru' : 'Belum ada data'}</span>
-            <strong>{update?.title || 'Tambahkan update pertama'}</strong>
-            {update ? <small>{dateLabel(update.created_at)} · {update.row_count || 0} baris data · {counts.get(program.id) ?? 0} update</small> : null}
+            <span>{update?'Data aktif':'Baseline siap'}</span>
+            <strong>{update?.title||'Menunggu sumber resmi terverifikasi'}</strong>
+            {update?<small>{dateLabel(update.created_at)} · {update.row_count||0} baris data · {counts.get(program.id)??0} update</small>:<small>Ruang lingkup sudah ditata tanpa mengisi angka yang belum memiliki sumber.</small>}
+            {program.slug==='berani-makmur'?<small className="berani-subprogram-note">Termasuk BERANI Tangkap Banyak</small>:null}
           </div>
         </Link>
       })}
