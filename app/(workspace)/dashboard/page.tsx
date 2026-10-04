@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { APP_NAME, APP_TAGLINE, GOVERNOR_PHOTO, VICE_GOVERNOR_PHOTO } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
@@ -56,7 +55,7 @@ export default async function DashboardPage() {
   ] as const
 
   return (
-    <AppShell active="/dashboard" title="Dashboard Strategis" adminMode={Boolean(user)}>
+    <>
       <div className="dashboard-cursor-zone">
       <section className="executive-hero dual-leader-hero">
         <div className="hero-copy">
@@ -152,6 +151,6 @@ export default async function DashboardPage() {
         </article>
       </section>
       </div>
-    </AppShell>
+    </>
   )
 }

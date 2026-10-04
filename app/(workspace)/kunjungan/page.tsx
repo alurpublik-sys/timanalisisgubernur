@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { SUPABASE_URL } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
@@ -53,7 +52,7 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
     documentsByVisit.set(document.kunjungan_id, items)
   }
 
-  return <AppShell active="/kunjungan" title="Kunjungan OPD" adminMode={Boolean(user)}>
+  return <>
     <section className="premium-page-intro">
       <div>
         <p className="eyebrow">RIWAYAT LAPANGAN</p>
@@ -139,5 +138,5 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
       </div>
     </section>
     <FeatureNotes featureKey="kunjungan" returnPath="/kunjungan" adminMode={Boolean(user)} title="Catatan Kunjungan OPD" description="Catatan umum, tindak lanjut, dan pengingat untuk modul Kunjungan OPD." />
-  </AppShell>
+  </>
 }

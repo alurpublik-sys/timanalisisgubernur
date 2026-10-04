@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { AppShell } from '@/components/app-shell'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthContext } from '@/lib/auth'
 import { FeatureNotes } from '@/components/feature-notes'
@@ -44,7 +43,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
     return `/media-monitor?${p.toString()}`
   }
 
-  return <AppShell active="/media-monitor" title="Media Monitor" adminMode={adminMode}>
+  return <>
     <section className="media-monitor-shell">
       <section className="panel table-panel premium-table-panel media-monitor-panel">
         <div className="section-heading table-heading-with-filter media-monitor-heading">
@@ -100,5 +99,5 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
       </section>
     </section>
     <FeatureNotes featureKey="media-monitor" returnPath="/media-monitor" adminMode={adminMode} title="Catatan Media Monitor" description="Catatan monitoring, follow-up isu media, atau pengingat tim." />
-  </AppShell>
+  </>
 }

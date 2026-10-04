@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { SUPABASE_URL } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
@@ -42,7 +41,7 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
     ...(documents ?? []).map((document) => ({ label: document.title || document.file_name, url: notulenUrl(document.file_path) || '#', type: 'PDF', note: 'Buka dokumen PDF' })),
   ]
 
-  return <AppShell active="/kunjungan" title="Detail Kunjungan" adminMode={Boolean(user)} editReturnTo={`/kunjungan/${visit.id}`}>
+  return <>
     <div className="breadcrumb-line"><Link href="/kunjungan">Kunjungan OPD</Link><span>/</span><strong>{visit.nama_opd}</strong></div>
 
     <section className="visit-detail-hero panel">
@@ -102,5 +101,5 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
     </section> : null}
 
     <FeatureNotes featureKey="kunjungan" entityKey={String(visit.id)} returnPath={`/kunjungan/${visit.id}`} adminMode={Boolean(user)} title="Catatan Kunjungan" description="Catatan khusus untuk kunjungan ini. Bisa ditambah, diedit, dan dihapus oleh admin." />
-  </AppShell>
+  </>
 }
