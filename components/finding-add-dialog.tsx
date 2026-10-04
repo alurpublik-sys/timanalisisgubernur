@@ -17,10 +17,12 @@ export function FindingAddDialog({
   today,
   selectedOpd,
   programs,
+  opdNames,
 }: {
   today: string
   selectedOpd: string
   programs: ProgramOption[]
+  opdNames: string[]
 }) {
   const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
@@ -78,7 +80,8 @@ export function FindingAddDialog({
             </div>
 
             <form action={submit} className="media-editor-form finding-editor-form">
-              <label className="media-editor-wide">Nama OPD<input name="opd_name" list="opd-options" required defaultValue={selectedOpd} placeholder="Pilih atau ketik nama OPD" autoFocus /></label>
+              <label className="media-editor-wide">Nama OPD<input name="opd_name" list="finding-opd-options" required defaultValue={selectedOpd} placeholder="Pilih atau ketik nama OPD" autoFocus /></label>
+              <datalist id="finding-opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist>
               <label className="media-editor-wide">Judul Temuan<input name="title" required placeholder="Apa yang menarik/perlu dicatat?" /></label>
               <label>Kategori<select name="category" defaultValue="Temuan">{categories.map((category) => <option key={category}>{category}</option>)}</select></label>
               <label>Tanggal<input name="finding_date" type="date" defaultValue={today} required /></label>

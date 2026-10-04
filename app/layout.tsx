@@ -11,6 +11,7 @@ import './berani-modern.css'
 import './premium-ui.css'
 import './renstra.css'
 import './command-center.css'
+import './premium-motion.css'
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' })
 

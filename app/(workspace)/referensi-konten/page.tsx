@@ -4,6 +4,7 @@ import { ReferenceEditorPortal } from '@/components/reference-editor-portal'
 import { createContentReference, updateContentReference } from '@/lib/actions/content-references'
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
+import { getOpdNames } from '@/lib/opd'
 import type { Json } from '@/lib/database.types'
 import { FeatureNotes } from '@/components/feature-notes'
 import { PendingSubmitButton } from '@/components/pending-submit-button'
@@ -54,21 +55,16 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
 
   const [
     { data: programs, error: programError },
-    { data: visits, error: visitError },
+    opdNames,
     { data: references, error },
   ] = await Promise.all([
     supabase.from('berani_programs').select('id,name').eq('active', true).order('sort_order'),
-    supabase.from('kunjungan').select('nama_opd').order('nama_opd'),
+    getOpdNames(),
     referenceQuery,
   ])
   if (programError) throw new Error(programError.message)
-  if (visitError) throw new Error(visitError.message)
   if (error) throw new Error(error.message)
 
-  const opdNames = [...new Set([
-    ...(visits ?? []).map((item) => item.nama_opd),
-    ...(references ?? []).map((item) => item.opd_name),
-  ].map((item) => item.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'))
 
   const programNames = new Map((programs ?? []).map((program) => [program.id, program.name]))
   const uniqueOpds = new Set((references ?? []).map((item) => item.opd_name)).size
@@ -126,11 +122,12 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
       </form>
     </section> : null}
 
+    {!shareMode ? <datalist id="content-opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist> : null}
+
     {!shareMode && adminMode ? <details className="panel reference-admin-create" id="tambah-referensi" open={composeMode}>
       <summary><span>＋</span><div><strong>Tambah Referensi</strong><small>Form hanya tampil dalam mode edit administrator.</small></div></summary>
       <form action={createContentReference} className="mini-form reference-create-compact">
         <label>Nama OPD<input name="opd_name" list="content-opd-options" required placeholder="Pilih atau ketik OPD" /></label>
-        <datalist id="content-opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist>
         <label>Judul Program / Angle<input name="title" required placeholder="Judul yang singkat dan jelas" /></label>
         <label>Label Program<input name="program_label" placeholder="Contoh: SIGANA / BERANI Cerdas" /></label>
         <label>Detail<textarea name="detail" placeholder="Jelaskan program secara singkat." /></label>
@@ -205,7 +202,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
       <form action={updateContentReference} className="mini-form reference-edit-form">
         <input type="hidden" name="id" value={editItem.id} />
         <input type="hidden" name="return_to" value={closeHref} />
-        <label>OPD<input name="opd_name" defaultValue={editItem.opd_name} required /></label>
+        <label>OPD<input name="opd_name" list="content-opd-options" defaultValue={editItem.opd_name} required /></label>
         <label>Judul<input name="title" defaultValue={editItem.title} required /></label>
         <label>Label program<input name="program_label" defaultValue={editItem.program_label || ''} /></label>
         <label className="reference-edit-wide">Detail<textarea name="detail" defaultValue={editItem.detail || ''} /></label>
