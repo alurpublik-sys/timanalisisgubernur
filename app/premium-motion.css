@@ -900,3 +900,263 @@ select{cursor:default!important}
   }
   .reference-library-links{justify-content:flex-start!important}
 }
+
+
+/* =========================================================
+   ADAPTIVE PREMIUM SIDEBAR
+   Expanded → Compact → Focus / Presentation
+   ========================================================= */
+
+.app-shell.sidebar-ready .desktop-sidebar{
+  transition:
+    width .24s cubic-bezier(.2,.8,.2,1),
+    flex-basis .24s cubic-bezier(.2,.8,.2,1),
+    padding .24s cubic-bezier(.2,.8,.2,1),
+    transform .24s cubic-bezier(.2,.8,.2,1),
+    opacity .18s ease!important;
+}
+.app-shell.sidebar-ready .desktop-sidebar .strategic-brand,
+.app-shell.sidebar-ready .desktop-sidebar .brand-copy,
+.app-shell.sidebar-ready .desktop-sidebar .sidebar-kicker,
+.app-shell.sidebar-ready .desktop-sidebar .nav-label,
+.app-shell.sidebar-ready .desktop-sidebar .sidebar-foot span,
+.app-shell.sidebar-ready .desktop-sidebar .sidebar-foot small{
+  transition:opacity .15s ease,transform .22s cubic-bezier(.2,.8,.2,1),max-width .22s ease!important;
+}
+
+.desktop-sidebar{
+  overflow-x:visible!important;
+}
+.sidebar-collapse-toggle{
+  position:absolute;
+  right:-14px;
+  top:92px;
+  z-index:45;
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  padding:0;
+  border:1px solid rgba(160,199,227,.22);
+  border-radius:9px;
+  background:linear-gradient(145deg,#102e48,#0b243b);
+  color:#edf7fd;
+  box-shadow:0 12px 28px -16px rgba(2,18,33,.88);
+  font-size:19px;
+  line-height:1;
+  transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+.sidebar-collapse-toggle:hover{
+  transform:translateX(1px);
+  border-color:rgba(174,215,243,.38);
+  background:linear-gradient(145deg,#173b59,#0d2b45);
+  box-shadow:0 15px 30px -15px rgba(2,18,33,.95);
+}
+.sidebar-collapse-toggle:active{transform:scale(.94)}
+.sidebar-collapse-toggle span{transform:translateY(-1px)}
+
+.nav-tooltip{
+  display:none;
+  position:absolute;
+  left:calc(100% + 12px);
+  top:50%;
+  z-index:80;
+  transform:translate3d(-4px,-50%,0);
+  padding:8px 10px;
+  border:1px solid rgba(199,220,235,.16);
+  border-radius:10px;
+  background:rgba(8,28,46,.97);
+  color:#f5faff;
+  box-shadow:0 16px 38px -22px rgba(0,0,0,.88);
+  opacity:0;
+  pointer-events:none;
+  white-space:nowrap;
+  font-size:9px;
+  font-weight:760;
+  letter-spacing:.01em;
+  transition:opacity .14s ease,transform .18s cubic-bezier(.2,.8,.2,1);
+}
+.desktop-sidebar nav a.nav-section-start{
+  margin-top:8px;
+}
+.desktop-sidebar nav a.nav-section-start:before{
+  /* Active marker stays independent from the subtle section break. */
+}
+.desktop-sidebar nav a.nav-section-start .nav-main:before{
+  content:"";
+  position:absolute;
+  left:7px;
+  right:7px;
+  top:-7px;
+  height:1px;
+  background:rgba(177,210,233,.08);
+}
+.desktop-sidebar .nav-main{position:relative}
+
+.sidebar-status-dot{
+  display:none;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#51b88a;
+  box-shadow:0 0 0 4px rgba(81,184,138,.1);
+}
+
+/* User-selected compact rail on desktop. */
+.app-shell.sidebar-compact .desktop-sidebar{
+  width:82px!important;
+  flex-basis:82px!important;
+  padding:18px 10px 16px!important;
+  overflow:visible!important;
+}
+.app-shell.sidebar-compact .desktop-sidebar .strategic-brand{
+  justify-content:center!important;
+  margin:0!important;
+  padding:4px 0 17px!important;
+  border-bottom:1px solid rgba(187,216,237,.075)!important;
+}
+.app-shell.sidebar-compact .desktop-sidebar .strategic-brand .brand-icon-wrap{
+  width:46px!important;
+  height:46px!important;
+  flex:0 0 46px!important;
+  border-radius:14px!important;
+}
+.app-shell.sidebar-compact .desktop-sidebar .brand-copy,
+.app-shell.sidebar-compact .desktop-sidebar .sidebar-kicker,
+.app-shell.sidebar-compact .desktop-sidebar .nav-label,
+.app-shell.sidebar-compact .desktop-sidebar .sidebar-foot span,
+.app-shell.sidebar-compact .desktop-sidebar .sidebar-foot small{
+  display:none!important;
+}
+.app-shell.sidebar-compact .desktop-sidebar nav{
+  gap:6px!important;
+  margin-top:11px;
+}
+.app-shell.sidebar-compact .desktop-sidebar nav a{
+  min-height:48px!important;
+  padding:7px!important;
+  justify-content:center!important;
+  overflow:visible!important;
+  border-radius:13px!important;
+}
+.app-shell.sidebar-compact .desktop-sidebar nav a::after{display:none!important}
+.app-shell.sidebar-compact .desktop-sidebar nav a::before{
+  left:-10px!important;
+  top:10px!important;
+  bottom:10px!important;
+}
+.app-shell.sidebar-compact .desktop-sidebar .nav-main{
+  width:100%;
+  justify-content:center!important;
+  gap:0!important;
+}
+.app-shell.sidebar-compact .desktop-sidebar .nav-glyph{
+  width:36px!important;
+  height:36px!important;
+  flex-basis:36px!important;
+  border-radius:11px!important;
+}
+.app-shell.sidebar-compact .desktop-sidebar nav a.nav-section-start{
+  margin-top:11px;
+}
+.app-shell.sidebar-compact .desktop-sidebar nav a.nav-section-start .nav-main:before{
+  left:4px;
+  right:4px;
+  top:-10px;
+}
+.app-shell.sidebar-compact .desktop-sidebar .nav-tooltip{
+  display:block;
+}
+.app-shell.sidebar-compact .desktop-sidebar nav a:hover .nav-tooltip,
+.app-shell.sidebar-compact .desktop-sidebar nav a:focus-visible .nav-tooltip{
+  opacity:1;
+  transform:translate3d(0,-50%,0);
+}
+.app-shell.sidebar-compact .desktop-sidebar .sidebar-foot{
+  display:grid!important;
+  place-items:center;
+  margin:15px 0 0!important;
+  padding:16px 0 5px!important;
+}
+.app-shell.sidebar-compact .desktop-sidebar .sidebar-status-dot{display:block}
+.app-shell.sidebar-compact .sidebar-collapse-toggle{
+  right:-14px;
+  top:77px;
+}
+
+/* Focus / presentation mode: remove the rail completely and let content breathe. */
+.app-shell.focus-mode .desktop-sidebar{
+  width:0!important;
+  flex-basis:0!important;
+  padding-left:0!important;
+  padding-right:0!important;
+  border-right:0!important;
+  opacity:0!important;
+  transform:translateX(-100%)!important;
+  overflow:hidden!important;
+  pointer-events:none;
+}
+.app-shell.focus-mode .sidebar-collapse-toggle{display:none!important}
+.app-shell.focus-mode .main-content{
+  max-width:1920px!important;
+  padding-left:clamp(22px,3vw,54px)!important;
+  padding-right:clamp(22px,3vw,54px)!important;
+}
+.app-shell.focus-mode .topbar{
+  margin-bottom:16px!important;
+}
+.app-shell.focus-mode .topbar .eyebrow{
+  display:none!important;
+}
+.app-shell.focus-mode .topbar h1{
+  font-size:clamp(22px,2vw,27px)!important;
+}
+.focus-mode-chip{
+  appearance:none;
+  border:1px solid #dce6ed;
+  background:rgba(255,255,255,.82);
+  color:#45677f;
+}
+.focus-mode-chip:hover{
+  border-color:#c8d8e3;
+  background:#fff;
+}
+.focus-mode-chip.is-active{
+  border-color:#bfd4e2!important;
+  background:#eaf3f8!important;
+  color:#315f80!important;
+}
+.focus-mode-chip span{
+  font-size:12px;
+  line-height:1;
+}
+
+/* Forced tablet landscape rail uses the same premium compact language. */
+@media(min-width:901px) and (max-width:1080px){
+  .sidebar-collapse-toggle{display:none!important}
+  .desktop-sidebar .nav-tooltip{display:block}
+  .desktop-sidebar nav a{overflow:visible!important}
+  .desktop-sidebar nav a:hover .nav-tooltip,
+  .desktop-sidebar nav a:focus-visible .nav-tooltip{
+    opacity:1;
+    transform:translate3d(0,-50%,0);
+  }
+  .desktop-sidebar .sidebar-status-dot{display:block}
+  .desktop-sidebar .sidebar-foot span,
+  .desktop-sidebar .sidebar-foot small{display:none!important}
+}
+
+/* Portrait/mobile continues to use the drawer; desktop rail controls are intentionally absent. */
+@media(max-width:900px), (orientation:portrait) and (max-width:900px){
+  .sidebar-collapse-toggle,
+  .focus-mode-chip{display:none!important}
+  .nav-tooltip{display:none!important}
+}
+
+/* Reduce motion without sacrificing the state change itself. */
+@media(prefers-reduced-motion:reduce){
+  .desktop-sidebar,
+  .desktop-sidebar *,
+  .sidebar-collapse-toggle,
+  .nav-tooltip{transition:none!important}
+}
