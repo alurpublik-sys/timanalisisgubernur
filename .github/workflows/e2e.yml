@@ -1,0 +1,38 @@
+name: Strategic UI E2E
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  responsive-e2e:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://suiiaiuxkhdsqufswpfv.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_dtMWWlvdj-Qzui7DFQfGTw_SRlc5SDh
+      APP_TIMEZONE: Asia/Makassar
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Install pinned Playwright runner
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Responsive workspace E2E
+        run: |
+          npm start > /tmp/tim-analisis-e2e.log 2>&1 &
+          ready=0
+          for i in {1..40}; do
+            status=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard || true)
+            if [ "$status" = "200" ]; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" != "1" ]; then cat /tmp/tim-analisis-e2e.log; exit 1; fi
+          npx playwright test --config=playwright.config.mjs
