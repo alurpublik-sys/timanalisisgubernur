@@ -40,7 +40,7 @@ function Brand() {
           <span>Tim Analisis dan</span>
           <span>Komunikasi Strategis</span>
         </strong>
-        <span className="brand-subtitle">(Independen)</span>
+        <span className="brand-subtitle">Independen</span>
       </div>
     </div>
   )
@@ -153,7 +153,7 @@ export function AppShell({ children, adminMode = false }: { children: React.Reac
         <div className="sidebar-kicker">Strategic Workspace</div>
         <Navigation active={active} onNavigate={beginNavigation} onIntent={prefetchRoute} />
         <div className="sidebar-foot">
-          <span>Independen</span>
+          <span>Independent Intelligence</span>
           <small>Data · Analisis · Informasi</small>
         </div>
       </aside>
@@ -178,7 +178,7 @@ export function AppShell({ children, adminMode = false }: { children: React.Reac
             <div className="mobile-drawer-head">
               <div>
                 <p className="eyebrow">TIM ANALISIS DAN</p>
-                <strong>Komunikasi Strategis <span>(Independen)</span></strong>
+                <strong>Komunikasi Strategis <span>· Independen</span></strong>
               </div>
               <button className="mobile-drawer-close" type="button" aria-label="Tutup navigasi" onClick={() => setMobileOpen(false)}>×</button>
             </div>
