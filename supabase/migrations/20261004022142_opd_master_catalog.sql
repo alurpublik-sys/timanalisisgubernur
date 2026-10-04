@@ -84,3 +84,52 @@ on conflict (slug) do update set
 
 create index if not exists opd_master_active_sort_idx on public.opd_master(active,sort_order);
 create index if not exists opd_aliases_opd_idx on public.opd_aliases(opd_id);
+
+
+with aliases(slug,alias) as (
+values
+('bkd','Badan Kepegawaian Daerah (BKD) Provinsi Sulawesi Tengah'),('bkd','Badan Kepegawaian Daerah Provinsi Sulawesi Tengah'),('bkd','BKD'),
+('kesbangpol','Badan Kesatuan Bangsa dan Politik (Kesbangpol) Provinsi Sulawesi Tengah'),('kesbangpol','Badan Kesatuan Bangsa dan Politik Provinsi Sulawesi Tengah'),('kesbangpol','Kesbangpol'),
+('bpbd','BADAN PENANGGULANGAN BENCANA DAERAH'),('bpbd','Badan Penanggulangan Bencana Daerah (BPBD) Provinsi Sulawesi Tengah'),('bpbd','Badan Penanggulangan Bencana Daerah Provinsi Sulawesi Tengah'),('bpbd','BPBD'),
+('bapenda','Bapenda'),('bapenda','BAPENDA'),('bapenda','Badan Pendapatan Daerah Provinsi Sulawesi Tengah'),
+('bpkad','BPKAD Sulteng'),('bpkad','Badan Pengelolaan Keuangan dan Aset Daerah (BPKAD) Provinsi Sulawesi Tengah'),('bpkad','Badan Pengelolaan Keuangan dan Aset Daerah Provinsi Sulawesi Tengah'),
+('bpsdm','BADAN PENGEMBANGAN SUMBER DAYA MANUSIA'),('bpsdm','Badan Pengembangan Sumber Daya Manusia (BPSDM) Provinsi Sulawesi Tengah'),('bpsdm','Badan Pengembangan Sumber Daya Manusia Provinsi Sulawesi Tengah'),
+('badan-penghubung','Badan Penghubung Provinsi Sulawesi Tengah'),
+('bappeda','BAPPEDA SULTENG'),('bappeda','Badan Perencanaan Pembangunan Daerah Provinsi Sulawesi Tengah'),
+('brida','Badan Riset dan Inovasi Daerah (BRIDA) Provinsi Sulawesi Tengah'),('brida','Badan Riset dan Inovasi Daerah Provinsi Sulawesi Tengah'),
+('bmpr','Dinas Bina Marga'),('bmpr','Dinas Bina Marga dan Penataan Ruang Provinsi Sulawesi Tengah'),
+('cikasda','Dinas Cipta Karya dan Sumber Daya Air Provinsi Sulawesi Tengah'),
+('dpmptsp','Dinas DPMPTSP'),('dpmptsp','Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu Provinsi Sulawesi Tengah'),
+('esdm','Dinas ESDM'),('esdm','Dinas Energi dan Sumber Daya Mineral Provinsi Sulawesi Tengah'),
+('disbud','Dinas Kebudayaan Sulteng'),('disbud','Dinas Kebudayaan Provinsi Sulawesi Tengah'),
+('kehutanan','Dinas Kehutanan  Provinsi Sulawesi Tengah'),('kehutanan','Dinas Kehutanan Provinsi Sulawesi Tengah'),
+('dislutkan','Dinas Kelautan dan Perikanan'),('dislutkan','Dinas Kelautan dan Perikanan Provinsi Sulawesi Tengah'),
+('disdukcapil','Dinas Kependudukan & Catatan Sipil'),('disdukcapil','Dinas Kependudukan dan Pencatatan Sipil Provinsi Sulawesi Tengah'),
+('dinkes','Dinas Kesehatan Provinsi Sulteng'),('dinkes','Dinas Kesehatan Provinsi Sulawesi Tengah'),
+('dkips','Dinas Kominfosaintik'),('dkips','DISKOMINFOSANTIK'),('dkips','Dinas Komunikasi, Informatika, Persandian dan Statistik Provinsi Sulawesi Tengah'),
+('dkukm','Dinas Koperasi & UKM Sulawesi Tengah'),('dkukm','Dinas Koperasi dan UKM Provinsi Sulawesi Tengah'),
+('dlh','Dinas Lingkungan Hidup'),('dlh','Dinas Lingkungan Hidup Prov. Sulteng'),('dlh','Dinas Lingkungan Hidup Provinsi Sulawesi Tengah'),
+('dinas-pangan','Dinas Pangan Provinsi Sulawesi Tengah'),
+('pariwisata','Dinas Pariwisata Sulawesi Tengah'),('pariwisata','Dinas Pariwisata Provinsi Sulawesi Tengah'),
+('pmd','Dinas Pemberdayaan Masyarakat Desa'),('pmd','Dinas Pemberdayaan Masyarakat dan Desa Provinsi Sulawesi Tengah'),
+('dp3a','Dinas Pemberdayaan Perempuan & Perlindungan Anak'),('dp3a','Dinas Pemberdayaan Perempuan dan Perlindungan Anak (DP3A)'),('dp3a','Dinas Pemberdayaan Perempuan dan Perlindungan Anak Provinsi Sulawesi Tengah'),
+('dispora','DISPORA'),('dispora','Dinas Pemuda dan Olahraga'),('dispora','Dinas Pemuda dan Olahraga Provinsi Sulawesi Tengah'),
+('pendidikan','Dinas Pendidikan'),('pendidikan','DINAS PENDIDIKAN'),('pendidikan','Dinas Pendidikan Provinsi Sulawesi Tengah'),
+('p2kb','Perangkat Daerah P2KB Provinsi Sulawesi Tengah'),('p2kb','Dinas P2KB'),('p2kb','Dinas Pengendalian Penduduk dan Keluarga Berencana (P2KB) Provinsi Sulawesi Tengah'),
+('dishub','DISHUB'),('dishub','Dinas Perhubungan Sulteng'),('dishub','Dinas Perhubungan Provinsi Sulawesi Tengah'),
+('perindag','DINAS PERINDUSTRIAN DAN PERDAGANGAN'),('perindag','Dinas Perindustrian dan Pergadangan Sulawesi Tengah (Disperindag)'),('perindag','Dinas Perindustrian dan Perdagangan Provinsi Sulawesi Tengah'),
+('disbunak','DINAS PERKEBUNAN DAN PETERNAKAN'),('disbunak','Dinas Perkebunan dan Peternakan Provinsi Sulawesi Tengah'),
+('dispusaka','DINAS PERPUSTAKAAN DAN KEARSIPAN'),('dispusaka','Dinas Perpustakaan dan Kearsipan Daerah Provinsi Sulawesi Tengah'),
+('perkimtan','Dinas Perumahan, Kawasan Permukiman dan Pertanahan Provinsi Sulawesi Tengah'),
+('dinsos','DINAS SOSIAL'),('dinsos','Dinas Sosial Provinsi Sulawesi Tengah'),
+('tph','Dinas TPH'),('tph','Dinas Tanaman Pangan dan Hortikultura Provinsi Sulawesi Tengah'),
+('nakertrans','Dinas Tenaga Kerja dan Transmigrasi Provinsi Sulawesi Tengah'),
+('inspektorat','Inspektorat Daerah Provinsi Sulawesi Tengah'),
+('satpol-pp','Satuan Polisi Pamong Praja Provinsi Sulawesi Tengah'),
+('setda','Sekretariat Daerah Provinsi Sulawesi Tengah'),
+('setwan','Sekretariat DPRD'),('setwan','Sekretariat DPRD Provinsi Sulawesi Tengah'),
+('rsud-undata','RSUD Undata'),('rsud-madani','RSUD Madani')
+)
+insert into public.opd_aliases(opd_id,alias)
+select m.id,a.alias from aliases a join public.opd_master m on m.slug=a.slug
+on conflict (alias_normalized) do nothing;
