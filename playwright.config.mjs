@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test'
 export default defineConfig({
+  fullyParallel: true,
+  workers: 4,
   testDir:'./tests/e2e',
   timeout:45_000,
   expect:{timeout:10_000},
