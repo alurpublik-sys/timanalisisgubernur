@@ -40,7 +40,7 @@ export default async function DashboardPage(){
   if(payloadError) throw new Error(payloadError.message)
   const payload=(payloadRaw??{}) as unknown as DashboardPayload
   const overview={...emptyOverview,...(payload.overview??{})}
-  const programs=payload.programs
+  const programs=payload.programs??[]
   const recentBerani=payload.recent_berani??[]
   const recentVisits=payload.recent_visits??[]
   const recentReferences=payload.recent_references??[]
