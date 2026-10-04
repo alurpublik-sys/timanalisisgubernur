@@ -7,16 +7,15 @@ import { getTeamPhotoUrl } from '@/lib/branding'
 import { FeatureNotes } from '@/components/feature-notes'
 import { DirectUploadField } from '@/components/direct-upload-field'
 import { PendingSubmitButton } from '@/components/pending-submit-button'
+import { getOpdNames } from '@/lib/opd'
 
 export default async function PengaturanPage() {
   const { supabase } = await requireUser('/pengaturan')
-  const [{ data: team, error }, { data: opdMaster, error: opdError }] = await Promise.all([
+  const [{ data: team, error }, opdNames] = await Promise.all([
     supabase.from('tim_analisis').select('*').order('sort_order').order('id'),
-    supabase.from('opd_master').select('display_name,acronym').eq('active', true).order('sort_order'),
+    getOpdNames(),
   ])
   if (error) throw new Error(error.message)
-  if (opdError) throw new Error(opdError.message)
-  const opdNames = (opdMaster ?? []).map((row) => row.display_name)
 
   return <>
     <div className="notice notice-success">Mode edit administrator sedang aktif. PIN yang sama melindungi Pengaturan, Temuan OPD, penambahan/edit Referensi Konten, pengelolaan 9 BERANI, dan penambahan Kunjungan OPD.</div>
