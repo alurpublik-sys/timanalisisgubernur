@@ -58,7 +58,7 @@ export function CursorFollower() {
       ring.classList.toggle('is-form', Boolean(target?.closest('input,select,textarea,[contenteditable="true"]')))
 
       const nextMotionTarget = target?.closest<HTMLElement>(
-        '.stat-card,.finding-card,.knowledge-dashboard-item,.premium-reference-card,.reference-library-card,.command-priority-card,.quick-link-grid a,.visit-source-item,.media-mobile-card,.team-profile-card'
+        '.stat-card,.finding-card,.berani-card,.knowledge-dashboard-item,.premium-reference-card,.reference-library-card,.command-priority-card,.quick-link-grid a,.visit-source-item,.media-mobile-card,.team-profile-card'
       ) ?? null
       if (motionTarget !== nextMotionTarget) {
         motionTarget?.classList.remove('motion-hover')
