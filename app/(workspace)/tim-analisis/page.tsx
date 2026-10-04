@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { getTeamPhotoUrl } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
@@ -14,7 +13,7 @@ export default async function TimPage() {
   const { data: rows, error } = await supabase.from('tim_analisis').select('*').eq('active', true).order('sort_order').order('id')
   if (error) throw new Error(error.message)
 
-  return <AppShell active="/tim-analisis" title="Tim Analisis" adminMode={Boolean(user)}>
+  return <>
     <section className="team-hero panel">
       <div><p className="eyebrow">TIM INDEPENDEN</p><h2>Analisis lintas bidang untuk data dan komunikasi strategis.</h2></div>
       <p>Profil anggota ditampilkan sebagai direktori profesional. Pengelolaan foto, CV, peran, dan data anggota dilakukan dari menu Pengaturan yang dilindungi PIN.</p>
@@ -42,5 +41,5 @@ export default async function TimPage() {
       })}
     </section>
     <FeatureNotes featureKey="tim-analisis" returnPath="/tim-analisis" adminMode={Boolean(user)} title="Catatan Tim Analisis" description="Catatan koordinasi terkait profil, peran, dan kebutuhan tim." />
-  </AppShell>
+  </>
 }

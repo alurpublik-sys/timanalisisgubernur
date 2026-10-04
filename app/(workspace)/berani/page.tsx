@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { FeatureNotes } from '@/components/feature-notes'
@@ -25,7 +24,7 @@ export default async function BeraniPage() {
     if (!latest.has(update.program_id)) latest.set(update.program_id, update)
   }
 
-  return <AppShell active="/berani" title="9 BERANI" adminMode={Boolean(user)}>
+  return <>
     <section className="knowledge-hero panel">
       <div>
         <p className="eyebrow">PUSAT DATA PROGRAM</p>
@@ -51,5 +50,5 @@ export default async function BeraniPage() {
       })}
     </section>
     <FeatureNotes featureKey="berani" returnPath="/berani" adminMode={Boolean(user)} title="Catatan 9 BERANI" description="Catatan umum lintas program 9 BERANI." />
-  </AppShell>
+  </>
 }

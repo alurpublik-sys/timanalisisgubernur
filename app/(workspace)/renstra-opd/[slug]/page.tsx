@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 
@@ -52,7 +51,7 @@ export default async function RenstraDetailPage({ params }: { params: Promise<{ 
     : null
 
   return (
-    <AppShell active="/renstra-opd" title={renstra.short_name} adminMode={Boolean(auth.user)} editReturnTo={`/renstra-opd/${renstra.slug}`}>
+    <>
       <div className="renstra-detail-back"><Link href="/renstra-opd">← Kembali ke Renstra OPD</Link></div>
 
       <section className="panel renstra-detail-hero">
@@ -144,6 +143,6 @@ export default async function RenstraDetailPage({ params }: { params: Promise<{ 
           </article>
         </aside>
       </section>
-    </AppShell>
+    </>
   )
 }

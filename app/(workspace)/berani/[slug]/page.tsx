@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { AppShell } from '@/components/app-shell'
 import { ProcessedBeraniSection } from '@/components/processed-berani-section'
 import { BeraniSmartUpload } from '@/components/berani-smart-upload'
 import { addBeraniDocuments, createBeraniUpdate, deleteBeraniDocument, deleteBeraniUpdate } from '@/lib/actions/knowledge'
@@ -149,7 +148,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
   const legacyColumns = selected ? stringColumns(selected.columns) : []
   const legacyRecords = (legacyRows ?? []).map((row) => asRecord(row.data))
 
-  return <AppShell active="/berani" title={program.name} adminMode={adminMode} editReturnTo={`/berani/${program.slug}`}>
+  return <>
     <div className="breadcrumb-line"><Link href="/berani">9 BERANI</Link><span>/</span><strong>{program.name}</strong></div>
 
     <section className="program-head panel berani-program-head">
@@ -296,5 +295,5 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
       </section>
     </> : null}
     <FeatureNotes featureKey="berani" entityKey={selected ? `${program.slug}:${selected.id}` : program.slug} returnPath={`/berani/${program.slug}${selected ? `?update=${selected.id}` : ''}`} adminMode={adminMode} title={`Catatan ${program.name}`} description="Catatan khusus untuk program/update yang sedang dibuka." />
-  </AppShell>
+  </>
 }

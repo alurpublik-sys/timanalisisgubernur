@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { AppShell } from '@/components/app-shell'
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 
@@ -43,7 +42,7 @@ export default async function RenstraOpdPage({ searchParams }: { searchParams: P
   const wordCount = all.filter((item) => item.source_kind === 'word' || item.source_kind === 'folder').length
 
   return (
-    <AppShell active="/renstra-opd" title="Renstra OPD" adminMode={Boolean(user)}>
+    <>
       <section className="renstra-hero panel">
         <div>
           <p className="eyebrow">PUSTAKA PERENCANAAN OPD</p>
@@ -120,6 +119,6 @@ export default async function RenstraOpdPage({ searchParams }: { searchParams: P
           </section>
         ) : null}
       </section>
-    </AppShell>
+    </>
   )
 }
