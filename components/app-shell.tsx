@@ -32,7 +32,7 @@ function titleForPath(pathname: string) {
 function Brand() {
   return (
     <div className="brand strategic-brand">
-      <div className="brand-portrait-wrap brand-icon-wrap">
+      <div className="brand-portrait-wrap brand-icon-wrap" title="Tim Analisis dan Komunikasi Strategis · Independen">
         <Image src="/tim-analisis-logo.png" alt="" width={62} height={62} sizes="62px" className="brand-portrait brand-app-icon" priority />
       </div>
       <div className="brand-copy">
@@ -217,7 +217,7 @@ export function AppShell({ children, adminMode = false }: { children: React.Reac
         </button>
         <div className="sidebar-kicker">Strategic Workspace</div>
         <Navigation active={active} onNavigate={beginNavigation} onIntent={prefetchRoute} />
-        <div className="sidebar-foot">
+        <div className="sidebar-foot" title="Independent Intelligence · Data · Analisis · Informasi">
           <i className="sidebar-status-dot" aria-hidden />
           <span>Independent Intelligence</span>
           <small>Data · Analisis · Informasi</small>
