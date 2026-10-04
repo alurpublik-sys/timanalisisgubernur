@@ -39,11 +39,11 @@ export default async function BeraniPage() {
     <section className="berani-grid">
       {(programs ?? []).map((program, index) => {
         const update = latest.get(program.id)
-        return <Link href={`/berani/${program.slug}`} prefetch className="berani-card" key={program.id}>
+        return <Link href={`/berani/${program.slug}`} prefetch className={`berani-card ${update ? 'is-active' : 'is-baseline'}`} key={program.id}>
           <div className="berani-card-top"><span className="berani-number">{String(index + 1).padStart(2, '0')}</span><span className="berani-arrow">↗</span></div>
           <h2>{program.name}</h2>
           <p>{program.summary || 'Pusat pembaruan data program.'}</p>
-          <div className="berani-latest">
+          <div className={`berani-latest ${update ? 'is-active' : 'is-baseline'}`}>
             <span>{update?'Data aktif':'Baseline siap'}</span>
             <strong>{update?.title||'Menunggu sumber resmi terverifikasi'}</strong>
             {update?<small>{dateLabel(update.created_at)} · {update.row_count||0} baris data · {counts.get(program.id)??0} update</small>:<small>Ruang lingkup sudah ditata tanpa mengisi angka yang belum memiliki sumber.</small>}
