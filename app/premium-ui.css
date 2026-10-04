@@ -52,16 +52,6 @@
 .data-table th{font-weight:900;letter-spacing:.04em}.data-table td{line-height:1.55}
 .finding-card{transition:transform .18s ease,border-color .18s ease}.finding-card:hover{transform:translateY(-1px);border-color:#cfdee8}
 
-/* Smooth dashboard cursor */
-.dashboard-cursor-ring{display:none;position:fixed;left:0;top:0;z-index:180;pointer-events:none;transform:translate3d(-100px,-100px,0) translate(-50%,-50%);will-change:transform;opacity:0;transition:opacity .12s ease,width .16s ease,height .16s ease,background .16s ease,border-color .16s ease,box-shadow .16s ease}
-@media(pointer:fine) and (hover:hover){
-  .dashboard-cursor-ring{display:block;width:22px;height:22px;border:1px solid rgba(73,126,169,.54);border-radius:50%;background:rgba(111,164,205,.035);box-shadow:0 0 0 3px rgba(93,144,185,.022)}
-  .dashboard-pointer-live .dashboard-cursor-ring{opacity:1}
-  .dashboard-cursor-ring.is-active{width:34px;height:34px;background:rgba(93,144,185,.075);border-color:rgba(59,112,155,.72);box-shadow:0 0 0 6px rgba(93,144,185,.03)}
-  .dashboard-cursor-zone .cursor-target-active{transform:translateY(-3px)!important;box-shadow:0 24px 52px -38px rgba(24,69,105,.58)!important;border-color:#cadbe7!important}
-  .dashboard-cursor-zone .stat-card,.dashboard-cursor-zone .hero-actions a,.dashboard-cursor-zone .quick-link-grid a,.dashboard-cursor-zone .knowledge-dashboard-item,.dashboard-cursor-zone .panel-head>a{transition:transform .2s cubic-bezier(.2,.75,.2,1),box-shadow .2s ease,border-color .2s ease,background .2s ease}
-}
-
 @media(max-width:980px){
   .premium-reference-grid{grid-template-columns:1fr 1fr}.visit-detail-grid{grid-template-columns:1fr}.content-premium-filter{grid-template-columns:1fr 1fr}.premium-result-count{display:none}
 }
@@ -76,9 +66,6 @@
 }
 @media(max-width:430px){
   .note-chip{max-width:100%;width:100%}.note-chip-row{display:grid;grid-template-columns:1fr}
-}
-@media(prefers-reduced-motion:reduce){
-  .dashboard-cursor-ring{display:none!important}.dashboard-cursor-zone .cursor-target-active{transform:none!important}
 }
 
 .processed-text-preview,.processed-text-full{white-space:pre-wrap;color:#49657b;font-size:10px;line-height:1.8}
@@ -665,23 +652,6 @@
   .reference-library-opd>span{width:30px;height:30px}
   .reference-library-card-head{gap:8px}
   .reference-library-card .reference-status{max-width:112px;overflow:hidden;text-overflow:ellipsis}
-}
-
-
-/* Final dashboard cursor: browser-rendered circular pointer to avoid follower drift */
-@media(pointer:fine) and (hover:hover){
-  .dashboard-cursor-zone,
-  .dashboard-cursor-zone *{
-    cursor:url('/dashboard-cursor.svg') 14 14, auto;
-  }
-  .dashboard-cursor-zone a,
-  .dashboard-cursor-zone button,
-  .dashboard-cursor-zone .stat-card,
-  .dashboard-cursor-zone .quick-link-grid a,
-  .dashboard-cursor-zone .knowledge-dashboard-item,
-  .dashboard-cursor-zone .panel-head>a{
-    cursor:url('/dashboard-cursor-active.svg') 18 18, pointer;
-  }
 }
 
 
