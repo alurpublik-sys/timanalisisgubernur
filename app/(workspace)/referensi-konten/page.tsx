@@ -123,11 +123,12 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
       </form>
     </section> : null}
 
+    {!shareMode ? <datalist id="content-opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist> : null}
+
     {!shareMode && adminMode ? <details className="panel reference-admin-create" id="tambah-referensi" open={composeMode}>
       <summary><span>＋</span><div><strong>Tambah Referensi</strong><small>Form hanya tampil dalam mode edit administrator.</small></div></summary>
       <form action={createContentReference} className="mini-form reference-create-compact">
         <label>Nama OPD<input name="opd_name" list="content-opd-options" required placeholder="Pilih atau ketik OPD" /></label>
-        <datalist id="content-opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist>
         <label>Judul Program / Angle<input name="title" required placeholder="Judul yang singkat dan jelas" /></label>
         <label>Label Program<input name="program_label" placeholder="Contoh: SIGANA / BERANI Cerdas" /></label>
         <label>Detail<textarea name="detail" placeholder="Jelaskan program secara singkat." /></label>
