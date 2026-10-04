@@ -94,3 +94,74 @@ test.describe('final visual polish', () => {
     expect(brightness).toBeGreaterThan(190)
   })
 })
+
+
+test.describe('adaptive premium sidebar', () => {
+  test('desktop sidebar collapses to a compact rail and persists the preference', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
+
+    const sidebar = page.locator('.desktop-sidebar')
+    const toggle = page.locator('.sidebar-collapse-toggle')
+    await expect(sidebar).toBeVisible()
+    const expanded = await sidebar.boundingBox()
+    expect(expanded?.width || 0).toBeGreaterThan(220)
+
+    await toggle.click()
+    await expect(page.locator('.app-shell')).toHaveClass(/sidebar-compact/)
+    await page.waitForTimeout(300)
+    const compact = await sidebar.boundingBox()
+    expect(compact?.width || 999).toBeLessThanOrEqual(90)
+    await expect(page.locator('.desktop-sidebar .nav-label').first()).toBeHidden()
+
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect(page.locator('.app-shell')).toHaveClass(/sidebar-compact/)
+    const persisted = await page.locator('.desktop-sidebar').boundingBox()
+    expect(persisted?.width || 999).toBeLessThanOrEqual(90)
+  })
+
+  test('compact rail exposes readable tooltips on hover', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.addInitScript(() => localStorage.setItem('tim-analysis-sidebar-mode', 'compact'))
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
+
+    const kunjungan = page.locator('.desktop-sidebar nav a[href="/kunjungan"]')
+    await kunjungan.hover()
+    await expect(kunjungan.locator('.nav-tooltip')).toHaveCSS('opacity', '1')
+    await expect(kunjungan.locator('.nav-tooltip')).toContainText('Kunjungan OPD')
+  })
+
+  test('focus mode removes the desktop rail and Escape restores it', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.goto('/berani', { waitUntil: 'domcontentloaded' })
+
+    await page.locator('.focus-mode-chip').click()
+    await expect(page.locator('.app-shell')).toHaveClass(/focus-mode/)
+    await page.waitForTimeout(300)
+    const focusedSidebar = await page.locator('.desktop-sidebar').boundingBox()
+    expect(focusedSidebar?.width || 0).toBeLessThanOrEqual(2)
+
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.app-shell')).not.toHaveClass(/focus-mode/)
+  })
+
+  test('Ctrl+B toggles sidebar without navigating or reloading', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.addInitScript(() => localStorage.setItem('tim-analysis-sidebar-mode', 'expanded'))
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
+    const beforeUrl = page.url()
+
+    await page.keyboard.press('Control+b')
+    await expect(page.locator('.app-shell')).toHaveClass(/sidebar-compact/)
+    expect(page.url()).toBe(beforeUrl)
+  })
+
+  test('portrait keeps sidebar controls out of the mobile header', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
+    await expect(page.locator('.desktop-sidebar')).toBeHidden()
+    await expect(page.locator('.sidebar-collapse-toggle')).toBeHidden()
+    await expect(page.locator('.focus-mode-chip')).toBeHidden()
+    await expect(page.locator('.mobile-menu-trigger')).toBeVisible()
+  })
+})
