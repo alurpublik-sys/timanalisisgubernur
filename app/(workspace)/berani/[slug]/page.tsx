@@ -6,6 +6,7 @@ import { addBeraniDocuments, createBeraniUpdate, deleteBeraniDocument, deleteBer
 import { SUPABASE_URL } from '@/lib/branding'
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
+import { getOpdNames } from '@/lib/opd'
 import type { Json } from '@/lib/database.types'
 import { FeatureNotes } from '@/components/feature-notes'
 
@@ -107,13 +108,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
   const { data: program, error: programError } = await supabase.from('berani_programs').select('*').eq('slug', slug).single()
   if (programError || !program) notFound()
 
-  const { data: opdMaster, error: opdError } = await supabase
-    .from('opd_master')
-    .select('display_name')
-    .eq('active', true)
-    .order('sort_order')
-  if (opdError) throw new Error(opdError.message)
-  const opdNames = (opdMaster ?? []).map((item) => item.display_name)
+  const opdNames = await getOpdNames()
 
   const {data:updates,error:updateError}=await supabase
     .from('berani_updates')
