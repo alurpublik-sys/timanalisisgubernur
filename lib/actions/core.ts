@@ -61,7 +61,14 @@ export async function createKunjungan(formData:FormData){
   }
   refresh('/kunjungan','/dashboard','/pengaturan')
 }
-export async function createMedia(formData:FormData){const supabase=await operationalClient();const payload={judul_berita:required(formData,'judul','Judul berita',2000),nama_media:optional(formData,'media','Nama media',500),tanggal:dateValue(formData,'tanggal','Tanggal'),sentimen:enumValue(formData,'sentimen','Sentimen',['Positif','Netral','Negatif']),link_berita:optionalUrl(formData,'link','Link berita')};const{error}=await supabase.from('media_monitoring').insert(payload);if(error)throw new Error(error.message);refresh('/media-monitor','/dashboard')}
+export async function createMedia(formData:FormData){
+ const supabase=await operationalClient(),title=required(formData,'judul','Judul berita',2000),tanggal=dateValue(formData,'tanggal','Tanggal'),link=optionalUrl(formData,'link','Link berita')
+ const raw=value(formData,'berani_program_id'),programId=raw?Number(raw):null;if(programId!==null&&(!Number.isSafeInteger(programId)||programId<=0))throw new Error('Program BERANI tidak valid.')
+ if(link){const{data,error}=await supabase.from('media_monitoring').select('id').eq('link_berita',link).limit(1).maybeSingle();if(error)throw new Error(error.message);if(data)throw new Error('Berita dengan link yang sama sudah ada di Media Monitor.')}
+ const{data:dup,error:dupError}=await supabase.from('media_monitoring').select('id').eq('judul_berita',title).eq('tanggal',tanggal).limit(1).maybeSingle();if(dupError)throw new Error(dupError.message);if(dup)throw new Error('Judul berita yang sama pada tanggal tersebut sudah tercatat.')
+ const payload={judul_berita:title,nama_media:optional(formData,'media','Nama media',500)||null,tanggal,sentimen:enumValue(formData,'sentimen','Sentimen',['Positif','Netral','Negatif'],'Netral'),link_berita:link||null,issue_category:enumValue(formData,'issue_category','Kategori isu',['Pemerintahan','Ekonomi','Infrastruktur','Sosial','Pendidikan','Kesehatan','Pangan','Lingkungan','Politik','Lainnya'],'Lainnya'),opd_name:optional(formData,'opd_name','OPD terkait',300)||null,berani_program_id:programId}
+ const{error}=await supabase.from('media_monitoring').insert(payload);if(error)throw new Error(error.message);refresh('/media-monitor','/dashboard')
+}
 
 
 export async function updateKunjungan(formData: FormData) {
