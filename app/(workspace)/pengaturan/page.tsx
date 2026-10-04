@@ -10,8 +10,13 @@ import { PendingSubmitButton } from '@/components/pending-submit-button'
 
 export default async function PengaturanPage() {
   const { supabase } = await requireUser('/pengaturan')
-  const { data: team, error } = await supabase.from('tim_analisis').select('*').order('sort_order').order('id')
+  const [{ data: team, error }, { data: opdMaster, error: opdError }] = await Promise.all([
+    supabase.from('tim_analisis').select('*').order('sort_order').order('id'),
+    supabase.from('opd_master').select('display_name,acronym').eq('active', true).order('sort_order'),
+  ])
   if (error) throw new Error(error.message)
+  if (opdError) throw new Error(opdError.message)
+  const opdNames = (opdMaster ?? []).map((row) => row.display_name)
 
   return <>
     <div className="notice notice-success">Mode edit administrator sedang aktif. PIN yang sama melindungi Pengaturan, Temuan OPD, penambahan/edit Referensi Konten, pengelolaan 9 BERANI, dan penambahan Kunjungan OPD.</div>
@@ -43,7 +48,7 @@ export default async function PengaturanPage() {
       <div className="section-heading"><p className="eyebrow">KUNJUNGAN OPD</p><h2>Tambah Kunjungan</h2><p className="muted-line">Form penambahan dipusatkan di Pengaturan agar halaman Kunjungan OPD tetap bersih dan fokus untuk membaca notulensi.</p></div>
       <form action={createKunjungan} className="panel form-card settings-visit-form">
         <div className="settings-form-grid">
-          <label>Nama OPD<input name="opd" required placeholder="Nama OPD" /></label>
+          <label>Nama OPD<input name="opd" list="settings-opd-options" required placeholder="Pilih atau ketik OPD" /><datalist id="settings-opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist></label>
           <label>Tanggal<input name="tanggal" type="date" required /></label>
           <label>Pejabat / Narasumber<input name="pejabat" placeholder="Nama pejabat atau narasumber" /></label>
           <label>Anggota Tim<input name="anggota" placeholder="Nama anggota/peserta" /></label>
