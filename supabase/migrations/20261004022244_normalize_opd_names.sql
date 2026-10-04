@@ -46,3 +46,11 @@ drop trigger if exists normalize_opd_berani on public.berani_updates;
 create trigger normalize_opd_berani before insert or update of opd_name on public.berani_updates for each row execute function public.normalize_opd_name_trigger();
 drop trigger if exists normalize_opd_renstra on public.renstra_opd;
 create trigger normalize_opd_renstra before insert or update of opd_name on public.renstra_opd for each row execute function public.normalize_opd_name_trigger();
+
+
+update public.kunjungan set nama_opd=public.canonical_opd_name(nama_opd) where nama_opd is not null;
+update public.opd_findings set opd_name=public.canonical_opd_name(opd_name) where opd_name is not null;
+update public.content_references set opd_name=public.canonical_opd_name(opd_name) where opd_name is not null;
+update public.media_monitoring set opd_name=public.canonical_opd_name(opd_name) where opd_name is not null;
+update public.berani_updates set opd_name=public.canonical_opd_name(opd_name) where opd_name is not null;
+update public.renstra_opd set opd_name=public.canonical_opd_name(opd_name) where opd_name is not null;
