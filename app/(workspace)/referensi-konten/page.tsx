@@ -54,21 +54,18 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
 
   const [
     { data: programs, error: programError },
-    { data: visits, error: visitError },
+    { data: opdMaster, error: opdError },
     { data: references, error },
   ] = await Promise.all([
     supabase.from('berani_programs').select('id,name').eq('active', true).order('sort_order'),
-    supabase.from('kunjungan').select('nama_opd').order('nama_opd'),
+    supabase.from('opd_master').select('display_name').eq('active', true).order('sort_order'),
     referenceQuery,
   ])
   if (programError) throw new Error(programError.message)
-  if (visitError) throw new Error(visitError.message)
+  if (opdError) throw new Error(opdError.message)
   if (error) throw new Error(error.message)
 
-  const opdNames = [...new Set([
-    ...(visits ?? []).map((item) => item.nama_opd),
-    ...(references ?? []).map((item) => item.opd_name),
-  ].map((item) => item.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'))
+  const opdNames = (opdMaster ?? []).map((item) => item.display_name)
 
   const programNames = new Map((programs ?? []).map((program) => [program.id, program.name]))
   const uniqueOpds = new Set((references ?? []).map((item) => item.opd_name)).size
@@ -205,7 +202,7 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
       <form action={updateContentReference} className="mini-form reference-edit-form">
         <input type="hidden" name="id" value={editItem.id} />
         <input type="hidden" name="return_to" value={closeHref} />
-        <label>OPD<input name="opd_name" defaultValue={editItem.opd_name} required /></label>
+        <label>OPD<input name="opd_name" list="content-opd-options" defaultValue={editItem.opd_name} required /></label>
         <label>Judul<input name="title" defaultValue={editItem.title} required /></label>
         <label>Label program<input name="program_label" defaultValue={editItem.program_label || ''} /></label>
         <label className="reference-edit-wide">Detail<textarea name="detail" defaultValue={editItem.detail || ''} /></label>
