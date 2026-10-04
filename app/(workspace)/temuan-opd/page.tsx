@@ -7,6 +7,7 @@ import type { Database } from '@/lib/database.types'
 import { DirectUploadField } from '@/components/direct-upload-field'
 import { PendingSubmitButton } from '@/components/pending-submit-button'
 import { FindingAddDialog } from '@/components/finding-add-dialog'
+import { getOpdNames } from '@/lib/opd'
 
 type Params = { opd?: string; q?: string; category?: string; sort?: string }
 type FindingDocument = Database['public']['Tables']['opd_finding_documents']['Row']
@@ -37,12 +38,11 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
   const sort = String(params.sort || 'latest').trim()
   const { supabase } = await requireUser('/temuan-opd')
 
-  const [{ data: programs, error: programError }, { data: opdMaster, error: opdError }] = await Promise.all([
+  const [{ data: programs, error: programError }, opdNames] = await Promise.all([
     supabase.from('berani_programs').select('id,name').eq('active', true).order('sort_order'),
-    supabase.from('opd_master').select('display_name,acronym,entity_type').eq('active', true).order('sort_order'),
+    getOpdNames(),
   ])
   if (programError) throw new Error(programError.message)
-  if (opdError) throw new Error(opdError.message)
 
   let findingQuery = supabase.from('opd_findings').select('*')
   if (selectedOpd) findingQuery = findingQuery.eq('opd_name', selectedOpd)
@@ -67,7 +67,6 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
     documentsByFinding.set(document.finding_id, list)
   }
 
-  const opdNames = (opdMaster ?? []).map((row) => row.display_name)
   const programNames = new Map((programs ?? []).map((program) => [program.id, program.name]))
 
   return <>
