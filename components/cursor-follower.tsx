@@ -34,6 +34,7 @@ export function CursorFollower() {
     let currentY = -100
     let raf = 0
     let visible = false
+    let motionTarget: HTMLElement | null = null
 
     const render = () => {
       currentX += (mouseX - currentX) * 0.18
@@ -55,11 +56,27 @@ export function CursorFollower() {
       ring.classList.toggle('is-interactive', Boolean(target?.closest(INTERACTIVE)))
       ring.classList.toggle('is-sidebar', Boolean(target?.closest('.sidebar,.mobile-shell-header,.mobile-drawer')))
       ring.classList.toggle('is-form', Boolean(target?.closest('input,select,textarea,[contenteditable="true"]')))
+
+      const nextMotionTarget = target?.closest<HTMLElement>(
+        '.stat-card,.finding-card,.knowledge-dashboard-item,.premium-reference-card,.reference-library-card,.command-priority-card,.quick-link-grid a,.visit-source-item,.media-mobile-card,.team-profile-card'
+      ) ?? null
+      if (motionTarget !== nextMotionTarget) {
+        motionTarget?.classList.remove('motion-hover')
+        motionTarget = nextMotionTarget
+        motionTarget?.classList.add('motion-hover')
+      }
+      if (motionTarget) {
+        const rect = motionTarget.getBoundingClientRect()
+        motionTarget.style.setProperty('--pointer-x', `${event.clientX - rect.left}px`)
+        motionTarget.style.setProperty('--pointer-y', `${event.clientY - rect.top}px`)
+      }
     }
 
     const onLeave = () => {
       visible = false
       ring.classList.remove('is-visible','is-interactive','is-sidebar','is-form')
+      motionTarget?.classList.remove('motion-hover')
+      motionTarget = null
     }
 
     window.addEventListener('mousemove', onMove, { passive: true })
@@ -70,6 +87,7 @@ export function CursorFollower() {
       window.removeEventListener('mousemove', onMove)
       document.documentElement.removeEventListener('mouseleave', onLeave)
       window.cancelAnimationFrame(raf)
+      motionTarget?.classList.remove('motion-hover')
     }
   }, [])
 
