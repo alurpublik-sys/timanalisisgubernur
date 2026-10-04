@@ -24,3 +24,35 @@ for(const viewport of viewports){
     })
   })
 }
+
+
+test.describe('premium workspace interactions', () => {
+  test('desktop keeps the native cursor and renders cursor follower separately', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
+    const cursorValue = await page.locator('.dashboard-cursor-zone').evaluate((node) => getComputedStyle(node).cursor)
+    expect(cursorValue).not.toContain('url(')
+    await expect(page.locator('.global-cursor-follower')).toHaveCount(1)
+    await expect(page.locator('.desktop-sidebar')).toBeVisible()
+  })
+
+  test('390 portrait uses an app-like drawer without overlapping the page', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
+    await expect(page.locator('.desktop-sidebar')).toBeHidden()
+    await expect(page.locator('.mobile-shell-header')).toBeVisible()
+    await page.locator('.mobile-menu-trigger').click()
+    await expect(page.locator('.mobile-drawer')).toBeVisible()
+    const drawerBox = await page.locator('.mobile-drawer').boundingBox()
+    expect(drawerBox?.width || 9999).toBeLessThanOrEqual(370)
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+    expect(overflow).toBeLessThanOrEqual(2)
+  })
+
+  test('820 portrait also uses mobile shell instead of a cramped sidebar rail', async ({ page }) => {
+    await page.setViewportSize({ width: 820, height: 1180 })
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
+    await expect(page.locator('.desktop-sidebar')).toBeHidden()
+    await expect(page.locator('.mobile-shell-header')).toBeVisible()
+  })
+})

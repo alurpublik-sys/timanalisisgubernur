@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { CursorFollower } from '@/components/cursor-follower'
 
 const menu = [
   { label: 'Dashboard', href: '/dashboard', glyph: 'DB' },
@@ -39,7 +40,7 @@ function Brand() {
           <span>Tim Analisis dan</span>
           <span>Komunikasi Strategis</span>
         </strong>
-        <span className="brand-subtitle">(Independen)</span>
+        <span className="brand-subtitle">Independen</span>
       </div>
     </div>
   )
@@ -54,7 +55,7 @@ function Navigation({ active, onNavigate, onIntent }: { active: string; onNaviga
           <Link
             key={href}
             href={href}
-            prefetch={false}
+            prefetch
             aria-current={isActive ? 'page' : undefined}
             className={isActive ? 'active' : ''}
             onMouseEnter={() => onIntent(href)}
@@ -96,17 +97,27 @@ export function AppShell({ children, adminMode = false }: { children: React.Reac
     const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
     if (connection?.saveData || connection?.effectiveType === '2g' || connection?.effectiveType === 'slow-2g') return
 
-    const currentIndex = menu.findIndex((item) => item.href === active)
-    const targets = new Set<string>(['/dashboard'])
-    if (currentIndex > 0) targets.add(menu[currentIndex - 1].href)
-    if (currentIndex >= 0 && currentIndex < menu.length - 1) targets.add(menu[currentIndex + 1].href)
-    targets.delete(active)
+    let cancelled = false
+    const warmRoutes = () => {
+      if (cancelled) return
+      for (const item of menu) {
+        if (item.href !== active) router.prefetch(item.href)
+      }
+    }
 
-    const timer = window.setTimeout(() => {
-      for (const href of targets) router.prefetch(href)
-    }, 650)
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number }).requestIdleCallback
+    const cancelIdle = (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback
+    let idleId: number | null = null
+    let timer: number | null = null
 
-    return () => window.clearTimeout(timer)
+    if (idle) idleId = idle(warmRoutes, { timeout: 1200 })
+    else timer = window.setTimeout(warmRoutes, 350)
+
+    return () => {
+      cancelled = true
+      if (idleId !== null && cancelIdle) cancelIdle(idleId)
+      if (timer !== null) window.clearTimeout(timer)
+    }
   }, [active, router])
 
   useEffect(() => {
@@ -134,6 +145,7 @@ export function AppShell({ children, adminMode = false }: { children: React.Reac
 
   return (
     <div className={`app-shell${navigating ? ' is-navigating' : ''}`}>
+      <CursorFollower />
       <div className="route-progress" aria-hidden><span /></div>
 
       <aside className="sidebar desktop-sidebar">
@@ -141,7 +153,7 @@ export function AppShell({ children, adminMode = false }: { children: React.Reac
         <div className="sidebar-kicker">Strategic Workspace</div>
         <Navigation active={active} onNavigate={beginNavigation} onIntent={prefetchRoute} />
         <div className="sidebar-foot">
-          <span>Independen</span>
+          <span>Independent Intelligence</span>
           <small>Data · Analisis · Informasi</small>
         </div>
       </aside>
@@ -166,7 +178,7 @@ export function AppShell({ children, adminMode = false }: { children: React.Reac
             <div className="mobile-drawer-head">
               <div>
                 <p className="eyebrow">TIM ANALISIS DAN</p>
-                <strong>Komunikasi Strategis <span>(Independen)</span></strong>
+                <strong>Komunikasi Strategis <span>· Independen</span></strong>
               </div>
               <button className="mobile-drawer-close" type="button" aria-label="Tutup navigasi" onClick={() => setMobileOpen(false)}>×</button>
             </div>

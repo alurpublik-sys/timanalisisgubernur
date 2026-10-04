@@ -7,10 +7,14 @@ import { getTeamPhotoUrl } from '@/lib/branding'
 import { FeatureNotes } from '@/components/feature-notes'
 import { DirectUploadField } from '@/components/direct-upload-field'
 import { PendingSubmitButton } from '@/components/pending-submit-button'
+import { getOpdNames } from '@/lib/opd'
 
 export default async function PengaturanPage() {
   const { supabase } = await requireUser('/pengaturan')
-  const { data: team, error } = await supabase.from('tim_analisis').select('*').order('sort_order').order('id')
+  const [{ data: team, error }, opdNames] = await Promise.all([
+    supabase.from('tim_analisis').select('*').order('sort_order').order('id'),
+    getOpdNames(),
+  ])
   if (error) throw new Error(error.message)
 
   return <>
@@ -43,7 +47,7 @@ export default async function PengaturanPage() {
       <div className="section-heading"><p className="eyebrow">KUNJUNGAN OPD</p><h2>Tambah Kunjungan</h2><p className="muted-line">Form penambahan dipusatkan di Pengaturan agar halaman Kunjungan OPD tetap bersih dan fokus untuk membaca notulensi.</p></div>
       <form action={createKunjungan} className="panel form-card settings-visit-form">
         <div className="settings-form-grid">
-          <label>Nama OPD<input name="opd" required placeholder="Nama OPD" /></label>
+          <label>Nama OPD<input name="opd" list="settings-opd-options" required placeholder="Pilih atau ketik OPD" /><datalist id="settings-opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist></label>
           <label>Tanggal<input name="tanggal" type="date" required /></label>
           <label>Pejabat / Narasumber<input name="pejabat" placeholder="Nama pejabat atau narasumber" /></label>
           <label>Anggota Tim<input name="anggota" placeholder="Nama anggota/peserta" /></label>

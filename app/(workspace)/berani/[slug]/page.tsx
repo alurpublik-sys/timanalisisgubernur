@@ -6,6 +6,7 @@ import { addBeraniDocuments, createBeraniUpdate, deleteBeraniDocument, deleteBer
 import { SUPABASE_URL } from '@/lib/branding'
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
+import { getOpdNames } from '@/lib/opd'
 import type { Json } from '@/lib/database.types'
 import { FeatureNotes } from '@/components/feature-notes'
 
@@ -107,6 +108,8 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
   const { data: program, error: programError } = await supabase.from('berani_programs').select('*').eq('slug', slug).single()
   if (programError || !program) notFound()
 
+  const opdNames = await getOpdNames()
+
   const {data:updates,error:updateError}=await supabase
     .from('berani_updates')
     .select('id,title,opd_name,period_label,row_count,created_at,updated_at')
@@ -172,7 +175,7 @@ export default async function BeraniDetailPage({ params, searchParams }: PagePro
         <input type="hidden" name="program_id" value={program.id} />
         <input type="hidden" name="program_slug" value={program.slug} />
         <label>Judul Update<input name="title" required placeholder={`Contoh: Data ${program.name} September 2026`} /></label>
-        <label>OPD Sumber<input name="opd_name" placeholder="Satu OPD boleh memiliki banyak update" /></label>
+        <label>OPD Sumber<input name="opd_name" list="berani-opd-options" placeholder="Pilih atau ketik OPD sumber" /><datalist id="berani-opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist></label>
         <label>Periode<input name="period_label" placeholder="Contoh: September 2026 / Triwulan III" /></label>
         <label>Ringkasan<textarea name="summary" placeholder="Opsional. Data utama akan dibaca dari dokumen sumber dan digabung dengan data yang sudah ada." /></label>
         <BeraniSmartUpload scope={program.slug} buttonLabel="Simpan & Olah Update" helpText="Maksimum 10 file dan 20 MB per file. File diunggah langsung ke Supabase; PDF visual/scan tetap dibaca dengan OCR." />

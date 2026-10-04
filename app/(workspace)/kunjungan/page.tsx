@@ -4,8 +4,9 @@ import { SUPABASE_URL } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
 import { getLegacyNotulensiOriginal } from '@/lib/legacy-notulensi-originals'
 import { FeatureNotes } from '@/components/feature-notes'
+import { getOpdNames } from '@/lib/opd'
 
-type Params = { q?: string; status?: string }
+type Params = { q?: string; status?: string; opd?: string }
 
 function notulenUrl(path?: string | null) {
   if (!path) return null
@@ -34,21 +35,25 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
   const params = await searchParams
   const q = String(params.q || '').trim()
   const status = String(params.status || '').trim()
+  const selectedOpd = String(params.opd || '').trim()
   const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
 
   let query = supabase.from('kunjungan').select('*').order('tanggal', { ascending: false }).order('id', { ascending: false })
   if (q) query = query.or(`nama_opd.ilike.%${q}%,pejabat.ilike.%${q}%,topik.ilike.%${q}%,legacy_id.ilike.%${q}%`)
   if (status) query = query.eq('status', status)
+  if (selectedOpd) query = query.eq('nama_opd', selectedOpd)
 
   const [
     { data: rows, error },
     { data: documents, error: documentError },
+    opdNames,
   ] = await Promise.all([
     query,
     supabase
       .from('kunjungan_documents')
       .select('id,kunjungan_id,title,file_path,file_name,mime_type,source_type,source_url,file_size,created_at')
       .order('created_at', { ascending: false }),
+    getOpdNames(),
   ])
   if (error) throw new Error(error.message)
   if (documentError) throw new Error(documentError.message)
@@ -71,11 +76,12 @@ export default async function KunjunganPage({ searchParams }: { searchParams: Pr
     </section>
 
     <section className="panel premium-filter-panel">
-      <form method="get" className="premium-filter-form">
-        <label><span>Cari</span><input name="q" defaultValue={q} placeholder="OPD, pejabat, topik, atau ID" /></label>
+      <form method="get" className="premium-filter-form visit-master-filter">
+        <label><span>Cari</span><input name="q" defaultValue={q} placeholder="Pejabat, topik, atau ID" /></label>
+        <label><span>OPD</span><select name="opd" defaultValue={selectedOpd}><option value="">Semua OPD</option>{opdNames.map((name) => <option key={name}>{name}</option>)}</select></label>
         <label><span>Status</span><select name="status" defaultValue={status}><option value="">Semua status</option><option>Terjadwal</option><option>Selesai</option><option>Ditunda</option></select></label>
         <button className="secondary-button" type="submit">Terapkan</button>
-        {(q || status) ? <Link className="ghost-button dark" href="/kunjungan">Reset</Link> : null}
+        {(q || status || selectedOpd) ? <Link className="ghost-button dark" href="/kunjungan">Reset</Link> : null}
       </form>
     </section>
 

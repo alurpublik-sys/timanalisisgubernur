@@ -8,6 +8,7 @@ import { FeatureNotes } from '@/components/feature-notes'
 import { updateKunjungan, deleteKunjungan, deleteKunjunganDocument } from '@/lib/actions/core'
 import { DirectUploadField } from '@/components/direct-upload-field'
 import { PendingSubmitButton } from '@/components/pending-submit-button'
+import { getOpdNames } from '@/lib/opd'
 
 function notulenUrl(path?: string | null) {
   if (!path) return null
@@ -34,9 +35,10 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
   if (!Number.isSafeInteger(numericId) || numericId <= 0) notFound()
 
   const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
-  const [{ data: visit, error }, { data: documents, error: documentError }] = await Promise.all([
+  const [{ data: visit, error }, { data: documents, error: documentError }, opdNames] = await Promise.all([
     supabase.from('kunjungan').select('*').eq('id', numericId).single(),
     supabase.from('kunjungan_documents').select('*').eq('kunjungan_id', numericId).order('created_at'),
+    getOpdNames(),
   ])
   if (error || !visit) notFound()
   if (documentError) throw new Error(documentError.message)
@@ -89,7 +91,7 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
         <summary><span>✎</span><div><strong>Edit Kunjungan & Notulensi</strong><small>Ganti data, unggah ulang PDF asli, atau hapus kunjungan.</small></div></summary>
         <form action={updateKunjungan} className="mini-form visit-edit-form">
           <input type="hidden" name="id" value={visit.id} />
-          <label>Nama OPD<input name="opd" defaultValue={visit.nama_opd} required /></label>
+          <label>Nama OPD<input name="opd" list="visit-opd-options" defaultValue={visit.nama_opd} required /><datalist id="visit-opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist></label>
           <label>Tanggal<input name="tanggal" type="date" defaultValue={visit.tanggal} required /></label>
           <label>Pejabat / Narasumber<input name="pejabat" defaultValue={visit.pejabat || ''} /></label>
           <label>Anggota Tim<input name="anggota" defaultValue={visit.anggota_tim || ''} /></label>

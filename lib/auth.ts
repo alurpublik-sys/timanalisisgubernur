@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminSessionToken } from '@/lib/pin-session'
@@ -13,7 +14,7 @@ const PIN_ADMIN_PROFILE = {
   active: true,
 }
 
-export async function getAuthContext() {
+export const getAuthContext = cache(async function getAuthContext() {
   const token = await getAdminSessionToken()
   if (!token) return { supabase: null, user: null, profile: null }
 
@@ -23,7 +24,7 @@ export async function getAuthContext() {
   if (!data) return { supabase: null, user: null, profile: null }
 
   return { supabase, user: PIN_ADMIN_USER, profile: PIN_ADMIN_PROFILE }
-}
+})
 
 export async function requireUser(returnTo = '/pengaturan') {
   const context = await getAuthContext()
