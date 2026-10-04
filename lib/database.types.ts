@@ -628,6 +628,38 @@ export type Database = {
           },
         ]
       }
+      opd_aliases: {
+        Row: {
+          alias: string
+          alias_normalized: string | null
+          created_at: string
+          id: number
+          opd_id: number
+        }
+        Insert: {
+          alias: string
+          alias_normalized?: string | null
+          created_at?: string
+          id?: number
+          opd_id: number
+        }
+        Update: {
+          alias?: string
+          alias_normalized?: string | null
+          created_at?: string
+          id?: number
+          opd_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opd_aliases_opd_id_fkey"
+            columns: ["opd_id"]
+            isOneToOne: false
+            referencedRelation: "opd_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opd_finding_documents: {
         Row: {
           created_at: string
@@ -718,6 +750,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      opd_master: {
+        Row: {
+          acronym: string | null
+          active: boolean
+          created_at: string
+          display_name: string
+          entity_type: string
+          id: number
+          official_name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          acronym?: string | null
+          active?: boolean
+          created_at?: string
+          display_name: string
+          entity_type?: string
+          id?: number
+          official_name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          acronym?: string | null
+          active?: boolean
+          created_at?: string
+          display_name?: string
+          entity_type?: string
+          id?: number
+          official_name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       rekomendasi: {
         Row: {
@@ -968,6 +1039,7 @@ export type Database = {
       }
       ah_admin_logout: { Args: never; Returns: boolean }
       ah_admin_session_check: { Args: never; Returns: boolean }
+      canonical_opd_name: { Args: { input_name: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
