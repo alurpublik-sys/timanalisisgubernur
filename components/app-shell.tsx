@@ -21,6 +21,7 @@ function activeRoute(pathname: string) {
   return match?.href||'/dashboard'
 }
 function titleForPath(pathname: string) {
+  if(pathname === '/dashboard') return 'Dashboard Strategis'
   if(pathname.startsWith('/kunjungan/')) return 'Detail Kunjungan'
   if(pathname.startsWith('/renstra-opd/')) return 'Renstra OPD'
   if(pathname.startsWith('/berani/')) return '9 BERANI'
