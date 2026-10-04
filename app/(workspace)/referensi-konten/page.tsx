@@ -4,6 +4,7 @@ import { ReferenceEditorPortal } from '@/components/reference-editor-portal'
 import { createContentReference, updateContentReference } from '@/lib/actions/content-references'
 import { getAuthContext } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
+import { getOpdNames } from '@/lib/opd'
 import type { Json } from '@/lib/database.types'
 import { FeatureNotes } from '@/components/feature-notes'
 import { PendingSubmitButton } from '@/components/pending-submit-button'
@@ -54,18 +55,16 @@ export default async function ReferensiKontenPage({ searchParams }: { searchPara
 
   const [
     { data: programs, error: programError },
-    { data: opdMaster, error: opdError },
+    opdNames,
     { data: references, error },
   ] = await Promise.all([
     supabase.from('berani_programs').select('id,name').eq('active', true).order('sort_order'),
-    supabase.from('opd_master').select('display_name').eq('active', true).order('sort_order'),
+    getOpdNames(),
     referenceQuery,
   ])
   if (programError) throw new Error(programError.message)
-  if (opdError) throw new Error(opdError.message)
   if (error) throw new Error(error.message)
 
-  const opdNames = (opdMaster ?? []).map((item) => item.display_name)
 
   const programNames = new Map((programs ?? []).map((program) => [program.id, program.name]))
   const uniqueOpds = new Set((references ?? []).map((item) => item.opd_name)).size
