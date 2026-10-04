@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
-import { createFinding, deleteFinding, deleteFindingDocument, updateFinding } from '@/lib/actions/knowledge'
+import { deleteFinding, deleteFindingDocument, updateFinding } from '@/lib/actions/knowledge'
 import { SUPABASE_URL } from '@/lib/branding'
 import { requireUser } from '@/lib/auth'
 import { FeatureNotes } from '@/components/feature-notes'
 import type { Database } from '@/lib/database.types'
 import { DirectUploadField } from '@/components/direct-upload-field'
 import { PendingSubmitButton } from '@/components/pending-submit-button'
+import { FindingAddDialog } from '@/components/finding-add-dialog'
 
 type Params = { opd?: string }
 type FindingDocument = Database['public']['Tables']['opd_finding_documents']['Row']
@@ -84,34 +85,19 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
         <button className="secondary-button" type="submit">Tampilkan</button>
         {selectedOpd ? <Link className="secondary-button" href="/temuan-opd">Reset</Link> : null}
       </form>
-      <div className="opd-selector-stat"><strong>{selectedOpd ? findings?.length ?? 0 : opdNames.length}</strong><span>{selectedOpd ? 'temuan OPD ini' : 'OPD terdata'}</span></div>
+      <div className="opd-selector-tools">
+        <FindingAddDialog
+          today={todayMakassar()}
+          selectedOpd={selectedOpd}
+          programs={(programs ?? []).map((program) => ({ id: program.id, name: program.name }))}
+        />
+        <div className="opd-selector-stat"><strong>{selectedOpd ? findings?.length ?? 0 : opdNames.length}</strong><span>{selectedOpd ? 'temuan OPD ini' : 'OPD terdata'}</span></div>
+      </div>
     </section>
 
-    <section className="module-grid finding-module-grid">
-      <form action={createFinding} className="panel form-card">
-        <div className="section-heading"><p className="eyebrow">TEMUAN BARU</p><h2>Tambah Temuan OPD</h2></div>
-        <label>Nama OPD<input name="opd_name" list="opd-options" required defaultValue={selectedOpd} placeholder="Pilih atau ketik nama OPD" /></label>
-        <datalist id="opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist>
-        <label>Judul Temuan<input name="title" required placeholder="Apa yang menarik/perlu dicatat?" /></label>
-        <label>Kategori<select name="category" defaultValue="Temuan">{categories.map((category) => <option key={category}>{category}</option>)}</select></label>
-        <label>Tanggal<input name="finding_date" type="date" defaultValue={todayMakassar()} required /></label>
-        <label>Detail<textarea name="detail" placeholder="Jelaskan konteks, angka, potensi, atau tindak lanjut." /></label>
-        <label>Terkait 9 BERANI<select name="berani_program_id" defaultValue=""><option value="">Tidak terkait khusus</option>{(programs ?? []).map((program) => <option value={program.id} key={program.id}>{program.name}</option>)}</select></label>
-        <label>Nama Sumber<input name="source_label" placeholder="Contoh: Kunjungan OPD / Paparan Kadis" /></label>
-        <label>Link Sumber<input name="source_url" type="url" placeholder="https://..." /></label>
-        <DirectUploadField
-          kind="finding-document"
-          name="finding_uploads"
-          label="Lampiran"
-          accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.png,.jpg,.jpeg,.webp"
-          multiple
-          maxFiles={10}
-          helpText="Bisa pilih hingga 10 file, maksimal 20 MB per file. File diunggah langsung ke Supabase agar tidak mentok batas request Vercel."
-        />
-        <PendingSubmitButton className="primary-button" pendingLabel="Menyimpan temuan…">Simpan Temuan</PendingSubmitButton>
-      </form>
+    <datalist id="opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist>
 
-      <section className="finding-list">
+    <section className="finding-list finding-presentation-list">
         {(findings ?? []).map((finding) => {
           const findingDocuments = documentsByFinding.get(finding.id) ?? []
           return <article className="finding-card panel" key={finding.id}>
@@ -166,9 +152,8 @@ export default async function TemuanOpdPage({ searchParams }: { searchParams: Pr
             </div>
           </article>
         })}
-        {(findings ?? []).length === 0 ? <div className="panel empty-document-panel"><p className="eyebrow">BELUM ADA TEMUAN</p><h2>{selectedOpd || 'OPD belum dipilih'}</h2><p>Tambahkan catatan pertama melalui formulir di samping. Tidak ada batas satu temuan per OPD.</p></div> : null}
+        {(findings ?? []).length === 0 ? <div className="panel empty-document-panel"><p className="eyebrow">BELUM ADA TEMUAN</p><h2>{selectedOpd || 'Belum ada temuan'}</h2><p>Gunakan tombol + di area filter untuk menambahkan catatan pertama. Tidak ada batas satu temuan per OPD.</p></div> : null}
       </section>
-    </section>
     <FeatureNotes featureKey="temuan-opd" returnPath="/temuan-opd" adminMode title="Catatan Temuan OPD" description="Catatan umum, tindak lanjut, dan pengingat untuk temuan lintas OPD." />
   </AppShell>
 }

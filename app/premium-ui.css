@@ -1494,3 +1494,21 @@ body.reference-editor-open::before{
     letter-spacing:.1em!important;
   }
 }
+
+
+/* Temuan OPD — presentation-first creation flow */
+.opd-selector-tools{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex:0 0 auto}
+.finding-add-icon{flex:0 0 36px}
+.finding-presentation-list{width:100%;gap:14px}
+.finding-editor-modal{width:min(760px,100%)}
+.finding-editor-form textarea{width:100%;min-height:112px;padding:11px 12px;border:1px solid #d4dee6;border-radius:11px;background:#fff;color:#183248;outline:none;resize:vertical}
+.finding-editor-form textarea:focus{border-color:#789bb8;box-shadow:0 0 0 4px rgba(71,122,168,.08)}
+.finding-editor-upload{grid-column:1/-1;padding:2px 0}
+.finding-editor-upload .direct-upload-field{gap:8px}
+@media(max-width:760px){
+  .opd-selector-tools{width:100%;justify-content:space-between;align-items:center}
+  .opd-selector-tools .opd-selector-stat{flex:1}
+  .finding-add-icon{width:40px;height:40px;min-height:40px;flex-basis:40px}
+  .finding-editor-upload{grid-column:1}
+  .finding-editor-form textarea{font-size:16px}
+}
