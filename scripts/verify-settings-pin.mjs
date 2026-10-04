@@ -29,17 +29,17 @@ const shell=readFileSync(join(root,'components/app-shell.tsx'),'utf8')
 if(shell.includes('requireUser')) failures.push('AppShell must not force a PIN session on public reading routes')
 
 for(const publicPage of[
-  'app/dashboard/page.tsx','app/kunjungan/page.tsx','app/media-monitor/page.tsx',
-  'app/berani/page.tsx','app/referensi-konten/page.tsx','app/tim-analisis/page.tsx'
+  'app/(workspace)/dashboard/page.tsx','app/(workspace)/kunjungan/page.tsx','app/(workspace)/media-monitor/page.tsx',
+  'app/(workspace)/berani/page.tsx','app/(workspace)/referensi-konten/page.tsx','app/(workspace)/tim-analisis/page.tsx'
 ]){
   const source=readFileSync(join(root,publicPage),'utf8')
   if(source.includes("requireUser(")) failures.push(`${publicPage} must remain readable without PIN`)
 }
 
-const findings=readFileSync(join(root,'app/temuan-opd/page.tsx'),'utf8')
+const findings=readFileSync(join(root,'app/(workspace)/temuan-opd/page.tsx'),'utf8')
 if(!findings.includes("requireUser('/temuan-opd')")) failures.push('Temuan OPD must require a validated PIN session')
 
-const settings=readFileSync(join(root,'app/pengaturan/page.tsx'),'utf8')
+const settings=readFileSync(join(root,'app/(workspace)/pengaturan/page.tsx'),'utf8')
 if(!settings.includes('requireUser')) failures.push('Pengaturan must require a validated PIN session')
 
 for(const actionFile of['lib/actions/core.ts','lib/actions/knowledge.ts','lib/actions/content-references.ts','lib/actions/settings.ts','lib/actions/notes.ts']){
