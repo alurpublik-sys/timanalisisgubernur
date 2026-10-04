@@ -3,20 +3,8 @@ import Link from 'next/link'
 import { getAuthContext } from '@/lib/auth'
 import { APP_NAME, APP_TAGLINE, GOVERNOR_PHOTO, VICE_GOVERNOR_PHOTO } from '@/lib/branding'
 import { createClient } from '@/lib/supabase/server'
+import { getDashboardPublicPayload } from '@/lib/dashboard-data'
 
-type DashboardProgram={id:number;name:string;slug:string;summary:string|null;sort_order:number}
-type DashboardPayload={
-  overview:Record<string,number|null>
-  renstra_count:number
-  reference_count:number
-  pending_references:number
-  programs:DashboardProgram[]
-  updated_program_ids:number[]
-  recent_berani:Array<{id:number;program_id:number;title:string;period_label:string|null;row_count:number;created_at:string}>
-  recent_visits:Array<{id:number;nama_opd:string;tanggal:string;topik:string;tanggal_estimasi:boolean;status:string}>
-  recent_references:Array<{id:number;opd_name:string;title:string;status:string;updated_at:string}>
-  negative_media:Array<{id:number;judul_berita:string;nama_media:string|null;tanggal:string;link_berita:string|null;issue_category:string}>
-}
 const emptyOverview={total_kunjungan:0,total_media:0,total_tim:0,media_positif:0,media_netral:0,media_negatif:0}
 function dateLabel(value:string){return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeZone:'Asia/Makassar'}).format(new Date(`${value}T00:00:00+08:00`))}
 function tone(value:number){return value>0?'attention':'safe'}
@@ -32,13 +20,11 @@ export default async function DashboardPage(){
     ? supabase.from('opd_findings').select('*',{count:'exact',head:true})
     : Promise.resolve({count:null as number|null})
 
-  const [{data:payloadRaw,error:payloadError},findingResult,findingCountResult]=await Promise.all([
-    supabase.rpc('dashboard_public_payload'),
+  const [payload,findingResult,findingCountResult]=await Promise.all([
+    getDashboardPublicPayload(),
     findingPromise,
     findingCountPromise,
   ])
-  if(payloadError) throw new Error(payloadError.message)
-  const payload=(payloadRaw??{}) as unknown as DashboardPayload
   const overview={...emptyOverview,...(payload.overview??{})}
   const programs=payload.programs??[]
   const recentBerani=payload.recent_berani??[]
