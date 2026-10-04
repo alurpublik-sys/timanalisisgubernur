@@ -34,12 +34,15 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
   if (!Number.isSafeInteger(numericId) || numericId <= 0) notFound()
 
   const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
-  const [{ data: visit, error }, { data: documents, error: documentError }] = await Promise.all([
+  const [{ data: visit, error }, { data: documents, error: documentError }, { data: opdMaster, error: opdError }] = await Promise.all([
     supabase.from('kunjungan').select('*').eq('id', numericId).single(),
     supabase.from('kunjungan_documents').select('*').eq('kunjungan_id', numericId).order('created_at'),
+    supabase.from('opd_master').select('display_name').eq('active', true).order('sort_order'),
   ])
   if (error || !visit) notFound()
   if (documentError) throw new Error(documentError.message)
+  if (opdError) throw new Error(opdError.message)
+  const opdNames = (opdMaster ?? []).map((item) => item.display_name)
 
   const pdf = notulenUrl(visit.notulen_pdf_path)
   const legacyOriginal = getLegacyNotulensiOriginal(visit.id)
@@ -89,7 +92,7 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
         <summary><span>✎</span><div><strong>Edit Kunjungan & Notulensi</strong><small>Ganti data, unggah ulang PDF asli, atau hapus kunjungan.</small></div></summary>
         <form action={updateKunjungan} className="mini-form visit-edit-form">
           <input type="hidden" name="id" value={visit.id} />
-          <label>Nama OPD<input name="opd" defaultValue={visit.nama_opd} required /></label>
+          <label>Nama OPD<input name="opd" list="visit-opd-options" defaultValue={visit.nama_opd} required /><datalist id="visit-opd-options">{opdNames.map((name) => <option value={name} key={name} />)}</datalist></label>
           <label>Tanggal<input name="tanggal" type="date" defaultValue={visit.tanggal} required /></label>
           <label>Pejabat / Narasumber<input name="pejabat" defaultValue={visit.pejabat || ''} /></label>
           <label>Anggota Tim<input name="anggota" defaultValue={visit.anggota_tim || ''} /></label>
