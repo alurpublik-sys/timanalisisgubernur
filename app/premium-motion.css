@@ -1157,3 +1157,8 @@ select{cursor:default!important}
   .sidebar-collapse-toggle,
   .nav-tooltip{transition:none!important}
 }
+
+
+/* Ensure compact-rail tooltips and the edge toggle render above workspace content. */
+.desktop-sidebar{z-index:22}
+.app-shell.sidebar-compact .desktop-sidebar{z-index:35}
