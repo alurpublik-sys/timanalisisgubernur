@@ -8,6 +8,7 @@ import { FeatureNotes } from '@/components/feature-notes'
 import { updateKunjungan, deleteKunjungan, deleteKunjunganDocument } from '@/lib/actions/core'
 import { DirectUploadField } from '@/components/direct-upload-field'
 import { PendingSubmitButton } from '@/components/pending-submit-button'
+import { getOpdNames } from '@/lib/opd'
 
 function notulenUrl(path?: string | null) {
   if (!path) return null
@@ -34,15 +35,13 @@ export default async function KunjunganDetailPage({ params }: { params: Promise<
   if (!Number.isSafeInteger(numericId) || numericId <= 0) notFound()
 
   const [{ user }, supabase] = await Promise.all([getAuthContext(), createClient(null)])
-  const [{ data: visit, error }, { data: documents, error: documentError }, { data: opdMaster, error: opdError }] = await Promise.all([
+  const [{ data: visit, error }, { data: documents, error: documentError }, opdNames] = await Promise.all([
     supabase.from('kunjungan').select('*').eq('id', numericId).single(),
     supabase.from('kunjungan_documents').select('*').eq('kunjungan_id', numericId).order('created_at'),
-    supabase.from('opd_master').select('display_name').eq('active', true).order('sort_order'),
+    getOpdNames(),
   ])
   if (error || !visit) notFound()
   if (documentError) throw new Error(documentError.message)
-  if (opdError) throw new Error(opdError.message)
-  const opdNames = (opdMaster ?? []).map((item) => item.display_name)
 
   const pdf = notulenUrl(visit.notulen_pdf_path)
   const legacyOriginal = getLegacyNotulensiOriginal(visit.id)
